@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Bell, Clock, Globe, Lock, Palette, Server, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -255,7 +254,7 @@ const Settings = () => {
 
         {/* Security Tab */}
         <TabsContent value="security">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6">
             <Card className="hover-scale shadow-sm card-gradient">
               <CardHeader>
                 <CardTitle>Password</CardTitle>
@@ -750,6 +749,38 @@ const Settings = () => {
                     </div>
                   </div>
                   
+                  <div className="border rounded-md p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg">Fleet</h3>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm">Edit</Button>
+                        <Button variant="destructive" size="sm">Delete</Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="fleet-all" className="h-4 w-4" />
+                        <Label htmlFor="fleet-all">Full Access</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="fleet-view" checked className="h-4 w-4" />
+                        <Label htmlFor="fleet-view">View Bookings</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="fleet-assign" checked className="h-4 w-4" />
+                        <Label htmlFor="fleet-assign">Assign Drivers</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="fleet-reports" checked className="h-4 w-4" />
+                        <Label htmlFor="fleet-reports">View Reports</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="fleet-edit" className="h-4 w-4" />
+                        <Label htmlFor="fleet-edit">Edit Bookings</Label>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Button>Create New Role</Button>
                 </div>
               </CardContent>
@@ -781,6 +812,7 @@ const Settings = () => {
                         <option value="manager">Manager</option>
                         <option value="dispatcher">Dispatcher</option>
                         <option value="driver">Driver</option>
+                        <option value="fleet">Fleet</option>
                       </select>
                     </div>
                   </div>
@@ -804,6 +836,7 @@ const Settings = () => {
                         <option value="manager">Manager</option>
                         <option value="dispatcher">Dispatcher</option>
                         <option value="driver">Driver</option>
+                        <option value="fleet">Fleet</option>
                       </select>
                     </div>
                   </div>
@@ -827,6 +860,7 @@ const Settings = () => {
                         <option value="manager">Manager</option>
                         <option value="dispatcher">Dispatcher</option>
                         <option value="driver">Driver</option>
+                        <option value="fleet">Fleet</option>
                       </select>
                     </div>
                   </div>

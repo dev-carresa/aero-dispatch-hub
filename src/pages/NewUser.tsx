@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  role: z.enum(["Admin", "Driver", "Dispatcher"]),
+  role: z.enum(["Admin", "Driver", "Dispatcher", "Fleet"]),
   status: z.enum(["active", "inactive"]),
 });
 
@@ -110,6 +110,7 @@ const NewUser = () => {
                         <SelectItem value="Admin">Admin</SelectItem>
                         <SelectItem value="Driver">Driver</SelectItem>
                         <SelectItem value="Dispatcher">Dispatcher</SelectItem>
+                        <SelectItem value="Fleet">Fleet</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -163,6 +164,10 @@ const NewUser = () => {
             <div>
               <h4 className="font-medium">Dispatcher</h4>
               <p className="text-sm text-muted-foreground">Booking management and driver assignment capabilities.</p>
+            </div>
+            <div>
+              <h4 className="font-medium">Fleet</h4>
+              <p className="text-sm text-muted-foreground">Access to view bookings, assign drivers, and view reports.</p>
             </div>
           </div>
         </div>

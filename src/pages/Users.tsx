@@ -86,6 +86,15 @@ const initialUsers = [
     lastActive: "1 hour ago",
     imageUrl: "",
   },
+  {
+    id: 6,
+    name: "Robert Fletcher",
+    email: "r.fletcher@example.com",
+    role: "Fleet",
+    status: "active",
+    lastActive: "30 minutes ago",
+    imageUrl: "",
+  },
 ];
 
 type User = typeof initialUsers[0];
@@ -202,6 +211,7 @@ const Users = () => {
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="driver">Driver</SelectItem>
               <SelectItem value="dispatcher">Dispatcher</SelectItem>
+              <SelectItem value="fleet">Fleet</SelectItem>
             </SelectContent>
           </Select>
         </div>
