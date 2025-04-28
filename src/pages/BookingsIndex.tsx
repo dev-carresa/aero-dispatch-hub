@@ -1,12 +1,15 @@
 
 import { BookingFilters } from "@/components/bookings/BookingFilters";
 import { BookingCard } from "@/components/bookings/BookingCard";
+import { BookingPagination } from "@/components/bookings/BookingPagination";
 import { Button } from "@/components/ui/button";
 import { 
-  DownloadCloud, 
+  ArrowUpDown,
+  Download, 
+  FileText,
   Filter, 
   Plus, 
-  RefreshCcw 
+  RefreshCcw,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -15,11 +18,17 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrackingHistoryDialog } from "@/components/bookings/dialogs/TrackingHistoryDialog";
+import { PaymentHistoryDialog } from "@/components/bookings/dialogs/PaymentHistoryDialog";
+import { MeetingBoardDialog } from "@/components/bookings/dialogs/MeetingBoardDialog";
 
 // Sample data for bookings
-const bookings = [
+const bookingsData = [
   {
     id: "B39218",
+    reference: "REF-39218",
     customer: "John Smith",
     origin: "JFK Airport Terminal 4",
     destination: "Hilton Manhattan Hotel",
@@ -29,21 +38,31 @@ const bookings = [
     driver: "Michael Rodriguez",
     status: "confirmed",
     price: "$125.00",
+    fleet: "Premium Fleet",
+    source: "Website",
+    flightNumber: "AA1234",
+    serviceType: "Arrival"
   },
   {
     id: "B39217", 
+    reference: "REF-39217",
     customer: "Alice Johnson",
     origin: "LaGuardia Airport Terminal B",
     destination: "Brooklyn Heights, 55 Water Street",
     date: "2023-10-15",
     time: "16:45",
     vehicle: "SUV - White",
-    driver: "Pending Assignment",
+    driver: "",
     status: "pending",
     price: "$145.00",
+    fleet: "",
+    source: "Mobile App",
+    flightNumber: "DL5678",
+    serviceType: "Arrival"
   },
   {
     id: "B39216",
+    reference: "REF-39216",
     customer: "Robert Davis",
     origin: "Newark Airport Terminal C",
     destination: "60 Wall Street, Manhattan",
@@ -53,9 +72,13 @@ const bookings = [
     driver: "James Wilson",
     status: "completed",
     price: "$180.00",
+    fleet: "Premium Fleet",
+    source: "Partner Agency",
+    serviceType: "Arrival"
   },
   {
     id: "B39215",
+    reference: "REF-39215",
     customer: "Maria Garcia",
     origin: "325 West 45th Street, Manhattan",
     destination: "JFK Airport Terminal 8",
@@ -65,9 +88,14 @@ const bookings = [
     driver: "David Brown",
     status: "confirmed",
     price: "$135.00",
+    fleet: "Standard Fleet",
+    source: "Website",
+    flightNumber: "BA4321",
+    serviceType: "Departure"
   },
   {
     id: "B39214", 
+    reference: "REF-39214",
     customer: "David Wilson",
     origin: "Times Square Marriott Hotel",
     destination: "LaGuardia Airport Terminal C",
@@ -77,9 +105,13 @@ const bookings = [
     driver: "Sarah Thompson",
     status: "confirmed",
     price: "$165.00",
+    fleet: "Premium Fleet",
+    source: "Phone Call",
+    serviceType: "Departure"
   },
   {
     id: "B39213",
+    reference: "REF-39213",
     customer: "Jennifer Taylor",
     origin: "JFK Airport Terminal 5",
     destination: "Sheraton Brooklyn Hotel",
@@ -89,10 +121,46 @@ const bookings = [
     driver: "Carlos Lopez",
     status: "cancelled",
     price: "$155.00",
+    fleet: "Standard Fleet",
+    source: "Website",
+    flightNumber: "JB2468",
+    serviceType: "Arrival"
   }
 ];
 
 const BookingsIndex = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
+  const [selectedBookingId, setSelectedBookingId] = useState("");
+  const [showTrackingDialog, setShowTrackingDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showMeetingDialog, setShowMeetingDialog] = useState(false);
+  
+  // Filter bookings based on the active tab
+  const filteredBookings = bookingsData.filter(booking => {
+    if (activeTab === "all") return true;
+    if (activeTab === "next24h") {
+      // This is a simplified filter for demonstration
+      return booking.date === "2023-10-15";
+    }
+    if (activeTab === "confirmed") return booking.status === "confirmed";
+    if (activeTab === "completed") return booking.status === "completed";
+    if (activeTab === "cancelled") return booking.status === "cancelled";
+    if (activeTab === "latest") {
+      // This is a simplified filter for demonstration
+      return booking.id === "B39218" || booking.id === "B39217";
+    }
+    return true;
+  });
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // In a real app, you would fetch data for the new page here
+  };
+  
+  // For demo purposes only - normally this would be calculated from API data
+  const totalPages = 3;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -114,14 +182,23 @@ const BookingsIndex = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <DownloadCloud className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-              <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-              <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Link to="/bookings/new">
@@ -133,17 +210,81 @@ const BookingsIndex = () => {
         </div>
       </div>
       
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-4 md:grid-cols-7 lg:grid-cols-8 w-full h-auto">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="next24h">Next 24h</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
+          <TabsTrigger value="latest">Latest</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          <TabsTrigger value="trash">Trash</TabsTrigger>
+          <TabsTrigger value="new" asChild>
+            <Link to="/bookings/new" className="w-full flex items-center justify-center">
+              <Plus className="h-4 w-4 mr-2" />
+              Add New
+            </Link>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
       <BookingFilters />
       
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing <strong>{filteredBookings.length}</strong> bookings
+        </div>
+        <Button variant="ghost" size="sm" className="flex items-center gap-1">
+          <ArrowUpDown className="h-4 w-4" />
+          Sort
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {bookings.map((booking) => (
+        {filteredBookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} />
         ))}
       </div>
       
+      {filteredBookings.length === 0 && (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium">No bookings found</h3>
+          <p className="text-muted-foreground">Try adjusting your filters or create a new booking.</p>
+          <Link to="/bookings/new" className="mt-4 inline-block">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Booking
+            </Button>
+          </Link>
+        </div>
+      )}
+      
       <div className="flex justify-center">
-        <Button variant="outline">Load More</Button>
+        <BookingPagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={handlePageChange} 
+        />
       </div>
+      
+      {/* Dialogs for tracking history, payment history, and meeting board */}
+      <TrackingHistoryDialog 
+        bookingId={selectedBookingId}
+        open={showTrackingDialog}
+        onOpenChange={setShowTrackingDialog}
+      />
+      
+      <PaymentHistoryDialog
+        bookingId={selectedBookingId}
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+      />
+      
+      <MeetingBoardDialog
+        bookingId={selectedBookingId}
+        open={showMeetingDialog}
+        onOpenChange={setShowMeetingDialog}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import BookingsIndex from "./pages/BookingsIndex";
 import BookingDetails from "./pages/BookingDetails";
 import NewBooking from "./pages/NewBooking";
+import EditBooking from "./pages/EditBooking";
 import Users from "./pages/Users";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
           <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
           <Route path="/bookings/:id" element={<Layout><BookingDetails /></Layout>} />
+          <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
           <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
           <Route path="/users" element={<Layout><Users /></Layout>} />
           <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
