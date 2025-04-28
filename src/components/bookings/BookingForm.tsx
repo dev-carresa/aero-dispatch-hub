@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,13 +17,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
 
-export function BookingForm() {
+interface BookingFormProps {
+  isEditing?: boolean;
+  bookingId?: string;
+}
+
+export function BookingForm({ isEditing = false, bookingId }: BookingFormProps) {
   const [date, setDate] = useState<Date>();
+  
+  useEffect(() => {
+    if (isEditing && bookingId) {
+      console.log(`Fetching booking data for ID: ${bookingId}`);
+    }
+  }, [isEditing, bookingId]);
   
   return (
     <div className="max-w-4xl mx-auto">
@@ -39,7 +49,9 @@ export function BookingForm() {
           <Card>
             <CardHeader>
               <CardTitle>Booking Details</CardTitle>
-              <CardDescription>Enter the basic booking information</CardDescription>
+              <CardDescription>
+                {isEditing ? "Edit the booking information" : "Enter the basic booking information"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,7 +150,7 @@ export function BookingForm() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline">Cancel</Button>
-              <Button>Next</Button>
+              <Button>{isEditing ? "Update" : "Next"}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -244,7 +256,7 @@ export function BookingForm() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline">Back</Button>
-              <Button type="submit">Save Booking</Button>
+              <Button type="submit">{isEditing ? "Update Booking" : "Save Booking"}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
