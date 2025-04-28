@@ -55,13 +55,11 @@ const Users = () => {
 
   // Dropdown actions
   const handleViewProfile = (user: User) => {
-    toast.info(`Viewing profile for ${user.name}`);
-    // In a real application this would navigate to a user profile page
+    navigate(`/users/${user.id}`);
   };
 
   const handleEditUser = (user: User) => {
-    toast.info(`Editing user ${user.name}`);
-    // In a real application this would navigate to an edit user page
+    navigate(`/users/${user.id}`);
   };
 
   const toggleUserStatus = (user: User) => {

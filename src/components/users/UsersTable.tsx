@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon, Edit, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +72,12 @@ export const UsersTable = ({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{user.name}</p>
+                      <Link 
+                        to={`/users/${user.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {user.name}
+                      </Link>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
@@ -99,9 +105,11 @@ export const UsersTable = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleViewProfile(user)}>
-                        <UserIcon className="h-4 w-4 mr-2" />
-                        View Profile
+                      <DropdownMenuItem asChild>
+                        <Link to={`/users/${user.id}`} className="flex items-center gap-2">
+                          <UserIcon className="h-4 w-4 mr-2" />
+                          View Profile
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleEditUser(user)}>
                         <Edit className="h-4 w-4 mr-2" />

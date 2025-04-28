@@ -11,6 +11,7 @@ import BookingDetails from "./pages/BookingDetails";
 import NewBooking from "./pages/NewBooking";
 import EditBooking from "./pages/EditBooking";
 import Users from "./pages/Users";
+import UserProfile from "./pages/UserProfile";
 import NewUser from "./pages/NewUser";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
           <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
           <Route path="/users" element={<Layout><Users /></Layout>} />
+          <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
           <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
           <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
