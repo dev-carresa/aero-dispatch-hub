@@ -28,6 +28,26 @@ export const bookingFormSchema = z.object({
   // Notes tab
   adminNotes: z.string().optional(),
   driverNotes: z.string().optional(),
+  
+  // Driver & Fleet income
+  driverIncome: z.number().min(0, "Driver income cannot be negative").optional(),
+  fleetIncome: z.number().min(0, "Fleet income cannot be negative").optional(),
+  
+  // Tracking
+  trackingStatus: z.enum(["accepted", "onroute", "arrived", "onboard", "completed", "noshow"]).optional(),
 })
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>
+
+// Tracking history status type
+export type TrackingStatusType = "accepted" | "onroute" | "arrived" | "onboard" | "completed" | "noshow";
+
+export interface TrackingHistoryEntry {
+  id: string;
+  status: TrackingStatusType;
+  timestamp: string;
+  location: string;
+  coords: [number, number]; // [longitude, latitude]
+  notes: string;
+  user: string;
+}

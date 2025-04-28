@@ -12,6 +12,10 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface AssignFleetDialogProps {
   bookingId: string;
@@ -27,17 +31,34 @@ const fleets = [
   { id: "4", name: "Executive Fleet", vehicles: 8, description: "High-end vehicles for executives" },
 ];
 
+const assignFleetSchema = z.object({
+  fleetId: z.string().min(1, "Please select a fleet"),
+  fleetIncome: z.number({
+    required_error: "Fleet income is required",
+    invalid_type_error: "Fleet income must be a number"
+  }).min(0, "Fleet income cannot be negative")
+});
+
+type AssignFleetFormData = z.infer<typeof assignFleetSchema>;
+
 export function AssignFleetDialog({ bookingId, open, onOpenChange }: AssignFleetDialogProps) {
-  const [selectedFleet, setSelectedFleet] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+
+  const form = useForm<AssignFleetFormData>({
+    resolver: zodResolver(assignFleetSchema),
+    defaultValues: {
+      fleetId: "",
+      fleetIncome: 0
+    },
+  });
 
   const filteredFleets = fleets.filter(fleet => 
     fleet.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAssign = () => {
-    if (!selectedFleet) {
+  const handleAssign = (data: AssignFleetFormData) => {
+    if (!data.fleetId) {
       toast({
         title: "No fleet selected",
         description: "Please select a fleet to assign.",
@@ -49,7 +70,7 @@ export function AssignFleetDialog({ bookingId, open, onOpenChange }: AssignFleet
     // Here you would actually assign the fleet in a real application
     toast({
       title: "Fleet assigned",
-      description: `Fleet has been successfully assigned to booking #${bookingId}.`,
+      description: `Fleet has been successfully assigned to booking #${bookingId} with income $${data.fleetIncome}.`,
     });
     
     onOpenChange(false);
@@ -65,75 +86,100 @@ export function AssignFleetDialog({ bookingId, open, onOpenChange }: AssignFleet
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-3">
-          <div className="relative">
-            <Input 
-              placeholder="Search fleets..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="border rounded-md max-h-[300px] overflow-y-auto">
-            {filteredFleets.length > 0 ? (
-              filteredFleets.map((fleet) => (
-                <div 
-                  key={fleet.id}
-                  className={`flex items-center gap-3 p-3 border-b last:border-0 cursor-pointer hover:bg-muted transition-colors ${
-                    selectedFleet === fleet.id ? 'bg-muted' : ''
-                  }`}
-                  onClick={() => setSelectedFleet(fleet.id)}
-                >
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Car className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{fleet.name}</p>
-                    <p className="text-xs text-muted-foreground">{fleet.description}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                      {fleet.vehicles} vehicles
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-4 text-center text-muted-foreground">
-                No fleets found matching "{searchQuery}"
-              </div>
-            )}
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              {selectedFleet ? `Selected fleet: ${fleets.find(f => f.id === selectedFleet)?.name}` : 'No fleet selected'}
-            </p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleAssign)} className="space-y-4 py-3">
+            <div className="relative">
+              <Input 
+                placeholder="Search fleets..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                // In a real app, this would open a form to create a new fleet
-                toast({
-                  title: "Add new fleet",
-                  description: "This would open a form to add a new fleet.",
-                });
-              }}
-            >
-              Add New Fleet
-            </Button>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAssign}>
-            Assign Fleet
-          </Button>
-        </DialogFooter>
+            <div className="border rounded-md max-h-[300px] overflow-y-auto">
+              {filteredFleets.length > 0 ? (
+                filteredFleets.map((fleet) => (
+                  <div 
+                    key={fleet.id}
+                    className={`flex items-center gap-3 p-3 border-b last:border-0 cursor-pointer hover:bg-muted transition-colors ${
+                      form.watch('fleetId') === fleet.id ? 'bg-muted' : ''
+                    }`}
+                    onClick={() => form.setValue('fleetId', fleet.id, { shouldValidate: true })}
+                  >
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Car className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{fleet.name}</p>
+                      <p className="text-xs text-muted-foreground">{fleet.description}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                        {fleet.vehicles} vehicles
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  No fleets found matching "{searchQuery}"
+                </div>
+              )}
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="fleetIncome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fleet Income ($)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0.00"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground">
+                {form.watch('fleetId') ? 
+                  `Selected fleet: ${fleets.find(f => f.id === form.watch('fleetId'))?.name}` : 
+                  'No fleet selected'}
+              </p>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  // In a real app, this would open a form to create a new fleet
+                  toast({
+                    title: "Add new fleet",
+                    description: "This would open a form to add a new fleet.",
+                  });
+                }}
+              >
+                Add New Fleet
+              </Button>
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                Assign Fleet
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
