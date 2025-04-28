@@ -1,44 +1,98 @@
 
+import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import type { BookingFormData } from "@/lib/schemas/bookingSchema";
 
 interface PassengersTabProps {
+  form: UseFormReturn<BookingFormData>;
   onBack: () => void;
   onNext: () => void;
 }
 
-export function PassengersTab({ onBack, onNext }: PassengersTabProps) {
+export function PassengersTab({ form, onBack, onNext }: PassengersTabProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Passenger Information</CardTitle>
         <CardDescription>Add all passenger details</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="passengers">Number of Passengers</Label>
-          <Input id="passengers" type="number" min="1" placeholder="1" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="luggage">Number of Luggage</Label>
-          <Input id="luggage" type="number" min="0" placeholder="1" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="flight">Flight Number (if applicable)</Label>
-          <Input id="flight" placeholder="e.g. LH123" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="special-instructions">Special Instructions</Label>
-          <Textarea id="special-instructions" placeholder="Any special requirements..." />
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>Back</Button>
-        <Button onClick={onNext}>Next</Button>
-      </CardFooter>
+      <Form {...form}>
+        <CardContent className="space-y-4">
+          <FormField
+            control={form.control}
+            name="passengerCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Passengers</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="luggageCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Luggage</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="flightNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Flight Number (if applicable)</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="specialInstructions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Special Instructions</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={onBack}>Back</Button>
+          <Button onClick={onNext}>Next</Button>
+        </CardFooter>
+      </Form>
     </Card>
   );
 }

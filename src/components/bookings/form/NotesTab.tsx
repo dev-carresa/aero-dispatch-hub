@@ -1,38 +1,61 @@
 
+import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import type { BookingFormData } from "@/lib/schemas/bookingSchema";
 
 interface NotesTabProps {
+  form: UseFormReturn<BookingFormData>;
   isEditing: boolean;
   onBack: () => void;
-  onSubmit: () => void;
 }
 
-export function NotesTab({ isEditing, onBack, onSubmit }: NotesTabProps) {
+export function NotesTab({ form, isEditing, onBack }: NotesTabProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Additional Notes</CardTitle>
         <CardDescription>Add any notes or comments about this booking</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="admin-notes">Admin Notes</Label>
-          <Textarea id="admin-notes" placeholder="Notes visible to admin only..." rows={4} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="driver-notes">Driver Notes</Label>
-          <Textarea id="driver-notes" placeholder="Notes for the driver..." rows={4} />
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>Back</Button>
-        <Button type="submit" onClick={onSubmit}>
-          {isEditing ? "Update Booking" : "Save Booking"}
-        </Button>
-      </CardFooter>
+      <Form {...form}>
+        <CardContent className="space-y-4">
+          <FormField
+            control={form.control}
+            name="adminNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Admin Notes</FormLabel>
+                <FormControl>
+                  <Textarea rows={4} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="driverNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Driver Notes</FormLabel>
+                <FormControl>
+                  <Textarea rows={4} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={onBack}>Back</Button>
+          <Button type="submit">
+            {isEditing ? "Update Booking" : "Save Booking"}
+          </Button>
+        </CardFooter>
+      </Form>
     </Card>
   );
 }
