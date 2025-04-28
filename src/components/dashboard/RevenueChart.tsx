@@ -1,6 +1,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { CalendarIcon, Download, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const data = [
   { name: 'Jan', revenue: 4000 },
@@ -19,15 +27,37 @@ const data = [
 
 export function RevenueChart() {
   return (
-    <Card className="col-span-1 lg:col-span-2">
-      <CardHeader>
-        <CardTitle>Monthly Revenue</CardTitle>
-        <CardDescription>Revenue overview for the current year</CardDescription>
+    <Card className="col-span-1 lg:col-span-2 hover-scale shadow-sm card-gradient">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div>
+          <CardTitle className="text-lg font-semibold">Monthly Revenue</CardTitle>
+          <CardDescription>Revenue overview for the current year</CardDescription>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
+            <CalendarIcon className="h-3.5 w-3.5" />
+            <span>2025</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <Download className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs">Export</span>
+                <ChevronDown className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Export as PNG</DropdownMenuItem>
+              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+              <DropdownMenuItem>Print Chart</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <AreaChart
               data={data}
               margin={{
                 top: 5,
@@ -36,18 +66,24 @@ export function RevenueChart() {
                 bottom: 5,
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
               <XAxis 
                 dataKey="name" 
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
               />
               <YAxis 
                 tickFormatter={(value) => `$${value}`} 
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
               />
               <Tooltip 
                 formatter={(value) => [`$${value}`, 'Revenue']}
@@ -59,15 +95,17 @@ export function RevenueChart() {
                   border: 'none'
                 }}
               />
-              <Line 
+              <Area 
                 type="monotone" 
                 dataKey="revenue" 
                 stroke="#2563eb" 
-                strokeWidth={3}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
+                dot={{ r: 3, strokeWidth: 2, stroke: '#2563eb', fill: 'white' }}
+                activeDot={{ r: 5, strokeWidth: 0, fill: '#2563eb' }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

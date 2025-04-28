@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, User } from "lucide-react";
+import { Calendar, Clock, Filter, MapPin, Search, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 // Sample data for recent bookings
 const bookings = [
@@ -60,77 +61,88 @@ const bookings = [
 
 export function RecentBookings() {
   return (
-    <Card className="col-span-1 lg:col-span-full">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="col-span-1 lg:col-span-full hover-scale shadow-sm card-gradient">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle>Recent Bookings</CardTitle>
+          <CardTitle className="text-lg font-semibold">Recent Bookings</CardTitle>
           <CardDescription>Latest booking activities</CardDescription>
         </div>
-        <Button variant="outline" size="sm">View All</Button>
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Search bookings..." className="pl-8 h-8 w-[180px] text-xs bg-white" />
+          </div>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+            <Filter className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="outline" size="sm" className="h-8">
+            <span className="text-xs">View All</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {bookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 last:border-0 last:pb-0"
-            >
-              <div className="flex items-center gap-4 w-full md:w-auto mb-2 md:mb-0">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center 
-                  ${booking.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
-                    booking.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                    'bg-yellow-100 text-yellow-700'}`}
-                >
-                  {booking.status === 'completed' ? (
-                    <Calendar className="h-5 w-5" />
-                  ) : (
-                    <Clock className="h-5 w-5" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-sm">{booking.id}</p>
-                  <div className="flex items-center text-xs text-muted-foreground mt-1">
-                    <User className="h-3 w-3 mr-1" />
-                    {booking.customer}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row gap-2 md:gap-6 w-full md:w-auto">
-                <div className="text-sm">
-                  <p className="text-muted-foreground text-xs">From</p>
-                  <div className="flex items-center">
-                    <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                    <span className="text-sm font-medium">{booking.origin}</span>
-                  </div>
-                </div>
-                <div className="text-sm">
-                  <p className="text-muted-foreground text-xs">To</p>
-                  <div className="flex items-center">
-                    <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                    <span className="text-sm font-medium">{booking.destination}</span>
-                  </div>
-                </div>
-                <div className="text-sm">
-                  <p className="text-muted-foreground text-xs">Pickup</p>
-                  <div className="flex items-center">
-                    <Calendar className="h-3 w-3 mr-1 text-muted-foreground" />
-                    <span className="text-sm font-medium">{booking.date}, {booking.time}</span>
-                  </div>
-                </div>
-                <div>
-                  <span className={`status-badge ${
-                    booking.status === 'confirmed' 
-                      ? 'status-badge-confirmed' 
-                      : booking.status === 'completed'
-                      ? 'status-badge-completed'
-                      : 'status-badge-pending'
-                  }`}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">ID</th>
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">Customer</th>
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">From</th>
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">To</th>
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">Pickup</th>
+                  <th className="px-4 py-3 text-xs font-medium text-muted-foreground text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((booking, index) => (
+                  <tr 
+                    key={booking.id} 
+                    className={`${index % 2 === 0 ? 'bg-white' : 'bg-muted/20'} hover:bg-muted/30`}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium">{booking.id}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+                          <User className="h-4 w-4" />
+                        </div>
+                        <div className="text-sm">{booking.customer}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex items-center">
+                        <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                        <span>{booking.origin}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex items-center">
+                        <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                        <span>{booking.destination}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex items-center">
+                        <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                        <span>{booking.date}, {booking.time}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`status-badge ${
+                        booking.status === 'confirmed' 
+                          ? 'status-badge-confirmed' 
+                          : booking.status === 'completed'
+                          ? 'status-badge-completed'
+                          : 'status-badge-pending'
+                      }`}>
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </CardContent>
     </Card>
