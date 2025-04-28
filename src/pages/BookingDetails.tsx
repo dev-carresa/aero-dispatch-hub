@@ -18,7 +18,8 @@ import {
   Share2, 
   Trash2,
   User,
-  X
+  X,
+  Plus
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
