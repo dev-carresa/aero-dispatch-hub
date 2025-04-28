@@ -12,7 +12,6 @@ import { MeetingBoardDialog } from "./dialogs/MeetingBoardDialog";
 import { BookingCardHeader } from "./card/BookingCardHeader";
 import { BookingCardContent } from "./card/BookingCardContent";
 import { BookingCardFooter } from "./card/BookingCardFooter";
-import { BookingCardActions } from "./card/BookingCardActions";
 import { BookingCardAlerts } from "./card/BookingCardAlerts";
 import { Booking } from "./types/booking";
 
@@ -86,6 +85,16 @@ export function BookingCard({ booking }: BookingCardProps) {
           reference={booking.reference}
           status={booking.status}
           serviceType={booking.serviceType}
+          onAssignDriver={() => setShowAssignDriver(true)}
+          onAssignFleet={() => setShowAssignFleet(true)}
+          onAssignVehicle={() => setShowAssignVehicle(true)}
+          onDuplicate={handleDuplicateBooking}
+          onCreateInvoice={handleCreateInvoice}
+          onViewTracking={() => setShowTrackingHistory(true)}
+          onViewPayment={() => setShowPaymentHistory(true)}
+          onViewMeetingBoard={() => setShowMeetingBoard(true)}
+          onCancel={() => setShowCancelAlert(true)}
+          onDelete={() => setShowDeleteAlert(true)}
         />
 
         <BookingCardContent 
@@ -106,20 +115,6 @@ export function BookingCard({ booking }: BookingCardProps) {
           driver={booking.driver}
           onAssignDriver={() => setShowAssignDriver(true)}
           onAssignVehicle={() => setShowAssignVehicle(true)}
-        />
-
-        <BookingCardActions 
-          id={booking.id}
-          onAssignDriver={() => setShowAssignDriver(true)}
-          onAssignFleet={() => setShowAssignFleet(true)}
-          onAssignVehicle={() => setShowAssignVehicle(true)}
-          onDuplicate={handleDuplicateBooking}
-          onCreateInvoice={handleCreateInvoice}
-          onViewTracking={() => setShowTrackingHistory(true)}
-          onViewPayment={() => setShowPaymentHistory(true)}
-          onViewMeetingBoard={() => setShowMeetingBoard(true)}
-          onCancel={() => setShowCancelAlert(true)}
-          onDelete={() => setShowDeleteAlert(true)}
         />
       </Card>
       

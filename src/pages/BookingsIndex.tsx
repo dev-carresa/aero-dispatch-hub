@@ -19,8 +19,8 @@ import {
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookingStatus } from "@/components/bookings/types/booking";
 
-// Sample data for bookings
 const bookingsData = [
   {
     id: "B39218",
@@ -32,7 +32,7 @@ const bookingsData = [
     time: "14:30",
     vehicle: "Sedan - Black",
     driver: "Michael Rodriguez",
-    status: "confirmed",
+    status: "confirmed" as BookingStatus,
     price: "$125.00",
     fleet: "Premium Fleet",
     source: "Website",
@@ -49,7 +49,7 @@ const bookingsData = [
     time: "16:45",
     vehicle: "SUV - White",
     driver: "",
-    status: "pending",
+    status: "pending" as BookingStatus,
     price: "$145.00",
     fleet: "",
     source: "Mobile App",
@@ -66,7 +66,7 @@ const bookingsData = [
     time: "18:15",
     vehicle: "Luxury Sedan - Black",
     driver: "James Wilson",
-    status: "completed",
+    status: "completed" as BookingStatus,
     price: "$180.00",
     fleet: "Premium Fleet",
     source: "Partner Agency",
@@ -82,7 +82,7 @@ const bookingsData = [
     time: "05:30",
     vehicle: "Sedan - Black",
     driver: "David Brown",
-    status: "confirmed",
+    status: "confirmed" as BookingStatus,
     price: "$135.00",
     fleet: "Standard Fleet",
     source: "Website",
@@ -99,7 +99,7 @@ const bookingsData = [
     time: "10:00",
     vehicle: "Luxury SUV - Black",
     driver: "Sarah Thompson",
-    status: "confirmed",
+    status: "confirmed" as BookingStatus,
     price: "$165.00",
     fleet: "Premium Fleet",
     source: "Phone Call",
@@ -115,7 +115,7 @@ const bookingsData = [
     time: "11:15",
     vehicle: "Van - Silver",
     driver: "Carlos Lopez",
-    status: "cancelled",
+    status: "cancelled" as BookingStatus,
     price: "$155.00",
     fleet: "Standard Fleet",
     source: "Website",
@@ -128,18 +128,15 @@ const BookingsIndex = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
   
-  // Filter bookings based on the active tab
   const filteredBookings = bookingsData.filter(booking => {
     if (activeTab === "all") return true;
     if (activeTab === "next24h") {
-      // This is a simplified filter for demonstration
       return booking.date === "2023-10-15";
     }
     if (activeTab === "confirmed") return booking.status === "confirmed";
     if (activeTab === "completed") return booking.status === "completed";
     if (activeTab === "cancelled") return booking.status === "cancelled";
     if (activeTab === "latest") {
-      // This is a simplified filter for demonstration
       return booking.id === "B39218" || booking.id === "B39217";
     }
     return true;
@@ -147,10 +144,8 @@ const BookingsIndex = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // In a real app, you would fetch data for the new page here
   };
   
-  // For demo purposes only - normally this would be calculated from API data
   const totalPages = 3;
 
   return (

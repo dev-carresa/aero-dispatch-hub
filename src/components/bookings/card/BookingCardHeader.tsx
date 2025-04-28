@@ -9,19 +9,40 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { BookingStatus } from "../types/booking";
+import { BookingCardActions } from "./BookingCardActions";
 
 interface BookingCardHeaderProps {
   id: string;
   reference?: string;
   status: BookingStatus;
   serviceType?: string;
+  onAssignDriver: () => void;
+  onAssignFleet: () => void;
+  onAssignVehicle: () => void;
+  onDuplicate: () => void;
+  onCreateInvoice: () => void;
+  onViewTracking: () => void;
+  onViewPayment: () => void;
+  onViewMeetingBoard: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
 }
 
 export function BookingCardHeader({ 
   id, 
   reference, 
   status, 
-  serviceType 
+  serviceType,
+  onAssignDriver,
+  onAssignFleet,
+  onAssignVehicle,
+  onDuplicate,
+  onCreateInvoice,
+  onViewTracking,
+  onViewPayment,
+  onViewMeetingBoard,
+  onCancel,
+  onDelete
 }: BookingCardHeaderProps) {
   return (
     <CardHeader className="px-4 py-3 pb-0 flex flex-row items-center justify-between space-y-0">
@@ -52,6 +73,19 @@ export function BookingCardHeader({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
+        <BookingCardActions 
+          id={id}
+          onAssignDriver={onAssignDriver}
+          onAssignFleet={onAssignFleet}
+          onAssignVehicle={onAssignVehicle}
+          onDuplicate={onDuplicate}
+          onCreateInvoice={onCreateInvoice}
+          onViewTracking={onViewTracking}
+          onViewPayment={onViewPayment}
+          onViewMeetingBoard={onViewMeetingBoard}
+          onCancel={onCancel}
+          onDelete={onDelete}
+        />
       </DropdownMenu>
     </CardHeader>
   );
