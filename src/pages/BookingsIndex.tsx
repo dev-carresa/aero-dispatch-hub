@@ -1,4 +1,3 @@
-
 import { BookingFilters } from "@/components/bookings/BookingFilters";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { BookingPagination } from "@/components/bookings/BookingPagination";
@@ -20,9 +19,6 @@ import {
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrackingHistoryDialog } from "@/components/bookings/dialogs/TrackingHistoryDialog";
-import { PaymentHistoryDialog } from "@/components/bookings/dialogs/PaymentHistoryDialog";
-import { MeetingBoardDialog } from "@/components/bookings/dialogs/MeetingBoardDialog";
 
 // Sample data for bookings
 const bookingsData = [
@@ -131,10 +127,6 @@ const bookingsData = [
 const BookingsIndex = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedBookingId, setSelectedBookingId] = useState("");
-  const [showTrackingDialog, setShowTrackingDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [showMeetingDialog, setShowMeetingDialog] = useState(false);
   
   // Filter bookings based on the active tab
   const filteredBookings = bookingsData.filter(booking => {
@@ -266,25 +258,6 @@ const BookingsIndex = () => {
           onPageChange={handlePageChange} 
         />
       </div>
-      
-      {/* Dialogs for tracking history, payment history, and meeting board */}
-      <TrackingHistoryDialog 
-        bookingId={selectedBookingId}
-        open={showTrackingDialog}
-        onOpenChange={setShowTrackingDialog}
-      />
-      
-      <PaymentHistoryDialog
-        bookingId={selectedBookingId}
-        open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
-      />
-      
-      <MeetingBoardDialog
-        bookingId={selectedBookingId}
-        open={showMeetingDialog}
-        onOpenChange={setShowMeetingDialog}
-      />
     </div>
   );
 };

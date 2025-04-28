@@ -1,8 +1,10 @@
 
 import {
+  AlertTriangle,
   CalendarClock,
   Car,
   Clock,
+  Copy,
   FileText,
   MapPin,
   MoreHorizontal,
@@ -35,6 +37,20 @@ import { useState } from "react";
 import { AssignDriverDialog } from "./dialogs/AssignDriverDialog";
 import { AssignFleetDialog } from "./dialogs/AssignFleetDialog";
 import { AssignVehicleDialog } from "./dialogs/AssignVehicleDialog";
+import { TrackingHistoryDialog } from "./dialogs/TrackingHistoryDialog";
+import { PaymentHistoryDialog } from "./dialogs/PaymentHistoryDialog";
+import { MeetingBoardDialog } from "./dialogs/MeetingBoardDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle, 
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookingCardProps {
   booking: {
@@ -60,6 +76,46 @@ export function BookingCard({ booking }: BookingCardProps) {
   const [showAssignDriver, setShowAssignDriver] = useState(false);
   const [showAssignFleet, setShowAssignFleet] = useState(false);
   const [showAssignVehicle, setShowAssignVehicle] = useState(false);
+  const [showTrackingHistory, setShowTrackingHistory] = useState(false);
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [showMeetingBoard, setShowMeetingBoard] = useState(false);
+  
+  // Alert dialogs
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  
+  const { toast } = useToast();
+
+  // Action handlers
+  const handleDuplicateBooking = () => {
+    toast({
+      title: "Booking duplicated",
+      description: `Booking ${booking.reference || booking.id} has been duplicated.`,
+    });
+  };
+
+  const handleCreateInvoice = () => {
+    toast({
+      title: "Invoice created",
+      description: `Invoice for booking ${booking.reference || booking.id} has been created.`,
+    });
+  };
+
+  const handleCancelBooking = () => {
+    setShowCancelAlert(false);
+    toast({
+      title: "Booking cancelled",
+      description: `Booking ${booking.reference || booking.id} has been cancelled.`,
+    });
+  };
+
+  const handleDeleteBooking = () => {
+    setShowDeleteAlert(false);
+    toast({
+      title: "Booking deleted",
+      description: `Booking ${booking.reference || booking.id} has been deleted.`,
+    });
+  };
 
   return (
     <>
@@ -123,16 +179,39 @@ export function BookingCard({ booking }: BookingCardProps) {
               <DropdownMenuItem onClick={() => setShowAssignVehicle(true)}>
                 Assign Vehicle
               </DropdownMenuItem>
-              <DropdownMenuItem>Duplicate Booking</DropdownMenuItem>
-              <DropdownMenuItem>Create Invoice</DropdownMenuItem>
-              <DropdownMenuItem>View Tracking History</DropdownMenuItem>
-              <DropdownMenuItem>View Payment History</DropdownMenuItem>
-              <DropdownMenuItem>Meeting Board</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDuplicateBooking}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate Booking
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCreateInvoice}>
+                <FileText className="h-4 w-4 mr-2" />
+                Create Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowTrackingHistory(true)}>
+                <MapPin className="h-4 w-4 mr-2" />
+                View Tracking History
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowPaymentHistory(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                View Payment History
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowMeetingBoard(true)}>
+                <User className="h-4 w-4 mr-2" />
+                Meeting Board
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-500">
+              <DropdownMenuItem 
+                onClick={() => setShowCancelAlert(true)} 
+                className="text-red-500"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
                 Cancel Booking
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-700">
+              <DropdownMenuItem 
+                onClick={() => setShowDeleteAlert(true)} 
+                className="text-red-700"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
                 Delete Booking
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -219,6 +298,7 @@ export function BookingCard({ booking }: BookingCardProps) {
         </CardFooter>
       </Card>
       
+      {/* Dialogs */}
       <AssignDriverDialog 
         bookingId={booking.id}
         open={showAssignDriver} 
@@ -236,6 +316,74 @@ export function BookingCard({ booking }: BookingCardProps) {
         open={showAssignVehicle} 
         onOpenChange={setShowAssignVehicle} 
       />
+
+      {/* New dialogs */}
+      <TrackingHistoryDialog 
+        bookingId={booking.id}
+        open={showTrackingHistory}
+        onOpenChange={setShowTrackingHistory}
+      />
+
+      <PaymentHistoryDialog
+        bookingId={booking.id}
+        open={showPaymentHistory}
+        onOpenChange={setShowPaymentHistory}
+      />
+
+      <MeetingBoardDialog
+        bookingId={booking.id}
+        open={showMeetingBoard}
+        onOpenChange={setShowMeetingBoard}
+        bookingData={{
+          customer: booking.customer,
+          origin: booking.origin,
+          destination: booking.destination,
+          date: booking.date,
+          time: booking.time,
+          flightNumber: booking.flightNumber
+        }}
+      />
+
+      {/* Alert dialogs */}
+      <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelBooking} 
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Yes, Cancel Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this booking? This action cannot be undone and will permanently remove this booking from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteBooking} 
+              className="bg-red-700 hover:bg-red-800"
+            >
+              Yes, Delete Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
