@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,8 @@ const booking = {
   flightNumber: "AA1234",
   notes: "Customer requested bottled water.",
   createdAt: "2023-10-10 09:23:45",
-  updatedAt: "2023-10-12 14:05:12"
+  updatedAt: "2023-10-12 14:05:12",
+  source: "Website"
 };
 
 const BookingDetails = () => {
@@ -140,6 +140,12 @@ const BookingDetails = () => {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <span>Flight: {booking.flightNumber}</span>
+                    </div>
+                  )}
+                  {booking.source && (
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <span>Source: {booking.source}</span>
                     </div>
                   )}
                 </div>
