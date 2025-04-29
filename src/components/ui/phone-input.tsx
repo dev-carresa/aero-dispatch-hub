@@ -2,7 +2,7 @@
 import * as React from "react"
 import { Controller, ControllerProps, FieldPath, FieldValues } from "react-hook-form"
 import PhoneInputLib from 'react-phone-number-input'
-import type { CountryCode, E164Number } from 'react-phone-number-input'
+import type { Country } from 'react-phone-number-input'
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import './phone-input.css'
@@ -22,7 +22,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         <div className={cn("phone-input-container", error && "phone-input-error")}>
           <PhoneInputLib
             ref={ref as any}
-            defaultCountry={defaultCountry as CountryCode}
+            defaultCountry={defaultCountry as Country}
             international
             countryCallingCodeEditable={false}
             className={cn(
@@ -73,7 +73,7 @@ const FormPhoneInput = <
         <PhoneInput
           label={label}
           defaultCountry={defaultCountry}
-          value={field.value as E164Number}
+          value={field.value as string}
           onChange={field.onChange}
           error={!!fieldState.error}
           className={className}
