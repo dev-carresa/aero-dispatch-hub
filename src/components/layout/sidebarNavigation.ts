@@ -6,7 +6,9 @@ import {
   FileText, 
   Settings, 
   Car,
-  BarChart
+  BarChart,
+  MessageSquare,
+  MessageCircle
 } from 'lucide-react';
 
 export const navigation = [
@@ -21,6 +23,8 @@ export const navigation = [
       { name: 'Saved Reports', href: '/reports/saved' },
     ]
   },
+  { name: 'Complaints', href: '/complaints', icon: MessageSquare },
+  { name: 'Driver Comments', href: '/driver-comments', icon: MessageCircle },
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

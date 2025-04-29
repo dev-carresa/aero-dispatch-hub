@@ -32,6 +32,15 @@ import ReportDetails from "./pages/ReportDetails";
 // Invoice pages
 import GenerateInvoice from "./pages/GenerateInvoice";
 
+// Complaint pages
+import Complaints from "./pages/Complaints";
+import NewComplaint from "./pages/NewComplaint";
+import ComplaintDetails from "./pages/ComplaintDetails";
+
+// Driver Comment pages
+import DriverComments from "./pages/DriverComments";
+import DriverCommentDetails from "./pages/DriverCommentDetails";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -64,6 +73,15 @@ const App = () => (
           <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
           <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
           <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
+          
+          {/* Complaint routes */}
+          <Route path="/complaints" element={<Layout><Complaints /></Layout>} />
+          <Route path="/complaints/new" element={<Layout><NewComplaint /></Layout>} />
+          <Route path="/complaints/:id" element={<Layout><ComplaintDetails /></Layout>} />
+          
+          {/* Driver Comment routes */}
+          <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
+          <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
