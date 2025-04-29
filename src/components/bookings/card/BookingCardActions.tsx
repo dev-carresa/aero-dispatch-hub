@@ -30,8 +30,6 @@ interface BookingCardActionsProps {
 
 export function BookingCardActions({
   id,
-  onAssignDriver,
-  onAssignFleet,
   onAssignVehicle,
   onDuplicate,
   onCreateInvoice,
@@ -50,12 +48,6 @@ export function BookingCardActions({
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
         <Link to={`/bookings/${id}/edit`}>Edit Booking</Link>
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={onAssignDriver}>
-        Assign Driver
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={onAssignFleet}>
-        Assign Fleet
       </DropdownMenuItem>
       <DropdownMenuItem onClick={onAssignVehicle}>
         Assign Vehicle

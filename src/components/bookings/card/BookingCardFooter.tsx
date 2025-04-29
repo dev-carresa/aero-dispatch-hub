@@ -47,11 +47,11 @@ export function BookingCardFooter({
               className="h-7 text-xs"
               onClick={onAssignVehicle}
             >
-              Assign Vehicle
+              Assign Fleet
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            Assign a specific vehicle to this booking
+            Assign a fleet to this booking
           </TooltipContent>
         </Tooltip>
       </div>
