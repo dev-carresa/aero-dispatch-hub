@@ -1,4 +1,3 @@
-
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
@@ -7,10 +6,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 // Create a custom Root component to handle cleanup
-const Sheet = React.forwardRef<
-  React.ElementRef<typeof SheetPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Root>
->(({ children, ...props }, ref) => {
+const Sheet = ({ children, ...props }: SheetPrimitive.DialogProps) => {
   // Handle cleanup when sheet is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -25,11 +21,11 @@ const Sheet = React.forwardRef<
   };
 
   return (
-    <SheetPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+    <SheetPrimitive.Root {...props} onOpenChange={handleOpenChange}>
       {children}
     </SheetPrimitive.Root>
   );
-});
+};
 
 Sheet.displayName = "Sheet";
 

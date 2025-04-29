@@ -5,10 +5,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { cn } from "@/lib/utils"
 
 // Create a custom Root component to handle cleanup
-const Popover = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>
->(({ children, ...props }, ref) => {
+const Popover = ({ children, ...props }: PopoverPrimitive.PopoverProps) => {
   // Handle cleanup when popover is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -23,11 +20,11 @@ const Popover = React.forwardRef<
   };
 
   return (
-    <PopoverPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+    <PopoverPrimitive.Root {...props} onOpenChange={handleOpenChange}>
       {children}
     </PopoverPrimitive.Root>
   );
-});
+};
 
 Popover.displayName = "Popover";
 

@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
@@ -6,10 +5,7 @@ import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
 // Create a custom Root component to handle cleanup
-const AlertDialog = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>
->(({ children, ...props }, ref) => {
+const AlertDialog = ({ children, ...props }: AlertDialogPrimitive.AlertDialogProps) => {
   // Handle cleanup when alert dialog is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -24,11 +20,11 @@ const AlertDialog = React.forwardRef<
   };
 
   return (
-    <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+    <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange}>
       {children}
     </AlertDialogPrimitive.Root>
   );
-});
+};
 
 AlertDialog.displayName = "AlertDialog";
 

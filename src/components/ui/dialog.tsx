@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -6,10 +5,7 @@ import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Create a custom Root component to handle cleanup
-const Dialog = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
->(({ children, ...props }, ref) => {
+const Dialog = ({ children, ...props }: DialogPrimitive.DialogProps) => {
   // Handle cleanup when dialog is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -24,11 +20,11 @@ const Dialog = React.forwardRef<
   };
 
   return (
-    <DialogPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+    <DialogPrimitive.Root {...props} onOpenChange={handleOpenChange}>
       {children}
     </DialogPrimitive.Root>
   );
-});
+};
 
 Dialog.displayName = "Dialog";
 
