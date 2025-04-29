@@ -17,7 +17,7 @@ export function BookingCard({ booking }: BookingCardProps) {
 
   return (
     <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md border-slate-200 bg-gradient-to-br from-white to-slate-50/70">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md border-slate-200 bg-gradient-to-br from-white to-slate-50/70 relative">
         {/* Status indicator strip */}
         <BookingStatusIndicator status={currentBooking.status} />
 
