@@ -18,6 +18,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch";
 import { FileInput } from "@/components/ui/file-input";
+import { FormPhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "react-phone-number-input";
+import "./phone-input.css";
 
 // Define form schema with conditional fields
 const baseSchema = {
@@ -37,8 +40,9 @@ const baseSchema = {
 
 const driverSchema = {
   ...baseSchema,
-  phone: z.string().min(10, "Phone number must be at least 10 characters"),
-  countryCode: z.string().min(2, "Country code is required"),
+  phone: z.string()
+    .refine((value) => !value || isValidPhoneNumber(value), 
+      { message: "Please enter a valid phone number" }),
   nationality: z.string().min(2, "Nationality is required"),
   dateOfBirth: z.string(),
   vehicleType: z.enum(["sedan", "suv", "van", "truck"]),
@@ -66,7 +70,6 @@ const formSchema = z.object(baseSchema).superRefine((data, ctx) => {
 
 type FormValues = z.infer<typeof formSchema> & {
   phone?: string;
-  countryCode?: string;
   nationality?: string;
   dateOfBirth?: string;
   vehicleType?: "sedan" | "suv" | "van" | "truck";
@@ -89,6 +92,7 @@ const NewUser = () => {
       lastName: "",
       email: "",
       password: "",
+      phone: "",
       role: initialRole as any,
       status: "active",
       driverAvailability: "available",
@@ -267,45 +271,20 @@ const NewUser = () => {
               
               {isDriverForm && (
                 <>
-                  <div className="grid gap-4 grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="countryCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country Code</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select country code" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="US">United States (+1)</SelectItem>
-                              <SelectItem value="UK">United Kingdom (+44)</SelectItem>
-                              <SelectItem value="CA">Canada (+1)</SelectItem>
-                              <SelectItem value="AU">Australia (+61)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="555-123-4567" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormPhoneInput
+                          control={form.control}
+                          name="phone"
+                          label="Phone Number"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <div className="grid gap-4 grid-cols-2">
                     <FormField

@@ -1,0 +1,79 @@
+
+/* Custom styles for react-phone-number-input */
+:root {
+  --PhoneInputCountryFlag-height: 1.2em;
+  --PhoneInput-color--focus: hsl(var(--ring));
+}
+
+.PhoneInput {
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputCountry {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+}
+
+.PhoneInputCountryIcon {
+  width: 1.5em;
+  height: 1em;
+}
+
+.PhoneInputCountrySelectArrow {
+  width: 0.3em;
+  height: 0.3em;
+  border-style: solid;
+  border-color: currentColor transparent transparent;
+  border-width: 0.3em 0.3em 0;
+  margin-left: 0.3em;
+}
+
+.PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: none !important;
+  padding: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.phone-input-container {
+  display: flex;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--input));
+  background-color: transparent;
+  padding: 0 0.75rem;
+}
+
+.phone-input-container:focus-within {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+.phone-input-error {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+.phone-input-error:focus-within {
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive));
+}
