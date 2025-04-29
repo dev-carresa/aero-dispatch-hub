@@ -8,22 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
-import { User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { DriverSearchList } from "./driver-assign/DriverSearchList";
+import { drivers } from "./driver-assign/driverData";
+import { assignDriverSchema, AssignDriverFormData } from "./driver-assign/assignDriverSchema";
 
 interface AssignDriverDialogProps {
   bookingId: string;
@@ -31,27 +23,7 @@ interface AssignDriverDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Sample driver data
-const drivers = [
-  { id: "1", name: "Michael Rodriguez", availability: "Available", phone: "+1 (555) 987-6543", avatar: "" },
-  { id: "2", name: "Sarah Thompson", availability: "Busy", phone: "+1 (555) 234-5678", avatar: "" },
-  { id: "3", name: "David Brown", availability: "Available", phone: "+1 (555) 345-6789", avatar: "" },
-  { id: "4", name: "James Wilson", availability: "Available", phone: "+1 (555) 456-7890", avatar: "" },
-  { id: "5", name: "Emily Davis", availability: "Off Duty", phone: "+1 (555) 567-8901", avatar: "" },
-];
-
-const assignDriverSchema = z.object({
-  driverId: z.string().min(1, "Please select a driver"),
-  driverIncome: z.number({
-    required_error: "Driver income is required",
-    invalid_type_error: "Driver income must be a number"
-  }).min(0, "Driver income cannot be negative")
-});
-
-type AssignDriverFormData = z.infer<typeof assignDriverSchema>;
-
 export function AssignDriverDialog({ bookingId, open, onOpenChange }: AssignDriverDialogProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const form = useForm<AssignDriverFormData>({
@@ -61,10 +33,6 @@ export function AssignDriverDialog({ bookingId, open, onOpenChange }: AssignDriv
       driverIncome: 0
     },
   });
-
-  const filteredDrivers = drivers.filter(driver => 
-    driver.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleAssign = (data: AssignDriverFormData) => {
     if (!data.driverId) {
@@ -97,53 +65,11 @@ export function AssignDriverDialog({ bookingId, open, onOpenChange }: AssignDriv
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleAssign)} className="space-y-4 py-3">
-            <div className="relative">
-              <Input 
-                placeholder="Search drivers..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            <div className="border rounded-md max-h-[300px] overflow-y-auto">
-              {filteredDrivers.length > 0 ? (
-                filteredDrivers.map((driver) => (
-                  <div 
-                    key={driver.id}
-                    className={`flex items-center gap-3 p-3 border-b last:border-0 cursor-pointer hover:bg-muted transition-colors ${
-                      form.watch('driverId') === driver.id ? 'bg-muted' : ''
-                    }`}
-                    onClick={() => form.setValue('driverId', driver.id, { shouldValidate: true })}
-                  >
-                    <Avatar>
-                      <AvatarImage src={driver.avatar} />
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-medium">{driver.name}</p>
-                      <p className="text-xs text-muted-foreground">{driver.phone}</p>
-                    </div>
-                    <div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        driver.availability === 'Available' 
-                          ? 'bg-green-100 text-green-800'
-                          : driver.availability === 'Busy'
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {driver.availability}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  No drivers found matching "{searchQuery}"
-                </div>
-              )}
-            </div>
+            <DriverSearchList 
+              drivers={drivers}
+              selectedDriverId={form.watch('driverId')}
+              onSelectDriver={(driverId) => form.setValue('driverId', driverId, { shouldValidate: true })}
+            />
             
             <FormField
               control={form.control}
