@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -9,17 +8,20 @@ import { AssignVehicleDialog } from "./dialogs/AssignVehicleDialog";
 import { TrackingHistoryDialog } from "./dialogs/TrackingHistoryDialog";
 import { PaymentHistoryDialog } from "./dialogs/PaymentHistoryDialog";
 import { MeetingBoardDialog } from "./dialogs/MeetingBoardDialog";
+import { ChangeStatusDialog } from "./dialogs/ChangeStatusDialog";
+import { InvoiceDetailsDialog } from "./dialogs/InvoiceDetailsDialog";
 import { BookingCardHeader } from "./card/BookingCardHeader";
 import { BookingCardContent } from "./card/BookingCardContent";
 import { BookingCardFooter } from "./card/BookingCardFooter";
 import { BookingCardAlerts } from "./card/BookingCardAlerts";
-import { Booking } from "./types/booking";
+import { Booking, BookingStatus } from "./types/booking";
 
 interface BookingCardProps {
   booking: Booking;
 }
 
 export function BookingCard({ booking }: BookingCardProps) {
+  // Existing dialog state
   const [showAssignDriver, setShowAssignDriver] = useState(false);
   const [showAssignFleet, setShowAssignFleet] = useState(false);
   const [showAssignVehicle, setShowAssignVehicle] = useState(false);
@@ -31,28 +33,36 @@ export function BookingCard({ booking }: BookingCardProps) {
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   
+  // New dialog states
+  const [showChangeStatus, setShowChangeStatus] = useState(false);
+  const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
+  
+  // New booking state that we can modify
+  const [currentBooking, setCurrentBooking] = useState<Booking>(booking);
+  
   const { toast } = useToast();
 
   // Action handlers
   const handleDuplicateBooking = () => {
     toast({
       title: "Booking duplicated",
-      description: `Booking ${booking.reference || booking.id} has been duplicated.`,
+      description: `Booking ${currentBooking.reference || currentBooking.id} has been duplicated.`,
     });
   };
 
   const handleCreateInvoice = () => {
-    toast({
-      title: "Invoice created",
-      description: `Invoice for booking ${booking.reference || booking.id} has been created.`,
-    });
+    setShowInvoiceDetails(true);
   };
 
   const handleCancelBooking = () => {
     setShowCancelAlert(false);
+    setCurrentBooking({
+      ...currentBooking,
+      status: 'cancelled'
+    });
     toast({
       title: "Booking cancelled",
-      description: `Booking ${booking.reference || booking.id} has been cancelled.`,
+      description: `Booking ${currentBooking.reference || currentBooking.id} has been cancelled.`,
     });
   };
 
@@ -60,7 +70,18 @@ export function BookingCard({ booking }: BookingCardProps) {
     setShowDeleteAlert(false);
     toast({
       title: "Booking deleted",
-      description: `Booking ${booking.reference || booking.id} has been deleted.`,
+      description: `Booking ${currentBooking.reference || currentBooking.id} has been deleted.`,
+    });
+  };
+  
+  const handleStatusChange = (newStatus: BookingStatus) => {
+    setCurrentBooking({
+      ...currentBooking,
+      status: newStatus
+    });
+    toast({
+      title: "Status updated",
+      description: `Booking status changed to ${newStatus}.`,
     });
   };
 
@@ -70,21 +91,22 @@ export function BookingCard({ booking }: BookingCardProps) {
         {/* Status indicator strip */}
         <div 
           className={`absolute top-0 left-0 w-1 h-full ${
-            booking.status === 'confirmed' 
+            currentBooking.status === 'confirmed' 
               ? 'bg-green-500' 
-              : booking.status === 'completed'
+              : currentBooking.status === 'completed'
               ? 'bg-blue-500'
-              : booking.status === 'cancelled'
+              : currentBooking.status === 'cancelled'
               ? 'bg-red-500'
               : 'bg-yellow-500'
           }`}
         />
 
         <BookingCardHeader 
-          id={booking.id}
-          reference={booking.reference}
-          status={booking.status}
-          serviceType={booking.serviceType}
+          id={currentBooking.id}
+          reference={currentBooking.reference}
+          status={currentBooking.status}
+          serviceType={currentBooking.serviceType}
+          onStatusClick={() => setShowChangeStatus(true)}
           onAssignDriver={() => setShowAssignDriver(true)}
           onAssignFleet={() => setShowAssignFleet(true)}
           onAssignVehicle={() => setShowAssignVehicle(true)}
@@ -98,69 +120,84 @@ export function BookingCard({ booking }: BookingCardProps) {
         />
 
         <BookingCardContent 
-          customer={booking.customer}
-          origin={booking.origin}
-          destination={booking.destination}
-          date={booking.date}
-          time={booking.time}
-          vehicle={booking.vehicle}
-          driver={booking.driver}
-          fleet={booking.fleet}
-          flightNumber={booking.flightNumber}
-          source={booking.source}
+          customer={currentBooking.customer}
+          origin={currentBooking.origin}
+          destination={currentBooking.destination}
+          date={currentBooking.date}
+          time={currentBooking.time}
+          vehicle={currentBooking.vehicle}
+          driver={currentBooking.driver}
+          fleet={currentBooking.fleet}
+          flightNumber={currentBooking.flightNumber}
+          source={currentBooking.source}
         />
 
         <BookingCardFooter 
-          price={booking.price}
-          driver={booking.driver}
+          price={currentBooking.price}
+          driver={currentBooking.driver}
           onAssignDriver={() => setShowAssignDriver(true)}
           onAssignVehicle={() => setShowAssignVehicle(true)}
         />
       </Card>
       
-      {/* Dialogs */}
+      {/* Existing Dialogs */}
       <AssignDriverDialog 
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showAssignDriver} 
         onOpenChange={setShowAssignDriver} 
       />
       
       <AssignFleetDialog 
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showAssignFleet} 
         onOpenChange={setShowAssignFleet} 
       />
       
       <AssignVehicleDialog 
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showAssignVehicle} 
         onOpenChange={setShowAssignVehicle} 
       />
 
       <TrackingHistoryDialog 
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showTrackingHistory}
         onOpenChange={setShowTrackingHistory}
       />
 
       <PaymentHistoryDialog
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showPaymentHistory}
         onOpenChange={setShowPaymentHistory}
       />
 
       <MeetingBoardDialog
-        bookingId={booking.id}
+        bookingId={currentBooking.id}
         open={showMeetingBoard}
         onOpenChange={setShowMeetingBoard}
         bookingData={{
-          customer: booking.customer,
-          origin: booking.origin,
-          destination: booking.destination,
-          date: booking.date,
-          time: booking.time,
-          flightNumber: booking.flightNumber
+          customer: currentBooking.customer,
+          origin: currentBooking.origin,
+          destination: currentBooking.destination,
+          date: currentBooking.date,
+          time: currentBooking.time,
+          flightNumber: currentBooking.flightNumber
         }}
+      />
+      
+      {/* New Dialogs */}
+      <ChangeStatusDialog
+        bookingId={currentBooking.id}
+        currentStatus={currentBooking.status}
+        open={showChangeStatus}
+        onOpenChange={setShowChangeStatus}
+        onStatusChange={handleStatusChange}
+      />
+      
+      <InvoiceDetailsDialog
+        open={showInvoiceDetails}
+        onOpenChange={setShowInvoiceDetails}
+        booking={currentBooking}
       />
 
       <BookingCardAlerts 

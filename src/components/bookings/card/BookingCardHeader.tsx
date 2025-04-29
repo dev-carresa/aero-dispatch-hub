@@ -16,6 +16,7 @@ interface BookingCardHeaderProps {
   reference?: string;
   status: BookingStatus;
   serviceType?: string;
+  onStatusClick: () => void;
   onAssignDriver: () => void;
   onAssignFleet: () => void;
   onAssignVehicle: () => void;
@@ -33,6 +34,7 @@ export function BookingCardHeader({
   reference, 
   status, 
   serviceType,
+  onStatusClick,
   onAssignDriver,
   onAssignFleet,
   onAssignVehicle,
@@ -50,15 +52,18 @@ export function BookingCardHeader({
         <Link to={`/bookings/${id}`} className="font-bold hover:text-primary">
           {reference || `#${id}`}
         </Link>
-        <Badge className={`status-badge ${
-          status === 'confirmed' 
-            ? 'bg-green-100 text-green-800 border-green-200' 
-            : status === 'completed'
-            ? 'bg-blue-100 text-blue-800 border-blue-200'
-            : status === 'cancelled'
-            ? 'bg-red-100 text-red-800 border-red-200'
-            : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-        }`}>
+        <Badge 
+          className={`status-badge cursor-pointer ${
+            status === 'confirmed' 
+              ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' 
+              : status === 'completed'
+              ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200'
+              : status === 'cancelled'
+              ? 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+              : 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200'
+          }`}
+          onClick={onStatusClick}
+        >
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
         {serviceType && (
