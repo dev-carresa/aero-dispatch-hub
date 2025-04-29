@@ -6,12 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save } from "lucide-react";
+import { Download, Printer, Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookingPagination } from "@/components/bookings/BookingPagination";
 import { SuccessNotification } from "@/components/invoices/SuccessNotification";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Booking {
   id: string;
@@ -34,6 +40,7 @@ interface InvoicePreviewProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  totalIncome: number;
 }
 
 export const InvoicePreview = ({ 
@@ -43,17 +50,25 @@ export const InvoicePreview = ({
   totalItems,
   currentPage,
   totalPages,
-  onPageChange
+  onPageChange,
+  totalIncome
 }: InvoicePreviewProps) => {
   const navigate = useNavigate();
   const [invoiceName, setInvoiceName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
-  // Calculate total amount of bookings - we use the displayed bookings just for calculation
-  const totalAmount = bookings ? bookings.reduce((sum, booking) => sum + booking.price, 0) : 0;
-  const taxAmount = totalAmount * 0.08; // 8% tax
-  const grandTotal = totalAmount + taxAmount;
+  // Tax calculation on total amount
+  const taxAmount = totalIncome * 0.08; // 8% tax
+  const grandTotal = totalIncome + taxAmount;
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(value);
+  };
 
   // Save invoice
   const handleSaveInvoice = () => {
@@ -65,12 +80,23 @@ export const InvoicePreview = ({
     // This would be an API call to save the invoice
     toast.success(`Invoice "${invoiceName}" saved successfully`);
     setSaveDialogOpen(false);
-    setSuccessMessage(`Invoice "${invoiceName}" has been saved successfully with ${totalItems} bookings totaling $${grandTotal.toFixed(2)}`);
+    setSuccessMessage(`Invoice "${invoiceName}" has been saved successfully with ${totalItems} bookings totaling ${formatCurrency(grandTotal)}`);
 
     // Navigate to invoices page after a brief delay
     setTimeout(() => {
       navigate("/invoices");
     }, 3000);
+  };
+  
+  // Handle export
+  const handleExport = (format: "pdf" | "csv" | "excel") => {
+    // In a real app, this would call an API to generate the export
+    toast.success(`Invoice exported as ${format.toUpperCase()}`);
+  };
+
+  // Handle print
+  const handlePrint = () => {
+    window.print();
   };
 
   if (!bookings) return null;
@@ -91,38 +117,128 @@ export const InvoicePreview = ({
   }
 
   return (
-    <Card className="border-green-100 bg-green-50/30">
-      <CardHeader className="border-b">
-        <CardTitle className="text-green-700">Invoice Preview</CardTitle>
-        <CardDescription>
-          {totalItems} bookings from {dateFrom ? format(dateFrom, "PPP") : ""} to {dateTo ? format(dateTo, "PPP") : ""}
-        </CardDescription>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Invoice Preview</CardTitle>
+            <CardDescription>
+              Found {totalItems} bookings matching your filters from {dateFrom ? format(dateFrom, "PPP") : ""} to {dateTo ? format(dateTo, "PPP") : ""}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("csv")}>
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("excel")}>
+                  Export as Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-1"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+            
+            <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Save className="h-4 w-4" />
+                  Save Invoice
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Save Invoice</DialogTitle>
+                  <DialogDescription>
+                    Enter a name for this invoice to save it to your invoices list.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="invoice-name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="invoice-name"
+                      value={invoiceName}
+                      onChange={(e) => setInvoiceName(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Monthly Invoice - Fleet One"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveInvoice}>Save</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="pt-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Fleet</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Service</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="font-medium">{booking.id}</TableCell>
-                <TableCell>{booking.fleet}</TableCell>
-                <TableCell>{booking.customer}</TableCell>
-                <TableCell>{booking.service}</TableCell>
-                <TableCell>{format(new Date(booking.date), "PP")} {booking.time}</TableCell>
-                <TableCell className="text-right">${booking.price.toFixed(2)}</TableCell>
+      
+      <div className="px-6 pb-2">
+        <div className="bg-muted/50 p-4 rounded-md">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">Total Bookings</h4>
+              <p className="text-2xl font-bold">{totalItems}</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">Total Invoice Amount</h4>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>Fleet</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Service</TableHead>
+                <TableHead>Date & Time</TableHead>
+                <TableHead className="text-right">Price</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {bookings.map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell className="font-medium">{booking.id}</TableCell>
+                  <TableCell>{booking.fleet}</TableCell>
+                  <TableCell>{booking.customer}</TableCell>
+                  <TableCell>{booking.service}</TableCell>
+                  <TableCell>{format(new Date(booking.date), "PP")} {booking.time}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(booking.price)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
         
         {totalPages > 1 && (
           <div className="mt-4 flex justify-center">
@@ -138,15 +254,15 @@ export const InvoicePreview = ({
           <div className="w-full max-w-xs space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal ({totalItems} bookings):</span>
-              <span className="font-medium">${totalAmount.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(totalIncome)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Tax (8%):</span>
-              <span className="font-medium">${taxAmount.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(taxAmount)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
-              <span>${grandTotal.toFixed(2)}</span>
+              <span>{formatCurrency(grandTotal)}</span>
             </div>
           </div>
         </div>
@@ -155,46 +271,10 @@ export const InvoicePreview = ({
         <div>
           <p className="text-sm text-muted-foreground">Generated on {format(new Date(), "PPP")}</p>
         </div>
-        <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Save className="h-4 w-4" />
-              Save Invoice
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Save Invoice</DialogTitle>
-              <DialogDescription>
-                Enter a name for this invoice to save it to your invoices list.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="invoice-name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="invoice-name"
-                  value={invoiceName}
-                  onChange={(e) => setInvoiceName(e.target.value)}
-                  className="col-span-3"
-                  placeholder="Monthly Invoice - Fleet One"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveInvoice}>Save</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </CardFooter>
       
       {successMessage && (
-        <div className="mt-4">
+        <div className="mt-4 px-6 pb-6">
           <SuccessAlert message={successMessage} />
         </div>
       )}

@@ -5,6 +5,7 @@ import { InvoiceFilterForm } from "@/components/invoices/InvoiceFilterForm";
 import { InvoicePreview } from "@/components/invoices/InvoicePreview"; 
 import { SuccessNotification } from "@/components/invoices/SuccessNotification";
 import { mockBookings } from "@/data/mockBookings";
+import { ReportsHeader } from "@/components/reports/ReportsHeader";
 
 const GenerateInvoice = () => {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(2025, 0, 15)); // Pre-set dates for demo
@@ -19,6 +20,9 @@ const GenerateInvoice = () => {
   const [itemsPerPage] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  
+  // Total Income calculation
+  const [totalIncome, setTotalIncome] = useState(0);
 
   // Load example data on component mount
   useEffect(() => {
@@ -56,6 +60,10 @@ const GenerateInvoice = () => {
     setTotalItems(filteredBookings.length);
     setTotalPages(Math.ceil(filteredBookings.length / itemsPerPage));
     
+    // Calculate total income from all filtered bookings
+    const income = filteredBookings.reduce((sum, booking) => sum + booking.price, 0);
+    setTotalIncome(income);
+    
     // Get current page of bookings
     const startIndex = (page - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, filteredBookings.length);
@@ -84,12 +92,12 @@ const GenerateInvoice = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Generate Invoice</h1>
-        <p className="text-muted-foreground">
-          Create a new invoice by selecting bookings from a specific date range
-        </p>
-      </div>
+      <ReportsHeader 
+        title="Generate Invoice" 
+        description="Create a new invoice by selecting bookings from a specific date range"
+        showGenerateButton={false}
+        showSavedButton={false}
+      />
 
       <SuccessNotification message={successMessage} />
 
@@ -113,6 +121,7 @@ const GenerateInvoice = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+          totalIncome={totalIncome}
         />
       )}
     </div>
