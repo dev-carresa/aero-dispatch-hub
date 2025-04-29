@@ -2,7 +2,6 @@
 import * as React from "react"
 import { Controller, ControllerProps, FieldPath, FieldValues } from "react-hook-form"
 import PhoneInputLib from 'react-phone-number-input'
-import type { Country } from 'react-phone-number-input'
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import './phone-input.css'
@@ -22,12 +21,9 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         <div className={cn("phone-input-container", error && "phone-input-error")}>
           <PhoneInputLib
             ref={ref as any}
-            defaultCountry={defaultCountry as Country}
+            defaultCountry={defaultCountry as any}
             international
             countryCallingCodeEditable={false}
-            // PhoneInputLib expects more specific types than HTMLInputElement provides
-            // Cast the props to any to resolve the type conflict
-            {...props as any}
             className={cn(
               "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background",
               "file:border-0 file:bg-transparent file:text-sm file:font-medium",
@@ -37,6 +33,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
               error && "border-destructive focus-visible:ring-destructive",
               className
             )}
+            {...props}
           />
         </div>
       </div>
@@ -75,8 +72,7 @@ const FormPhoneInput = <
         <PhoneInput
           label={label}
           defaultCountry={defaultCountry}
-          // Cast value to compatible type
-          value={field.value as string}
+          value={field.value}
           onChange={field.onChange}
           error={!!fieldState.error}
           className={className}

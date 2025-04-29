@@ -4,29 +4,7 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-// Create a custom Root component to handle cleanup
-const Dialog = ({ children, ...props }: DialogPrimitive.DialogProps) => {
-  // Handle cleanup when dialog is closed
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Ensure pointer-events is restored when dialog closes
-      document.body.style.pointerEvents = '';
-    }
-    
-    // Forward the open change to the original handler if provided
-    if (props.onOpenChange) {
-      props.onOpenChange(open);
-    }
-  };
-
-  return (
-    <DialogPrimitive.Root {...props} onOpenChange={handleOpenChange}>
-      {children}
-    </DialogPrimitive.Root>
-  );
-};
-
-Dialog.displayName = "Dialog";
+const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 

@@ -5,29 +5,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-// Create a custom Root component to handle cleanup
-const Sheet = ({ children, ...props }: SheetPrimitive.DialogProps) => {
-  // Handle cleanup when sheet is closed
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Ensure pointer-events is restored when sheet closes
-      document.body.style.pointerEvents = '';
-    }
-    
-    // Forward the open change to the original handler if provided
-    if (props.onOpenChange) {
-      props.onOpenChange(open);
-    }
-  };
-
-  return (
-    <SheetPrimitive.Root {...props} onOpenChange={handleOpenChange}>
-      {children}
-    </SheetPrimitive.Root>
-  );
-};
-
-Sheet.displayName = "Sheet";
+const Sheet = SheetPrimitive.Root
 
 const SheetTrigger = SheetPrimitive.Trigger
 
@@ -150,3 +128,4 @@ export {
   Sheet, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
+
