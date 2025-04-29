@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
   SelectContent, 
@@ -11,6 +9,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
@@ -18,6 +17,7 @@ import { ArrowLeft, Save } from "lucide-react";
 export const ComplaintForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     bookingReference: "",
@@ -36,6 +36,13 @@ export const ComplaintForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -47,7 +54,10 @@ export const ComplaintForm = () => {
       return;
     }
     
-    // In a real app, we would call an API to create the complaint
+    // In a real app, we would call an API to create the complaint with the files
+    console.log("Form data:", formData);
+    console.log("Attachments:", attachments);
+    
     setTimeout(() => {
       toast.success("Complaint created successfully");
       setIsSubmitting(false);
@@ -122,9 +132,10 @@ export const ComplaintForm = () => {
           <label className="block text-sm font-medium mb-1">Attachments</label>
           <FileInput
             label="Upload evidence or documents"
-            showPreview={false}
+            showPreview={true}
             accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
             multiple
+            onChange={handleFileChange}
           />
           <p className="text-xs text-muted-foreground mt-1">
             Supported formats: JPG, PNG, PDF, DOC up to 10MB
