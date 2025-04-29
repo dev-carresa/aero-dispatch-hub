@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import './phone-input.css'
 
-interface PhoneInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value'> {
   label?: string
   defaultCountry?: string
   className?: string
   error?: boolean
+  value?: string
 }
 
 const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
@@ -72,7 +73,7 @@ const FormPhoneInput = <
         <PhoneInput
           label={label}
           defaultCountry={defaultCountry}
-          value={field.value}
+          value={field.value as string}
           onChange={field.onChange}
           error={!!fieldState.error}
           className={className}
