@@ -18,6 +18,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 interface QualityReviewsFiltersProps {
   onFilterChange: (filters: any) => void;
@@ -34,12 +35,9 @@ export const QualityReviewsFilters = ({
   const [fleetId, setFleetId] = useState("");
   const [driverId, setDriverId] = useState("");
   const [scoreType, setScoreType] = useState("");
-  const [dateRange, setDateRange] = useState<{
-    from?: Date;
-    to?: Date;
-  }>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  const handleDateSelect = (range: any) => {
+  const handleDateSelect = (range: DateRange | undefined) => {
     setDateRange(range);
     applyFilters();
   };
@@ -59,7 +57,7 @@ export const QualityReviewsFilters = ({
     setFleetId("");
     setDriverId("");
     setScoreType("");
-    setDateRange({});
+    setDateRange(undefined);
     onFilterChange({});
   };
 
@@ -156,11 +154,11 @@ export const QualityReviewsFilters = ({
                 variant={"outline"}
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !dateRange.from && !dateRange.to && "text-muted-foreground"
+                  !dateRange && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.from ? (
+                {dateRange?.from ? (
                   dateRange.to ? (
                     <>
                       {format(dateRange.from, "LLL dd, y")} -{" "}
