@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { CalendarIcon, Download, Filter, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 
 // Sample data for invoices
 const invoices = [
@@ -91,10 +92,12 @@ const Invoices = () => {
             <Download className="h-4 w-4 mr-1" />
             Export
           </Button>
-          <Button size="sm" className="h-9">
-            <Plus className="h-4 w-4 mr-1" />
-            New Invoice
-          </Button>
+          <Link to="/invoices/generate">
+            <Button size="sm" className="h-9">
+              <Plus className="h-4 w-4 mr-1" />
+              New Invoice
+            </Button>
+          </Link>
         </div>
       </div>
 

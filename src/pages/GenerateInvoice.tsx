@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { DateRangeSelector } from "@/components/reports/filter-components/DateRangeSelector";
 import { BookingStatusSelector } from "@/components/reports/filter-components/BookingStatusSelector";
-import { Filter, Save } from "lucide-react";
+import { Check, Filter, Save } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,25 +28,82 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock booking data for demonstration
+// Extended mock booking data with more details for better demonstration
 const mockBookings = [
-  { id: "B001", fleet: "Fleet One", customer: "John Smith", date: "2025-01-15", price: 120.00, status: "completed" },
-  { id: "B002", fleet: "Fleet One", customer: "Alice Johnson", date: "2025-01-16", price: 85.50, status: "completed" },
-  { id: "B003", fleet: "Fleet Two", customer: "Robert Brown", date: "2025-01-18", price: 200.75, status: "completed" },
-  { id: "B004", fleet: "Fleet One", customer: "Mary Davis", date: "2025-01-22", price: 150.25, status: "completed" },
-  { id: "B005", fleet: "Fleet Three", customer: "David Wilson", date: "2025-01-25", price: 95.00, status: "completed" }
+  { 
+    id: "B001", 
+    fleet: "Fleet One", 
+    customer: "John Smith", 
+    date: "2025-01-15", 
+    time: "09:30 AM",
+    service: "Airport Transfer",
+    pickup: "JFK Airport",
+    dropoff: "Manhattan Hotel",
+    price: 120.00, 
+    status: "completed" 
+  },
+  { 
+    id: "B002", 
+    fleet: "Fleet One", 
+    customer: "Alice Johnson", 
+    date: "2025-01-16", 
+    time: "14:00 PM",
+    service: "City Tour",
+    pickup: "Times Square",
+    dropoff: "Central Park",
+    price: 85.50, 
+    status: "completed" 
+  },
+  { 
+    id: "B003", 
+    fleet: "Fleet Two", 
+    customer: "Robert Brown", 
+    date: "2025-01-18", 
+    time: "10:15 AM",
+    service: "Point to Point",
+    pickup: "Brooklyn",
+    dropoff: "Queens",
+    price: 200.75, 
+    status: "completed" 
+  },
+  { 
+    id: "B004", 
+    fleet: "Fleet One", 
+    customer: "Mary Davis", 
+    date: "2025-01-22", 
+    time: "16:45 PM",
+    service: "Corporate Transport",
+    pickup: "Wall Street",
+    dropoff: "Midtown Office",
+    price: 150.25, 
+    status: "completed" 
+  },
+  { 
+    id: "B005", 
+    fleet: "Fleet Three", 
+    customer: "David Wilson", 
+    date: "2025-01-25", 
+    time: "08:00 AM",
+    service: "Airport Transfer",
+    pickup: "Newark Airport",
+    dropoff: "Jersey City Hotel",
+    price: 95.00, 
+    status: "completed" 
+  }
 ];
 
 const GenerateInvoice = () => {
   const navigate = useNavigate();
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(2025, 0, 15)); // Pre-set dates for demo
+  const [dateTo, setDateTo] = useState<Date | undefined>(new Date(2025, 0, 25));
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["completed"]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [bookings, setBookings] = useState<any[] | null>(null);
   const [invoiceName, setInvoiceName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Handle booking status selection
   const handleStatusChange = (statusId: string, checked: boolean) => {
@@ -65,6 +122,7 @@ const GenerateInvoice = () => {
     }
     
     setIsGenerating(true);
+    setSuccessMessage(null);
 
     // Simulate API call
     setTimeout(() => {
@@ -81,11 +139,13 @@ const GenerateInvoice = () => {
       setBookings(filteredBookings);
       setIsGenerating(false);
       toast.success("Invoice data generated successfully");
-    }, 1500);
+    }, 1000);
   };
 
   // Calculate total amount of bookings
   const totalAmount = bookings ? bookings.reduce((sum, booking) => sum + booking.price, 0) : 0;
+  const taxAmount = totalAmount * 0.08; // 8% tax
+  const grandTotal = totalAmount + taxAmount;
 
   // Save invoice
   const handleSaveInvoice = () => {
@@ -97,11 +157,12 @@ const GenerateInvoice = () => {
     // This would be an API call to save the invoice
     toast.success(`Invoice "${invoiceName}" saved successfully`);
     setSaveDialogOpen(false);
+    setSuccessMessage(`Invoice "${invoiceName}" has been saved successfully with ${bookings?.length} bookings totaling $${grandTotal.toFixed(2)}`);
 
     // Navigate to invoices page after a brief delay
     setTimeout(() => {
       navigate("/invoices");
-    }, 1500);
+    }, 3000);
   };
 
   return (
@@ -112,6 +173,14 @@ const GenerateInvoice = () => {
           Create a new invoice by selecting bookings from a specific date range
         </p>
       </div>
+
+      {successMessage && (
+        <Alert className="bg-green-50 border-green-200">
+          <Check className="h-4 w-4 text-green-600" />
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>
@@ -148,22 +217,22 @@ const GenerateInvoice = () => {
       </Card>
 
       {bookings && bookings.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoice Preview</CardTitle>
+        <Card className="border-green-100 bg-green-50/30">
+          <CardHeader className="border-b">
+            <CardTitle className="text-green-700">Invoice Preview</CardTitle>
             <CardDescription>
               {bookings.length} bookings from {format(dateFrom!, "PPP")} to {format(dateTo!, "PPP")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <Table>
-              <TableCaption>Total amount: ${totalAmount.toFixed(2)}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Booking ID</TableHead>
                   <TableHead>Fleet</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Date & Time</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                 </TableRow>
               </TableHeader>
@@ -173,16 +242,34 @@ const GenerateInvoice = () => {
                     <TableCell className="font-medium">{booking.id}</TableCell>
                     <TableCell>{booking.fleet}</TableCell>
                     <TableCell>{booking.customer}</TableCell>
-                    <TableCell>{format(new Date(booking.date), "PP")}</TableCell>
+                    <TableCell>{booking.service}</TableCell>
+                    <TableCell>{format(new Date(booking.date), "PP")} {booking.time}</TableCell>
                     <TableCell className="text-right">${booking.price.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            
+            <div className="mt-6 border-t pt-4 flex flex-col items-end">
+              <div className="w-full max-w-xs space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span className="font-medium">${totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax (8%):</span>
+                  <span className="font-medium">${taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <span>Total:</span>
+                  <span>${grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
+          <CardFooter className="flex justify-between border-t bg-card">
             <div>
-              <p className="text-sm text-muted-foreground">All prices are exclusive of tax</p>
+              <p className="text-sm text-muted-foreground">Generated on {format(new Date(), "PPP")}</p>
             </div>
             <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
               <DialogTrigger asChild>
