@@ -26,6 +26,7 @@ import EditVehicle from "./pages/EditVehicle";
 import Reports from "./pages/Reports";
 import GenerateReport from "./pages/GenerateReport";
 import SavedReports from "./pages/SavedReports";
+import ReportDetails from "./pages/ReportDetails";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/reports" element={<Layout><Reports /></Layout>} />
           <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
           <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
+          <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />

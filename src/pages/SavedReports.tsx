@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ReportData, ReportStatus } from "@/types/report";
@@ -54,9 +53,7 @@ const SavedReports = () => {
   
   // Handle viewing report details
   const handleViewReport = (report: ReportData) => {
-    toast.info("Viewing report details would open the report");
-    // In a real app, this would navigate to a report detail page
-    // navigate(`/reports/view/${report.id}`);
+    navigate(`/reports/view/${report.id}`);
   };
   
   // Handle report status change

@@ -6,10 +6,7 @@ export interface ReportFilter {
   dateFrom?: string;
   dateTo?: string;
   bookingStatus?: string[];
-  includeDriver?: boolean;
-  includeFleet?: boolean;
-  includeCustomer?: boolean;
-  includeVehicle?: boolean;
+  reportType: ReportType;
 }
 
 export interface ReportData {
@@ -22,4 +19,6 @@ export interface ReportData {
   updatedAt: string;
   createdBy: number;
   results?: any[];
+  totalBookings?: number;
+  totalIncome?: number;
 }

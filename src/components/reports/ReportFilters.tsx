@@ -8,7 +8,7 @@ import { CalendarIcon, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ReportFilter } from "@/types/report";
+import { ReportFilter, ReportType } from "@/types/report";
 import {
   Card,
   CardContent,
@@ -17,6 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs";
 
 interface ReportFiltersProps {
   filters: ReportFilter;
@@ -58,6 +64,13 @@ export function ReportFilters({
     });
   };
 
+  const handleReportTypeChange = (type: ReportType) => {
+    onFiltersChange({
+      ...filters,
+      reportType: type
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -66,7 +79,7 @@ export function ReportFilters({
           Report Filters
         </CardTitle>
         <CardDescription>
-          Select date range and data to include in your report
+          Select date range and report type
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -163,84 +176,19 @@ export function ReportFilters({
           </div>
 
           <div>
-            <Label className="text-base">Data to Include</Label>
-            <div className="grid grid-cols-2 gap-3 mt-2 md:grid-cols-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="include-driver"
-                  checked={filters.includeDriver}
-                  onCheckedChange={(checked) => 
-                    onFiltersChange({
-                      ...filters, 
-                      includeDriver: checked === true
-                    })
-                  }
-                />
-                <label
-                  htmlFor="include-driver"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Driver
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="include-fleet"
-                  checked={filters.includeFleet}
-                  onCheckedChange={(checked) => 
-                    onFiltersChange({
-                      ...filters, 
-                      includeFleet: checked === true
-                    })
-                  }
-                />
-                <label
-                  htmlFor="include-fleet"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Fleet
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="include-customer"
-                  checked={filters.includeCustomer}
-                  onCheckedChange={(checked) => 
-                    onFiltersChange({
-                      ...filters, 
-                      includeCustomer: checked === true
-                    })
-                  }
-                />
-                <label
-                  htmlFor="include-customer"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Customer
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="include-vehicle"
-                  checked={filters.includeVehicle}
-                  onCheckedChange={(checked) => 
-                    onFiltersChange({
-                      ...filters, 
-                      includeVehicle: checked === true
-                    })
-                  }
-                />
-                <label
-                  htmlFor="include-vehicle"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Vehicle
-                </label>
-              </div>
-            </div>
+            <Label className="text-base">Report Type</Label>
+            <Tabs 
+              value={filters.reportType} 
+              onValueChange={(value) => handleReportTypeChange(value as ReportType)}
+              className="mt-2"
+            >
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="driver">Driver</TabsTrigger>
+                <TabsTrigger value="fleet">Fleet</TabsTrigger>
+                <TabsTrigger value="customer">Customer</TabsTrigger>
+                <TabsTrigger value="vehicle">Vehicle</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
       </CardContent>

@@ -36,14 +36,32 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { BookingPagination } from "@/components/bookings/BookingPagination";
+import { ReportType } from "@/types/report";
 
 interface ReportResultsProps {
   results: any[];
   onSaveReport: (name: string) => void;
   columns: { key: string; label: string }[];
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  totalIncome: number | null;
+  reportType: ReportType;
 }
 
-export function ReportResults({ results, onSaveReport, columns }: ReportResultsProps) {
+export function ReportResults({ 
+  results, 
+  onSaveReport, 
+  columns, 
+  totalItems, 
+  currentPage, 
+  totalPages, 
+  onPageChange,
+  totalIncome,
+  reportType
+}: ReportResultsProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [reportName, setReportName] = useState("");
 
@@ -64,6 +82,13 @@ export function ReportResults({ results, onSaveReport, columns }: ReportResultsP
     window.print();
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(value);
+  };
+
   return (
     <Card className="mt-8">
       <CardHeader>
@@ -71,7 +96,10 @@ export function ReportResults({ results, onSaveReport, columns }: ReportResultsP
           <div>
             <CardTitle>Report Results</CardTitle>
             <CardDescription>
-              Found {results.length} records matching your filters
+              Found {totalItems} {reportType === "driver" ? "drivers" : 
+                     reportType === "customer" ? "customers" : 
+                     reportType === "fleet" ? "fleets" : "vehicles"} 
+              matching your filters
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -143,6 +171,26 @@ export function ReportResults({ results, onSaveReport, columns }: ReportResultsP
           </div>
         </div>
       </CardHeader>
+      
+      {totalIncome !== null && (
+        <div className="px-6 pb-2">
+          <div className="bg-muted/50 p-4 rounded-md">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Total Bookings</h4>
+                <p className="text-2xl font-bold">{totalItems}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">
+                  Total {reportType === "driver" ? "Driver" : reportType === "fleet" ? "Fleet" : "Vehicle"} Income
+                </h4>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(totalIncome)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <CardContent>
         <div className="rounded-md border">
           <Table>
@@ -172,6 +220,16 @@ export function ReportResults({ results, onSaveReport, columns }: ReportResultsP
             </TableBody>
           </Table>
         </div>
+        
+        {totalPages > 1 && (
+          <div className="mt-4 flex justify-center">
+            <BookingPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

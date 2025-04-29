@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ReportFilter } from "@/types/report";
+import { ReportFilter, ReportType } from "@/types/report";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportFilters } from "@/components/reports/ReportFilters";
 import { ReportResults } from "@/components/reports/ReportResults";
@@ -12,10 +12,7 @@ const GenerateReport = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<ReportFilter>({
     bookingStatus: ["completed"],
-    includeDriver: true,
-    includeCustomer: false,
-    includeFleet: false,
-    includeVehicle: false,
+    reportType: "driver",
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -23,6 +20,15 @@ const GenerateReport = () => {
   
   // These are the columns that will be displayed in the report results table
   const [reportColumns, setReportColumns] = useState<{ key: string; label: string }[]>([]);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  
+  // Total calculations
+  const [totalIncome, setTotalIncome] = useState<number | null>(null);
   
   // Handle filter changes
   const handleFiltersChange = (newFilters: ReportFilter) => {
@@ -41,69 +47,115 @@ const GenerateReport = () => {
         { key: 'date', label: 'Date' },
       ];
       
-      // Add columns based on selected data to include
-      if (filters.includeCustomer) {
-        columns.push({ key: 'customer', label: 'Customer' });
-        columns.push({ key: 'email', label: 'Email' });
-      }
-      
-      if (filters.includeDriver) {
-        columns.push({ key: 'driver', label: 'Driver' });
-        columns.push({ key: 'phone', label: 'Phone' });
-      }
-      
-      if (filters.includeVehicle) {
-        columns.push({ key: 'vehicle', label: 'Vehicle' });
-        columns.push({ key: 'licensePlate', label: 'License Plate' });
-      }
-      
-      if (filters.includeFleet) {
-        columns.push({ key: 'fleet', label: 'Fleet' });
-        columns.push({ key: 'fleetManager', label: 'Fleet Manager' });
+      // Add columns based on selected report type
+      switch(filters.reportType) {
+        case "driver":
+          columns.push({ key: 'driver', label: 'Driver Name' });
+          columns.push({ key: 'phone', label: 'Phone' });
+          columns.push({ key: 'bookings', label: 'Bookings' });
+          columns.push({ key: 'rating', label: 'Rating' });
+          columns.push({ key: 'income', label: 'Income' });
+          break;
+        case "customer":
+          columns.push({ key: 'customer', label: 'Customer Name' });
+          columns.push({ key: 'email', label: 'Email' });
+          columns.push({ key: 'bookings', label: 'Total Bookings' });
+          columns.push({ key: 'totalSpent', label: 'Total Spent' });
+          break;
+        case "fleet":
+          columns.push({ key: 'fleet', label: 'Fleet Name' });
+          columns.push({ key: 'fleetManager', label: 'Fleet Manager' });
+          columns.push({ key: 'vehicles', label: 'Total Vehicles' });
+          columns.push({ key: 'bookings', label: 'Total Bookings' });
+          columns.push({ key: 'income', label: 'Total Income' });
+          break;
+        case "vehicle":
+          columns.push({ key: 'vehicle', label: 'Vehicle Model' });
+          columns.push({ key: 'licensePlate', label: 'License Plate' });
+          columns.push({ key: 'bookings', label: 'Total Bookings' });
+          columns.push({ key: 'distance', label: 'Total Distance' });
+          columns.push({ key: 'income', label: 'Total Income' });
+          break;
       }
       
       columns.push({ key: 'status', label: 'Status' });
-      columns.push({ key: 'amount', label: 'Amount' });
       
       setReportColumns(columns);
       
-      // Generate mock results
-      const results = Array.from({ length: 15 }).map((_, i) => {
+      // Generate mock results (total 45 items for pagination testing)
+      const totalResults = 45;
+      setTotalItems(totalResults);
+      setTotalPages(Math.ceil(totalResults / itemsPerPage));
+      
+      // Generate all results but will only display current page
+      const allResults = Array.from({ length: totalResults }).map((_, i) => {
         const result: Record<string, any> = {
           id: `B${10000 + i}`,
-          date: format(new Date(2024, 0, i + 1), 'yyyy-MM-dd'),
+          date: format(new Date(2024, 0, i % 30 + 1), 'yyyy-MM-dd'),
           status: (filters.bookingStatus || [])[Math.floor(Math.random() * (filters.bookingStatus || []).length) % (filters.bookingStatus || []).length],
-          amount: `$${(Math.random() * 150 + 50).toFixed(2)}`,
         };
         
-        if (filters.includeCustomer) {
-          result.customer = `Customer ${i + 1}`;
-          result.email = `customer${i + 1}@example.com`;
-        }
-        
-        if (filters.includeDriver) {
-          result.driver = `Driver ${i + 1}`;
-          result.phone = `+1 555-${1000 + i}`;
-        }
-        
-        if (filters.includeVehicle) {
-          const vehicles = ['Toyota Camry', 'Honda Accord', 'Ford Transit', 'Tesla Model Y', 'Chevrolet Suburban'];
-          result.vehicle = vehicles[i % vehicles.length];
-          result.licensePlate = `ABC${1000 + i}`;
-        }
-        
-        if (filters.includeFleet) {
-          result.fleet = `Fleet ${(i % 3) + 1}`;
-          result.fleetManager = `Manager ${(i % 3) + 1}`;
+        // Add specific data based on report type
+        switch(filters.reportType) {
+          case "driver":
+            result.driver = `Driver ${i % 5 + 1}`;
+            result.phone = `+1 555-${1000 + i % 5}`;
+            result.bookings = Math.floor(Math.random() * 50) + 10;
+            result.rating = (Math.random() * 2 + 3).toFixed(1);
+            result.income = `$${(Math.random() * 500 + 200).toFixed(2)}`;
+            break;
+          case "customer":
+            result.customer = `Customer ${i % 8 + 1}`;
+            result.email = `customer${i % 8 + 1}@example.com`;
+            result.bookings = Math.floor(Math.random() * 15) + 1;
+            result.totalSpent = `$${(Math.random() * 1200 + 300).toFixed(2)}`;
+            break;
+          case "fleet":
+            result.fleet = `Fleet ${i % 3 + 1}`;
+            result.fleetManager = `Manager ${i % 3 + 1}`;
+            result.vehicles = Math.floor(Math.random() * 10) + 5;
+            result.bookings = Math.floor(Math.random() * 100) + 50;
+            result.income = `$${(Math.random() * 5000 + 1000).toFixed(2)}`;
+            break;
+          case "vehicle":
+            const vehicles = ['Toyota Camry', 'Honda Accord', 'Ford Transit', 'Tesla Model Y', 'Chevrolet Suburban'];
+            result.vehicle = vehicles[i % vehicles.length];
+            result.licensePlate = `ABC${1000 + i}`;
+            result.bookings = Math.floor(Math.random() * 40) + 10;
+            result.distance = `${Math.floor(Math.random() * 5000) + 1000} mi`;
+            result.income = `$${(Math.random() * 3000 + 800).toFixed(2)}`;
+            break;
         }
         
         return result;
       });
       
-      setGeneratedResults(results);
+      // Calculate total income if applicable
+      if (filters.reportType === "driver" || filters.reportType === "fleet" || filters.reportType === "vehicle") {
+        const total = allResults.reduce((sum, item) => {
+          const income = parseFloat(item.income.replace('$', ''));
+          return sum + income;
+        }, 0);
+        setTotalIncome(total);
+      } else {
+        setTotalIncome(null);
+      }
+      
+      // Slice the results for pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalResults);
+      const paginatedResults = allResults.slice(startIndex, endIndex);
+      
+      setGeneratedResults(paginatedResults);
       setIsGenerating(false);
       toast.success("Report generated successfully");
     }, 1500);
+  };
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    handleGenerateReport();
   };
   
   // Save report
@@ -136,6 +188,12 @@ const GenerateReport = () => {
           results={generatedResults}
           columns={reportColumns}
           onSaveReport={handleSaveReport}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          totalIncome={totalIncome}
+          reportType={filters.reportType}
         />
       )}
     </div>
