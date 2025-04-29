@@ -11,8 +11,7 @@ export const initialReports: ReportData[] = [
       dateFrom: "2024-01-01",
       dateTo: "2024-03-31",
       bookingStatus: ["completed"],
-      includeDriver: true,
-      includeVehicle: true
+      reportType: "driver"
     },
     createdAt: "2024-04-05T10:30:00Z",
     updatedAt: "2024-04-08T14:15:00Z",
@@ -27,8 +26,7 @@ export const initialReports: ReportData[] = [
       dateFrom: "2024-02-01",
       dateTo: "2024-04-15",
       bookingStatus: ["completed", "cancelled"],
-      includeFleet: true,
-      includeVehicle: true
+      reportType: "fleet"
     },
     createdAt: "2024-04-16T09:20:00Z",
     updatedAt: "2024-04-16T09:20:00Z",
@@ -43,7 +41,7 @@ export const initialReports: ReportData[] = [
       dateFrom: "2023-10-01",
       dateTo: "2024-03-31",
       bookingStatus: ["completed", "no-show"],
-      includeCustomer: true
+      reportType: "customer"
     },
     createdAt: "2024-04-12T11:45:00Z",
     updatedAt: "2024-04-14T16:30:00Z",
@@ -57,7 +55,7 @@ export const initialReports: ReportData[] = [
     filters: {
       dateFrom: "2023-01-01",
       dateTo: "2023-12-31",
-      includeVehicle: true
+      reportType: "vehicle"
     },
     createdAt: "2024-01-10T08:20:00Z",
     updatedAt: "2024-04-01T10:15:00Z",
@@ -72,8 +70,7 @@ export const initialReports: ReportData[] = [
       dateFrom: "2024-01-01",
       dateTo: "2024-03-31",
       bookingStatus: ["cancelled"],
-      includeCustomer: true,
-      includeDriver: true
+      reportType: "booking"
     },
     createdAt: "2024-04-03T14:20:00Z",
     updatedAt: "2024-04-18T09:45:00Z",
