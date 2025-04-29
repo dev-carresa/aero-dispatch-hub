@@ -28,6 +28,9 @@ import GenerateReport from "./pages/GenerateReport";
 import SavedReports from "./pages/SavedReports";
 import ReportDetails from "./pages/ReportDetails";
 
+// Invoice pages
+import GenerateInvoice from "./pages/GenerateInvoice";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -46,6 +49,7 @@ const App = () => (
           <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
           <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
           <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
+          <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           
           {/* Vehicle routes */}

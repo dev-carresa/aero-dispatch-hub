@@ -23,7 +23,7 @@ const Reports = () => {
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
@@ -39,12 +39,6 @@ const Reports = () => {
               Select date ranges, booking status, and include data for drivers,
               customers, fleets, and vehicles to generate comprehensive reports.
             </p>
-            <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <li className="flex items-center">• Choose custom date ranges</li>
-              <li className="flex items-center">• Filter by booking status</li>
-              <li className="flex items-center">• Include specific data points</li>
-              <li className="flex items-center">• Export in multiple formats</li>
-            </ul>
           </CardContent>
           <CardFooter>
             <Button 
@@ -72,12 +66,6 @@ const Reports = () => {
               View, edit, export, and manage reports you've previously generated and saved.
               Quickly access reports in draft, final, or archived states.
             </p>
-            <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-              <li className="flex items-center">• Browse all saved reports</li>
-              <li className="flex items-center">• Change report status</li>
-              <li className="flex items-center">• Export in various formats</li>
-              <li className="flex items-center">• Restore from trash</li>
-            </ul>
           </CardContent>
           <CardFooter>
             <Button 
@@ -87,6 +75,34 @@ const Reports = () => {
             >
               <FileText className="h-4 w-4" />
               View Saved Reports
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Generate Invoice
+            </CardTitle>
+            <CardDescription>
+              Create invoices from booking data
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-3">
+            <p className="text-sm text-muted-foreground">
+              Generate invoices by selecting date ranges and booking statuses. 
+              Combine multiple bookings into a single invoice for clients.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full gap-2" 
+              onClick={() => navigate("/invoices/generate")}
+            >
+              <FileText className="h-4 w-4" />
+              Generate Invoice
             </Button>
           </CardFooter>
         </Card>
