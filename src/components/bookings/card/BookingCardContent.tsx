@@ -36,71 +36,80 @@ export function BookingCardContent({
   source,
 }: BookingCardContentProps) {
   return (
-    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-3">
-      {/* Left Column - Customer & Journey Details */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="font-medium">{customer}</span>
-        </div>
-        
-        <div className="flex items-start gap-2">
-          <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-          <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground">From:</span>
-            <span className="line-clamp-1">{origin}</span>
+    <CardContent className="p-4 flex flex-col md:flex-row gap-6">
+      {/* Left Section - Main Service Info */}
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+            <Car className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-base">{vehicle}</h3>
+            <p className="text-sm text-muted-foreground">Premium Transportation</p>
           </div>
         </div>
         
-        <div className="flex items-start gap-2">
-          <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-          <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground">To:</span>
-            <span className="line-clamp-1">{destination}</span>
+        <div className="grid grid-cols-1 gap-2 mt-4">
+          <div className="flex items-start gap-2">
+            <User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <span className="text-sm">{customer}</span>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span>{date} at {time}</span>
+          
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">From:</span>
+              <span className="text-sm font-medium line-clamp-1">{origin}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">To:</span>
+              <span className="text-sm font-medium line-clamp-1">{destination}</span>
+            </div>
+          </div>
         </div>
       </div>
       
-      {/* Right Column - Vehicle, Driver & Other Details */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Car className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span>{vehicle}</span>
+      {/* Right Section - Details */}
+      <div className="flex-1 space-y-3">
+        <div className="bg-slate-50 p-3 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarClock className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium">{date} at {time}</span>
+          </div>
+          
+          {driver && (
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm">Driver: {driver}</span>
+            </div>
+          )}
+          
+          {flightNumber && (
+            <div className="flex items-center gap-2">
+              <Plane className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm">Flight: {flightNumber}</span>
+            </div>
+          )}
         </div>
         
-        {driver && (
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Driver: {driver}</span>
-          </div>
-        )}
-        
-        {fleet && (
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
+        <div className="flex flex-wrap gap-2">
+          {fleet && (
+            <Badge variant="outline" className="text-xs bg-blue-50">
               Fleet: {fleet}
             </Badge>
-          </div>
-        )}
-        
-        {flightNumber && (
-          <div className="flex items-center gap-2">
-            <Plane className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Flight: {flightNumber}</span>
-          </div>
-        )}
-        
-        {source && (
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Source: {source}</span>
-          </div>
-        )}
+          )}
+          
+          {source && (
+            <Badge variant="outline" className="text-xs">
+              <FileText className="h-3 w-3 mr-1" />
+              {source}
+            </Badge>
+          )}
+        </div>
       </div>
     </CardContent>
   );

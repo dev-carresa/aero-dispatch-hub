@@ -87,7 +87,7 @@ export function BookingCard({ booking }: BookingCardProps) {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md border-slate-200 bg-gradient-to-br from-white to-slate-50/70">
         {/* Status indicator strip */}
         <div 
           className={`absolute top-0 left-0 w-1 h-full ${
@@ -106,6 +106,7 @@ export function BookingCard({ booking }: BookingCardProps) {
           reference={currentBooking.reference}
           status={currentBooking.status}
           serviceType={currentBooking.serviceType}
+          price={currentBooking.price}
           onStatusClick={() => setShowChangeStatus(true)}
           onAssignDriver={() => setShowAssignDriver(true)}
           onAssignFleet={() => setShowAssignFleet(true)}
