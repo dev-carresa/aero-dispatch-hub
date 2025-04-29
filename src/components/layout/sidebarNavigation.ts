@@ -8,7 +8,8 @@ import {
   Car,
   BarChart,
   MessageSquare,
-  MessageCircle
+  MessageCircle,
+  ThumbsUp
 } from 'lucide-react';
 
 export const navigation = [
@@ -25,6 +26,7 @@ export const navigation = [
   },
   { name: 'Complaints', href: '/complaints', icon: MessageSquare },
   { name: 'Driver Comments', href: '/driver-comments', icon: MessageCircle },
+  { name: 'Quality Reviews', href: '/quality-reviews', icon: ThumbsUp },
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

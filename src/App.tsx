@@ -41,6 +41,9 @@ import ComplaintDetails from "./pages/ComplaintDetails";
 import DriverComments from "./pages/DriverComments";
 import DriverCommentDetails from "./pages/DriverCommentDetails";
 
+// Quality Reviews pages
+import QualityReviews from "./pages/QualityReviews";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -82,6 +85,9 @@ const App = () => (
           {/* Driver Comment routes */}
           <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
           <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
+          
+          {/* Quality Reviews routes */}
+          <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />

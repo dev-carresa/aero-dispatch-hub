@@ -1,0 +1,149 @@
+
+import { QualityReview } from "../types/qualityReview";
+
+export const sampleReviews: QualityReview[] = [
+  {
+    id: "rev-001",
+    bookingReference: "B10001",
+    fleetId: 1,
+    fleetName: "Premium Fleet Services",
+    driverId: 101,
+    driverName: "John Smith",
+    reviewDate: "2025-04-25",
+    score: "positive",
+    message: "Driver was punctual and very professional. The car was clean and comfortable. Excellent service overall!",
+    customerName: "Alice Johnson"
+  },
+  {
+    id: "rev-002",
+    bookingReference: "B10015",
+    fleetId: 2,
+    fleetName: "City Cab Co.",
+    driverId: 102,
+    driverName: "Emily Davis",
+    reviewDate: "2025-04-24",
+    score: "positive",
+    message: "Great service, arrived early and was very helpful with my luggage. Would use again.",
+    customerName: "Robert Williams"
+  },
+  {
+    id: "rev-003",
+    bookingReference: "B10022",
+    fleetId: 3,
+    fleetName: "Express Transport",
+    driverId: 103,
+    driverName: "Michael Brown",
+    reviewDate: "2025-04-24",
+    score: "negative",
+    message: "Driver was late by 15 minutes. No apology offered. Car was not very clean.",
+    customerName: "Sarah Miller"
+  },
+  {
+    id: "rev-004",
+    bookingReference: "B10030",
+    fleetId: 1,
+    fleetName: "Premium Fleet Services",
+    driverId: 104,
+    driverName: "David Wilson",
+    reviewDate: "2025-04-23",
+    score: "positive",
+    message: "Excellent experience. Driver was courteous and took the fastest route.",
+    customerName: "Thomas Anderson"
+  },
+  {
+    id: "rev-005",
+    bookingReference: "B10035",
+    fleetId: 2,
+    fleetName: "City Cab Co.",
+    driverId: 105,
+    driverName: "James Taylor",
+    reviewDate: "2025-04-22",
+    score: "negative",
+    message: "Driver was talking on phone during most of the journey. Felt unsafe.",
+    customerName: "Jennifer White"
+  },
+  {
+    id: "rev-006",
+    bookingReference: "B10042",
+    fleetId: 3,
+    fleetName: "Express Transport",
+    driverId: 106,
+    driverName: "Sophia Martinez",
+    reviewDate: "2025-04-21",
+    score: "positive",
+    message: "Driver knew the area well and suggested a better route. Very satisfied.",
+    customerName: "William Harris"
+  },
+  {
+    id: "rev-007",
+    bookingReference: "B10050",
+    fleetId: 1,
+    fleetName: "Premium Fleet Services",
+    driverId: 107,
+    driverName: "Emma Garcia",
+    reviewDate: "2025-04-20",
+    score: "positive",
+    message: "Very comfortable ride. Driver was professional and friendly.",
+    customerName: "Daniel Lee"
+  },
+  {
+    id: "rev-008",
+    bookingReference: "B10056",
+    fleetId: 2,
+    fleetName: "City Cab Co.",
+    driverId: 108,
+    driverName: "Olivia Rodriguez",
+    reviewDate: "2025-04-19",
+    score: "negative",
+    message: "Driver seemed lost and took wrong turns multiple times.",
+    customerName: "Elizabeth Clark"
+  },
+  {
+    id: "rev-009",
+    bookingReference: "B10063",
+    fleetId: 3,
+    fleetName: "Express Transport",
+    driverId: 109,
+    driverName: "Noah Lewis",
+    reviewDate: "2025-04-18",
+    score: "positive",
+    message: "Very smooth ride. Driver helped with luggage and was very polite.",
+    customerName: "Richard Walker"
+  },
+  {
+    id: "rev-010",
+    bookingReference: "B10070",
+    fleetId: 1,
+    fleetName: "Premium Fleet Services",
+    driverId: 110,
+    driverName: "Isabella Hall",
+    reviewDate: "2025-04-17",
+    score: "positive",
+    message: "Outstanding service. Car was luxurious and the driver was exceptional.",
+    customerName: "Patricia Young"
+  },
+  {
+    id: "rev-011",
+    bookingReference: "B10078",
+    fleetId: 2,
+    fleetName: "City Cab Co.",
+    driverId: 111,
+    driverName: "Mason Clark",
+    reviewDate: "2025-04-16",
+    score: "negative",
+    message: "Driver was rude when I asked to change the destination slightly.",
+    customerName: "Joseph King"
+  },
+  {
+    id: "rev-012",
+    bookingReference: "B10085",
+    fleetId: 3,
+    fleetName: "Express Transport",
+    driverId: 112,
+    driverName: "Charlotte Hill",
+    reviewDate: "2025-04-15",
+    score: "positive",
+    message: "Arrived exactly on time. Vehicle was clean and driver was professional.",
+    customerName: "Nancy Allen"
+  }
+];
