@@ -1,10 +1,36 @@
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-const AlertDialog = AlertDialogPrimitive.Root
+// Create a custom Root component to handle cleanup
+const AlertDialog = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>
+>(({ children, ...props }, ref) => {
+  // Handle cleanup when alert dialog is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Ensure pointer-events is restored when alert dialog closes
+      document.body.style.pointerEvents = '';
+    }
+    
+    // Forward the open change to the original handler if provided
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
+  };
+
+  return (
+    <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+      {children}
+    </AlertDialogPrimitive.Root>
+  );
+});
+
+AlertDialog.displayName = "AlertDialog";
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 

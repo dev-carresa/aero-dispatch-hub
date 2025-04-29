@@ -1,3 +1,4 @@
+
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
@@ -5,7 +6,32 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Sheet = SheetPrimitive.Root
+// Create a custom Root component to handle cleanup
+const Sheet = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Root>
+>(({ children, ...props }, ref) => {
+  // Handle cleanup when sheet is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Ensure pointer-events is restored when sheet closes
+      document.body.style.pointerEvents = '';
+    }
+    
+    // Forward the open change to the original handler if provided
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
+  };
+
+  return (
+    <SheetPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+      {children}
+    </SheetPrimitive.Root>
+  );
+});
+
+Sheet.displayName = "Sheet";
 
 const SheetTrigger = SheetPrimitive.Trigger
 
@@ -128,4 +154,3 @@ export {
   Sheet, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
-

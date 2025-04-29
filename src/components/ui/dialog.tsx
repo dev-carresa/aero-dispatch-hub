@@ -1,10 +1,36 @@
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const Dialog = DialogPrimitive.Root
+// Create a custom Root component to handle cleanup
+const Dialog = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
+>(({ children, ...props }, ref) => {
+  // Handle cleanup when dialog is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Ensure pointer-events is restored when dialog closes
+      document.body.style.pointerEvents = '';
+    }
+    
+    // Forward the open change to the original handler if provided
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
+  };
+
+  return (
+    <DialogPrimitive.Root {...props} onOpenChange={handleOpenChange} ref={ref}>
+      {children}
+    </DialogPrimitive.Root>
+  );
+});
+
+Dialog.displayName = "Dialog";
 
 const DialogTrigger = DialogPrimitive.Trigger
 

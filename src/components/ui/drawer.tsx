@@ -1,17 +1,36 @@
+
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
 
-const Drawer = ({
-  shouldScaleBackground = true,
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root
-    shouldScaleBackground={shouldScaleBackground}
-    {...props}
-  />
-)
+// Create a custom Root component to handle cleanup
+const Drawer = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Root>
+>(({ shouldScaleBackground = true, ...props }, ref) => {
+  // Handle cleanup when drawer is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Ensure pointer-events is restored when drawer closes
+      document.body.style.pointerEvents = '';
+    }
+    
+    // Forward the open change to the original handler if provided
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
+  };
+
+  return (
+    <DrawerPrimitive.Root
+      shouldScaleBackground={shouldScaleBackground}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  );
+});
+
 Drawer.displayName = "Drawer"
 
 const DrawerTrigger = DrawerPrimitive.Trigger
