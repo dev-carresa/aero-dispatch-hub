@@ -307,7 +307,7 @@ export function VehicleForm({ vehicle, isEditMode = false }: VehicleFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {fleets.map(fleet => (
                       <SelectItem key={fleet.id} value={fleet.id}>{fleet.name}</SelectItem>
                     ))}
@@ -335,7 +335,7 @@ export function VehicleForm({ vehicle, isEditMode = false }: VehicleFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {drivers.map(driver => (
                       <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>
                     ))}
