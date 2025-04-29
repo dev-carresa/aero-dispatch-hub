@@ -3,19 +3,19 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FileImage, Upload } from "lucide-react"
+import { FileImage } from "lucide-react"
 
 interface FileInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
-  preview?: boolean
+  showPreview?: boolean
   className?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   previewUrl?: string
 }
 
 const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
-  ({ className, label, preview = true, previewUrl, onChange, ...props }, ref) => {
-    const [preview, setPreview] = React.useState<string | null>(previewUrl || null)
+  ({ className, label, showPreview = true, previewUrl, onChange, ...props }, ref) => {
+    const [previewImage, setPreviewImage] = React.useState<string | null>(previewUrl || null)
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -23,7 +23,7 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
         const reader = new FileReader()
         reader.onload = (event) => {
           if (event.target?.result) {
-            setPreview(event.target.result as string)
+            setPreviewImage(event.target.result as string)
           }
         }
         reader.readAsDataURL(file)
@@ -38,11 +38,11 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       <div className={cn("space-y-2", className)}>
         {label && <Label>{label}</Label>}
         <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-          {preview && (
+          {showPreview && (
             <div className="relative aspect-square w-full max-w-[150px] overflow-hidden rounded-md border border-dashed border-input bg-background flex items-center justify-center">
-              {preview ? (
+              {previewImage ? (
                 <img 
-                  src={preview} 
+                  src={previewImage} 
                   alt="Preview" 
                   className="h-full w-full object-cover" 
                 />
