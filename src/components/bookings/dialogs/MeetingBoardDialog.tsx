@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Download, Edit, Eye, Printer, User } from "lucide-react";
+import { Download, Edit, Eye, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MeetingBoardDialogProps {
@@ -141,7 +141,7 @@ export function MeetingBoardDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Sample Preview Dialog */}
+      {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
           <div className="bg-white p-10 flex flex-col items-center">
