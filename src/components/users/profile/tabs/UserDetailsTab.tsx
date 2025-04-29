@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { User } from "@/types/user";
+import { User, UserRole } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ interface UserDetailsTabProps {
 const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  role: z.enum(["Admin", "Driver", "Fleet", "Dispatcher"]),
+  role: z.enum(["Admin", "Driver", "Fleet", "Dispatcher", "Customer"] as const),
   status: z.enum(["active", "inactive"]),
 });
 
@@ -107,6 +106,7 @@ export const UserDetailsTab = ({ user, onUserUpdate }: UserDetailsTabProps) => {
                         <SelectItem value="Driver">Driver</SelectItem>
                         <SelectItem value="Fleet">Fleet</SelectItem>
                         <SelectItem value="Dispatcher">Dispatcher</SelectItem>
+                        <SelectItem value="Customer">Customer</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
