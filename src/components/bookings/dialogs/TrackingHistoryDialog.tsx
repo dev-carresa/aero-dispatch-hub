@@ -96,27 +96,30 @@ export function TrackingHistoryDialog({ bookingId, open, onOpenChange }: Trackin
                 <TabsTrigger value="timeline" className="text-xs px-2">Timeline</TabsTrigger>
                 <TabsTrigger value="map" className="text-xs px-2">Map</TabsTrigger>
               </TabsList>
+              
+              {/* Move TabsContent components inside the Tabs component */}
+              <TabsContent value="split" className="flex-1 mt-0 flex flex-col md:flex-row gap-4 overflow-hidden">
+                <div className="flex-1 overflow-y-auto md:max-w-[40%]">
+                  <TimelineView trackingHistory={trackingHistory} className="h-full" />
+                </div>
+                <div className="flex-1">
+                  <MapDisplay trackingHistory={trackingHistory} className="h-full" />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="timeline" className="flex-1 mt-0 overflow-y-auto">
+                <TimelineView trackingHistory={trackingHistory} className="h-full" />
+              </TabsContent>
+              
+              <TabsContent value="map" className="flex-1 mt-0">
+                <MapDisplay trackingHistory={trackingHistory} className="h-full" />
+              </TabsContent>
             </Tabs>
           </div>
         </DialogHeader>
         
-        <div className={`flex flex-1 gap-4 overflow-hidden ${getLayoutClasses()}`}>
-          <TabsContent value="split" className="flex-1 mt-0 flex flex-col md:flex-row gap-4 overflow-hidden">
-            <div className="flex-1 overflow-y-auto md:max-w-[40%]">
-              <TimelineView trackingHistory={trackingHistory} className="h-full" />
-            </div>
-            <div className="flex-1">
-              <MapDisplay trackingHistory={trackingHistory} className="h-full" />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="timeline" className="flex-1 mt-0 overflow-y-auto">
-            <TimelineView trackingHistory={trackingHistory} className="h-full" />
-          </TabsContent>
-          
-          <TabsContent value="map" className="flex-1 mt-0">
-            <MapDisplay trackingHistory={trackingHistory} className="h-full" />
-          </TabsContent>
+        <div className="flex-1 overflow-hidden">
+          {/* Content will be shown by the Tabs component above */}
         </div>
         
         <div className="flex justify-between items-center pt-4 border-t">
