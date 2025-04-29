@@ -1,166 +1,164 @@
 
-import {
-  BarChart3,
-  Building2,
-  Calendar,
-  FileText,
-  LayoutDashboard,
-  Settings,
-  Users,
-  ChevronRight,
-  CreditCard,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+// We need to update the Sidebar component to include our new routes
+
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  CalendarCheck, 
+  Users, 
+  FileText, 
+  Settings, 
+  Menu,
+  X,
+  TrendingUp,
+  Car,
+  BarChart
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Bookings', href: '/bookings', icon: CalendarCheck },
+    { name: 'Users', href: '/users', icon: Users },
+    { name: 'Vehicles', href: '/vehicles', icon: Car },
+    { name: 'Reports', href: '/reports', icon: BarChart, 
+      children: [
+        { name: 'Overview', href: '/reports' },
+        { name: 'Generate Report', href: '/reports/generate' },
+        { name: 'Saved Reports', href: '/reports/saved' },
+      ]
+    },
+    { name: 'Invoices', href: '/invoices', icon: FileText },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  const toggleSidebar = () => {
+    setExpanded(!expanded);
+  };
+
+  const toggleMobileSidebar = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   return (
-    <div className={`flex flex-col ${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out border-r bg-sidebar border-r-border`}>
-      <div className="h-16 border-b border-b-border flex items-center justify-between px-4">
-        {!collapsed && (
-          <div className="flex items-center">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="ml-2 text-lg font-bold">
-              Transport Co.
-            </span>
-          </div>
-        )}
-        {collapsed && <Building2 className="h-6 w-6 mx-auto text-primary" />}
-        <button 
-          onClick={() => setCollapsed(!collapsed)} 
-          className="p-1 rounded-md hover:bg-sidebar-accent"
+    <>
+      {/* Mobile menu button */}
+      <div className="absolute top-3 left-4 z-40 md:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleMobileSidebar}
+          className="h-9 w-9"
         >
-          <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`} />
-        </button>
+          <Menu className="h-5 w-5" />
+        </Button>
       </div>
-      
-      <div className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          <li>
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Dashboard"
-            >
-              <LayoutDashboard className="h-5 w-5" />
-              {!collapsed && <span>Dashboard</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/bookings"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Bookings"
-            >
-              <Calendar className="h-5 w-5" />
-              {!collapsed && <span>Bookings</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/invoices"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Invoices"
-            >
-              <FileText className="h-5 w-5" />
-              {!collapsed && <span>Invoices</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/users"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Users"
-            >
-              <Users className="h-5 w-5" />
-              {!collapsed && <span>Users</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/reports"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Reports"
-            >
-              <BarChart3 className="h-5 w-5" />
-              {!collapsed && <span>Reports</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/payments"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Payments"
-            >
-              <CreditCard className="h-5 w-5" />
-              {!collapsed && <span>Payments</span>}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} py-2 px-3 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground"
-                }`
-              }
-              title="Settings"
-            >
-              <Settings className="h-5 w-5" />
-              {!collapsed && <span>Settings</span>}
-            </NavLink>
-          </li>
-        </ul>
-      </div>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        {!collapsed && (
-          <div className="flex flex-col space-y-1">
-            <p className="text-xs font-medium text-sidebar-foreground/70">Transport Co. © 2025</p>
-            <p className="text-xs text-sidebar-foreground/50">v1.0.0</p>
-          </div>
+
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 md:hidden" 
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform duration-300 md:relative md:z-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          !expanded && 'md:w-16'
         )}
+      >
+        <div className="flex h-16 items-center justify-between border-b px-4">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-md bg-primary text-white flex items-center justify-center font-bold">
+              T
+            </div>
+            {expanded && <span className="font-semibold">Transport App</span>}
+          </Link>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileSidebar}
+              className="md:hidden"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="hidden md:flex"
+            >
+              {expanded ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+              )}
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="space-y-1 px-2">
+            {navigation.map((item) => {
+              const isActive = 
+                location.pathname === item.href || 
+                (item.href !== '/' && location.pathname.startsWith(item.href));
+              
+              return (
+                <div key={item.name}>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      'group flex items-center rounded-md px-3 py-2 text-sm font-medium',
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        'mr-3 h-5 w-5 flex-shrink-0',
+                        isActive ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    />
+                    {(expanded || mobileOpen) && <span>{item.name}</span>}
+                  </Link>
+                  
+                  {/* Submenu items for Reports */}
+                  {item.children && (expanded || mobileOpen) && isActive && (
+                    <div className="mt-1 ml-6 space-y-1">
+                      {item.children.map((subItem) => (
+                        <Link
+                          key={subItem.name}
+                          to={subItem.href}
+                          className={cn(
+                            'block rounded-md py-2 pl-6 pr-3 text-sm',
+                            location.pathname === subItem.href
+                              ? 'font-medium text-primary'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          {subItem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

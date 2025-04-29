@@ -17,6 +17,12 @@ import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// New pages
+import Vehicles from "./pages/Vehicles";
+import Reports from "./pages/Reports";
+import GenerateReport from "./pages/GenerateReport";
+import SavedReports from "./pages/SavedReports";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -36,7 +42,16 @@ const App = () => (
           <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
           <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Vehicle routes */}
+          <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
+          
+          {/* Report routes */}
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
+          <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
+          <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
+          
+          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
