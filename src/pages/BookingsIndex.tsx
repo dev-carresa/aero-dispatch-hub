@@ -1,9 +1,11 @@
+
 import { BookingFilters } from "@/components/bookings/BookingFilters";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { BookingPagination } from "@/components/bookings/BookingPagination";
 import { Button } from "@/components/ui/button";
 import { 
-  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
   Download, 
   FileText,
   Filter, 
@@ -14,12 +16,16 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingStatus } from "@/components/bookings/types/booking";
+
+type SortOption = "date-asc" | "date-desc" | "price-asc" | "price-desc" | "status";
 
 const bookingsData = [
   {
@@ -127,7 +133,9 @@ const bookingsData = [
 const BookingsIndex = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
+  const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   
+  // Filter bookings based on active tab
   const filteredBookings = bookingsData.filter(booking => {
     if (activeTab === "all") return true;
     if (activeTab === "next24h") {
@@ -141,12 +149,56 @@ const BookingsIndex = () => {
     }
     return true;
   });
+  
+  // Sort bookings based on selected sort option
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    switch (sortOption) {
+      case "date-asc":
+        return a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
+      case "date-desc":
+        return b.date.localeCompare(a.date) || b.time.localeCompare(a.time);
+      case "price-asc":
+        return parseFloat(a.price.replace("$", "")) - parseFloat(b.price.replace("$", ""));
+      case "price-desc":
+        return parseFloat(b.price.replace("$", "")) - parseFloat(a.price.replace("$", ""));
+      case "status":
+        return a.status.localeCompare(b.status);
+      default:
+        return 0;
+    }
+  });
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
   
   const totalPages = 3;
+  
+  // Helper function to get sort icon and label
+  const getSortDisplay = () => {
+    if (sortOption.includes('asc')) {
+      return (
+        <>
+          <ArrowUp className="h-4 w-4" />
+          Sort: {sortOption.split('-')[0].charAt(0).toUpperCase() + sortOption.split('-')[0].slice(1)} (Asc)
+        </>
+      );
+    } else if (sortOption.includes('desc')) {
+      return (
+        <>
+          <ArrowDown className="h-4 w-4" />
+          Sort: {sortOption.split('-')[0].charAt(0).toUpperCase() + sortOption.split('-')[0].slice(1)} (Desc)
+        </>
+      );
+    } else {
+      return (
+        <>
+          <ArrowDown className="h-4 w-4" />
+          Sort: Status
+        </>
+      );
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -219,21 +271,33 @@ const BookingsIndex = () => {
       
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing <strong>{filteredBookings.length}</strong> bookings
+          Showing <strong>{sortedBookings.length}</strong> bookings
         </div>
-        <Button variant="ghost" size="sm" className="flex items-center gap-1">
-          <ArrowUpDown className="h-4 w-4" />
-          Sort
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              {getSortDisplay()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+              <DropdownMenuRadioItem value="date-desc">Date (Newest first)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="date-asc">Date (Oldest first)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="price-desc">Price (Highest first)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="price-asc">Price (Lowest first)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="status">Status</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="grid grid-cols-1 gap-4">
-        {filteredBookings.map((booking) => (
+        {sortedBookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} />
         ))}
       </div>
       
-      {filteredBookings.length === 0 && (
+      {sortedBookings.length === 0 && (
         <div className="text-center py-12">
           <h3 className="text-lg font-medium">No bookings found</h3>
           <p className="text-muted-foreground">Try adjusting your filters or create a new booking.</p>

@@ -71,58 +71,49 @@ const trackingHistory: TrackingHistoryEntry[] = [
 export function TrackingHistoryDialog({ bookingId, open, onOpenChange }: TrackingHistoryDialogProps) {
   const [viewMode, setViewMode] = useState<"split" | "timeline" | "map">("split");
 
-  // Function to determine layout based on viewMode
-  const getLayoutClasses = () => {
-    switch (viewMode) {
-      case "timeline":
-        return "flex-col";
-      case "map":
-        return "flex-col";
-      case "split":
-      default:
-        return "flex-col md:flex-row";
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle>Tracking History - Booking #{bookingId}</DialogTitle>
-          <div className="flex items-center space-x-2">
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)} className="w-auto">
-              <TabsList className="grid grid-cols-3 h-8">
-                <TabsTrigger value="split" className="text-xs px-2">Split View</TabsTrigger>
-                <TabsTrigger value="timeline" className="text-xs px-2">Timeline</TabsTrigger>
-                <TabsTrigger value="map" className="text-xs px-2">Map</TabsTrigger>
-              </TabsList>
-              
-              {/* Move TabsContent components inside the Tabs component */}
-              <TabsContent value="split" className="flex-1 mt-0 flex flex-col md:flex-row gap-4 overflow-hidden">
-                <div className="flex-1 overflow-y-auto md:max-w-[40%]">
-                  <TimelineView trackingHistory={trackingHistory} className="h-full" />
-                </div>
-                <div className="flex-1">
-                  <MapDisplay trackingHistory={trackingHistory} className="h-full" />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="timeline" className="flex-1 mt-0 overflow-y-auto">
-                <TimelineView trackingHistory={trackingHistory} className="h-full" />
-              </TabsContent>
-              
-              <TabsContent value="map" className="flex-1 mt-0">
-                <MapDisplay trackingHistory={trackingHistory} className="h-full" />
-              </TabsContent>
-            </Tabs>
-          </div>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden">
-          {/* Content will be shown by the Tabs component above */}
+        <div className="mb-4">
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)}>
+            <TabsList className="grid grid-cols-3 h-8">
+              <TabsTrigger value="split" className="text-xs px-2">Split View</TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs px-2">Timeline</TabsTrigger>
+              <TabsTrigger value="map" className="text-xs px-2">Map</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex-1 overflow-hidden">
+          {viewMode === "split" && (
+            <div className="flex flex-col md:flex-row gap-4 h-full">
+              <div className="flex-1 overflow-y-auto max-h-[400px] md:max-w-[40%]">
+                <TimelineView trackingHistory={trackingHistory} />
+              </div>
+              <div className="flex-1">
+                <MapDisplay trackingHistory={trackingHistory} />
+              </div>
+            </div>
+          )}
+          
+          {viewMode === "timeline" && (
+            <div className="overflow-y-auto max-h-[400px]">
+              <TimelineView trackingHistory={trackingHistory} />
+            </div>
+          )}
+          
+          {viewMode === "map" && (
+            <div className="h-[400px]">
+              <MapDisplay trackingHistory={trackingHistory} />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-between items-center pt-4 border-t mt-4">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Close
           </Button>
