@@ -32,9 +32,9 @@ export const QualityReviewsFilters = ({
   drivers,
 }: QualityReviewsFiltersProps) => {
   const [bookingRef, setBookingRef] = useState("");
-  const [fleetId, setFleetId] = useState("");
-  const [driverId, setDriverId] = useState("");
-  const [scoreType, setScoreType] = useState("");
+  const [fleetId, setFleetId] = useState("all");
+  const [driverId, setDriverId] = useState("all");
+  const [scoreType, setScoreType] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const handleDateSelect = (range: DateRange | undefined) => {
@@ -45,18 +45,18 @@ export const QualityReviewsFilters = ({
   const applyFilters = () => {
     onFilterChange({
       bookingRef,
-      fleetId: fleetId ? parseInt(fleetId) : undefined,
-      driverId: driverId ? parseInt(driverId) : undefined,
-      scoreType,
+      fleetId: fleetId !== "all" ? parseInt(fleetId) : undefined,
+      driverId: driverId !== "all" ? parseInt(driverId) : undefined,
+      scoreType: scoreType !== "all" ? scoreType : undefined,
       dateRange,
     });
   };
 
   const resetFilters = () => {
     setBookingRef("");
-    setFleetId("");
-    setDriverId("");
-    setScoreType("");
+    setFleetId("all");
+    setDriverId("all");
+    setScoreType("all");
     setDateRange(undefined);
     onFilterChange({});
   };
@@ -93,7 +93,7 @@ export const QualityReviewsFilters = ({
               <SelectValue placeholder="All Fleets" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Fleets</SelectItem>
+              <SelectItem value="all">All Fleets</SelectItem>
               {fleets.map((fleet) => (
                 <SelectItem key={fleet.id} value={fleet.id.toString()}>
                   {fleet.name}
@@ -116,7 +116,7 @@ export const QualityReviewsFilters = ({
               <SelectValue placeholder="All Drivers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Drivers</SelectItem>
+              <SelectItem value="all">All Drivers</SelectItem>
               {drivers.map((driver) => (
                 <SelectItem key={driver.id} value={driver.id.toString()}>
                   {driver.name}
@@ -139,7 +139,7 @@ export const QualityReviewsFilters = ({
               <SelectValue placeholder="All Reviews" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Reviews</SelectItem>
+              <SelectItem value="all">All Reviews</SelectItem>
               <SelectItem value="positive">Positive</SelectItem>
               <SelectItem value="negative">Negative</SelectItem>
             </SelectContent>
