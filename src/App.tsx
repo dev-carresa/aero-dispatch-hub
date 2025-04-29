@@ -17,8 +17,12 @@ import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
-// New pages
+// Vehicle pages
 import Vehicles from "./pages/Vehicles";
+import NewVehicle from "./pages/NewVehicle";
+import EditVehicle from "./pages/EditVehicle";
+
+// Report pages
 import Reports from "./pages/Reports";
 import GenerateReport from "./pages/GenerateReport";
 import SavedReports from "./pages/SavedReports";
@@ -45,6 +49,8 @@ const App = () => (
           
           {/* Vehicle routes */}
           <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
+          <Route path="/vehicles/new" element={<Layout><NewVehicle /></Layout>} />
+          <Route path="/vehicles/:id/edit" element={<Layout><EditVehicle /></Layout>} />
           
           {/* Report routes */}
           <Route path="/reports" element={<Layout><Reports /></Layout>} />

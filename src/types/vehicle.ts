@@ -8,6 +8,7 @@ export interface Vehicle {
   model: string;
   year: number;
   licensePlate: string;
+  registrationNumber?: string;
   vin: string;
   color: string;
   type: string;
@@ -21,6 +22,8 @@ export interface Vehicle {
   assignedDriverId?: number;
   fleetId?: number;
   imageUrl?: string;
+  insuranceExpiry?: string;
+  technicalControlExpiry?: string;
   createdAt: string;
   updatedAt: string;
 }

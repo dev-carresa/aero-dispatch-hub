@@ -8,6 +8,7 @@ import { VehiclesHeader } from "@/components/vehicles/VehiclesHeader";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
 import { VehiclesTable } from "@/components/vehicles/VehiclesTable";
 import { DeleteVehicleDialog } from "@/components/vehicles/DeleteVehicleDialog";
+import { ChangeVehicleStatusDialog } from "@/components/vehicles/ChangeVehicleStatusDialog";
 
 const Vehicles = () => {
   const navigate = useNavigate();
@@ -15,8 +16,12 @@ const Vehicles = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [fleetFilter, setFleetFilter] = useState("all");
+  const [driverFilter, setDriverFilter] = useState("all");
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [vehicleToUpdateStatus, setVehicleToUpdateStatus] = useState<Vehicle | null>(null);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   // Filter vehicles based on search term and filters
   const filteredVehicles = vehicles.filter((vehicle) => {
@@ -24,12 +29,17 @@ const Vehicles = () => {
       searchTerm === "" ||
       vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase());
+      vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (vehicle.registrationNumber && vehicle.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
     const matchesType = typeFilter === "all" || vehicle.type === typeFilter;
+    
+    // Fleet and driver filters would need actual fleet/driver data in a real app
+    const matchesFleet = fleetFilter === "all" || (vehicle.fleetId && vehicle.fleetId.toString() === fleetFilter);
+    const matchesDriver = driverFilter === "all" || (vehicle.assignedDriverId && vehicle.assignedDriverId.toString() === driverFilter);
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesFleet && matchesDriver;
   });
 
   // Calculate totals for header
@@ -52,6 +62,16 @@ const Vehicles = () => {
     setTypeFilter(value);
   };
 
+  // Handle fleet filter change
+  const handleFleetFilterChange = (value: string) => {
+    setFleetFilter(value);
+  };
+
+  // Handle driver filter change
+  const handleDriverFilterChange = (value: string) => {
+    setDriverFilter(value);
+  };
+
   // Handle delete vehicle
   const handleDeleteVehicle = (vehicle: Vehicle) => {
     setVehicleToDelete(vehicle);
@@ -68,6 +88,17 @@ const Vehicles = () => {
     }
   };
 
+  // Handle edit vehicle
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    navigate(`/vehicles/${vehicle.id}/edit`);
+  };
+
+  // Handle status change click
+  const handleStatusClick = (vehicle: Vehicle) => {
+    setVehicleToUpdateStatus(vehicle);
+    setShowStatusDialog(true);
+  };
+
   // Handle status change
   const handleStatusChange = (vehicle: Vehicle, newStatus: Vehicle["status"]) => {
     setVehicles(
@@ -76,6 +107,8 @@ const Vehicles = () => {
       )
     );
     toast.success(`Vehicle ${vehicle.make} ${vehicle.model} status updated to ${newStatus}`);
+    setShowStatusDialog(false);
+    setVehicleToUpdateStatus(null);
   };
 
   return (
@@ -90,15 +123,20 @@ const Vehicles = () => {
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         typeFilter={typeFilter}
+        fleetFilter={fleetFilter}
+        driverFilter={driverFilter}
         handleSearchChange={handleSearchChange}
         handleStatusFilterChange={handleStatusFilterChange}
         handleTypeFilterChange={handleTypeFilterChange}
+        handleFleetFilterChange={handleFleetFilterChange}
+        handleDriverFilterChange={handleDriverFilterChange}
       />
 
       <VehiclesTable
         vehicles={filteredVehicles}
         onDeleteVehicle={handleDeleteVehicle}
-        onStatusChange={handleStatusChange}
+        onEditVehicle={handleEditVehicle}
+        onStatusClick={handleStatusClick}
       />
 
       <DeleteVehicleDialog
@@ -106,6 +144,13 @@ const Vehicles = () => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirmDelete={handleConfirmDelete}
+      />
+
+      <ChangeVehicleStatusDialog
+        vehicle={vehicleToUpdateStatus}
+        open={showStatusDialog}
+        onOpenChange={setShowStatusDialog}
+        onStatusChange={handleStatusChange}
       />
     </div>
   );
