@@ -4,7 +4,7 @@ import { Controller, ControllerProps, FieldPath, FieldValues } from "react-hook-
 import PhoneInputLib from 'react-phone-number-input'
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import 'react-phone-number-input/style.css'
+import './phone-input.css'
 
 interface PhoneInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -21,7 +21,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         <div className={cn("phone-input-container", error && "phone-input-error")}>
           <PhoneInputLib
             ref={ref as any}
-            defaultCountry={defaultCountry}
+            defaultCountry={defaultCountry as any}
             international
             countryCallingCodeEditable={false}
             className={cn(

@@ -20,7 +20,6 @@ import { Switch } from "@/components/ui/switch";
 import { FileInput } from "@/components/ui/file-input";
 import { FormPhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import "./phone-input.css";
 
 // Define form schema with conditional fields
 const baseSchema = {
