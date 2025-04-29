@@ -1,7 +1,8 @@
 
 import * as React from "react"
 import { Controller, ControllerProps, FieldPath, FieldValues } from "react-hook-form"
-import PhoneInputLib, { CountryCode } from 'react-phone-number-input'
+import PhoneInputLib from 'react-phone-number-input'
+import type { CountryCode, E164Number } from 'react-phone-number-input'
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import './phone-input.css'
@@ -72,7 +73,7 @@ const FormPhoneInput = <
         <PhoneInput
           label={label}
           defaultCountry={defaultCountry}
-          value={field.value}
+          value={field.value as E164Number}
           onChange={field.onChange}
           error={!!fieldState.error}
           className={className}
