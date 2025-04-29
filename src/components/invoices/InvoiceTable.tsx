@@ -3,9 +3,28 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Download, Filter, Search, SlidersHorizontal } from "lucide-react";
+import { 
+  Download, 
+  Filter, 
+  Search, 
+  SlidersHorizontal, 
+  Eye, 
+  Trash2 
+} from "lucide-react";
 import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
 import { InvoiceStatusDialog } from "./InvoiceStatusDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Invoice {
   id: string;
@@ -20,8 +39,11 @@ interface InvoiceTableProps {
 }
 
 export const InvoiceTable = ({ invoices }: InvoiceTableProps) => {
+  const navigate = useNavigate();
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   
   const totalAmount = invoices.reduce((sum, invoice) => sum + invoice.amount, 0).toFixed(2);
   
@@ -33,6 +55,27 @@ export const InvoiceTable = ({ invoices }: InvoiceTableProps) => {
   const handleStatusChange = (id: string, newStatus: string) => {
     // In a real app, this would update the invoice status in your data source
     console.log(`Updated invoice ${id} status to ${newStatus}`);
+  };
+
+  const handleViewInvoice = (invoice: Invoice) => {
+    // In a real app, this would navigate to the invoice details page
+    toast.info(`Viewing invoice ${invoice.id}`);
+    // Simulate navigation to invoice details
+    navigate(`/invoices/${invoice.id}`);
+  };
+
+  const handleDeleteClick = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (invoiceToDelete) {
+      // In a real app, this would delete the invoice from your data source
+      toast.success(`Invoice ${invoiceToDelete.id} deleted successfully`);
+      setDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
+    }
   };
 
   return (
@@ -93,8 +136,23 @@ export const InvoiceTable = ({ invoices }: InvoiceTableProps) => {
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Search className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleViewInvoice(invoice)}
+                          title="View Invoice"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          onClick={() => handleDeleteClick(invoice)}
+                          title="Delete Invoice"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>
@@ -128,6 +186,27 @@ export const InvoiceTable = ({ invoices }: InvoiceTableProps) => {
           onStatusChange={handleStatusChange}
         />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete invoice 
+              {invoiceToDelete ? ` ${invoiceToDelete.id}` : ""} and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
