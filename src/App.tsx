@@ -14,6 +14,7 @@ import Users from "./pages/Users";
 import UserProfile from "./pages/UserProfile";
 import NewUser from "./pages/NewUser";
 import Invoices from "./pages/Invoices";
+import InvoiceDetails from "./pages/InvoiceDetails";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
           <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
           <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
+          <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           
           {/* Vehicle routes */}
