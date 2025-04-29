@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, Edit, UserPlus } from "lucide-react";
+import { User as UserIcon, Edit, UserPlus, Phone, Car } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ interface UsersTableProps {
   handleViewProfile: (user: User) => void;
   handleEditUser: (user: User) => void;
   setUserToDeactivate: (user: User) => void;
+  currentFilter?: string;
 }
 
 export const UsersTable = ({
@@ -34,15 +35,35 @@ export const UsersTable = ({
   handleViewProfile,
   handleEditUser,
   setUserToDeactivate,
+  currentFilter = "all",
 }: UsersTableProps) => {
+  const isDriverView = currentFilter === "Driver";
+
+  // Function to determine badge color based on driver availability
+  const getDriverAvailabilityColor = (availability?: string) => {
+    switch (availability) {
+      case 'available':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'busy':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'on_break':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'offline':
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-950 rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
+            {isDriverView && <TableHead>Vehicle</TableHead>}
+            <TableHead>{isDriverView ? "Position" : "Role"}</TableHead>
+            <TableHead>{isDriverView ? "Availability" : "Status"}</TableHead>
+            {isDriverView && <TableHead>Phone</TableHead>}
             <TableHead>Last Active</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -50,10 +71,10 @@ export const UsersTable = ({
         <TableBody>
           {filteredUsers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
+              <TableCell colSpan={isDriverView ? 6 : 5} className="text-center py-8">
                 <div className="flex flex-col items-center gap-2">
                   <UserIcon className="h-8 w-8 text-muted-foreground/50" />
-                  <p className="font-medium">No users found</p>
+                  <p className="font-medium">No {isDriverView ? "drivers" : "users"} found</p>
                   <p className="text-sm text-muted-foreground">
                     Try adjusting your search or filters
                   </p>
@@ -82,19 +103,42 @@ export const UsersTable = ({
                     </div>
                   </div>
                 </TableCell>
+                {isDriverView && (
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Car className="h-4 w-4 text-muted-foreground" />
+                      <span>{user.vehicleType || "Not Assigned"}</span>
+                    </div>
+                  </TableCell>
+                )}
                 <TableCell>{user.role}</TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
                     className={
-                      user.status === 'active'
-                        ? 'bg-green-50 text-green-700 border-green-200'
-                        : 'bg-gray-50 text-gray-700 border-gray-200'
+                      isDriverView
+                        ? getDriverAvailabilityColor(user.driverAvailability)
+                        : (user.status === 'active'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-gray-50 text-gray-700 border-gray-200')
                     }
+                    onClick={() => isDriverView && setUserToDeactivate(user)}
+                    style={{ cursor: isDriverView ? 'pointer' : 'default' }}
                   >
-                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                    {isDriverView 
+                      ? (user.driverAvailability || 'offline').replace('_', ' ').charAt(0).toUpperCase() + 
+                        (user.driverAvailability || 'offline').replace('_', ' ').slice(1) 
+                      : user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                   </Badge>
                 </TableCell>
+                {isDriverView && (
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{user.phone || "Not Available"}</span>
+                    </div>
+                  </TableCell>
+                )}
                 <TableCell>{user.lastActive}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -113,7 +157,7 @@ export const UsersTable = ({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleEditUser(user)}>
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit User
+                        Edit {isDriverView ? "Driver" : "User"}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
@@ -121,7 +165,9 @@ export const UsersTable = ({
                         onClick={() => setUserToDeactivate(user)}
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
-                        {user.status === 'active' ? 'Deactivate User' : 'Activate User'}
+                        {isDriverView 
+                          ? 'Change Availability'
+                          : (user.status === 'active' ? 'Deactivate User' : 'Activate User')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
