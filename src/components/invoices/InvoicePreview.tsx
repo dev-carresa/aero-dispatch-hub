@@ -10,6 +10,8 @@ import { Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { BookingPagination } from "@/components/bookings/BookingPagination";
+import { SuccessNotification } from "@/components/invoices/SuccessNotification";
 
 interface Booking {
   id: string;
@@ -28,15 +30,27 @@ interface InvoicePreviewProps {
   bookings: Booking[] | null;
   dateFrom?: Date;
   dateTo?: Date;
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-export const InvoicePreview = ({ bookings, dateFrom, dateTo }: InvoicePreviewProps) => {
+export const InvoicePreview = ({ 
+  bookings, 
+  dateFrom, 
+  dateTo,
+  totalItems,
+  currentPage,
+  totalPages,
+  onPageChange
+}: InvoicePreviewProps) => {
   const navigate = useNavigate();
   const [invoiceName, setInvoiceName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
-  // Calculate total amount of bookings
+  // Calculate total amount of bookings - we use the displayed bookings just for calculation
   const totalAmount = bookings ? bookings.reduce((sum, booking) => sum + booking.price, 0) : 0;
   const taxAmount = totalAmount * 0.08; // 8% tax
   const grandTotal = totalAmount + taxAmount;
@@ -51,7 +65,7 @@ export const InvoicePreview = ({ bookings, dateFrom, dateTo }: InvoicePreviewPro
     // This would be an API call to save the invoice
     toast.success(`Invoice "${invoiceName}" saved successfully`);
     setSaveDialogOpen(false);
-    setSuccessMessage(`Invoice "${invoiceName}" has been saved successfully with ${bookings?.length} bookings totaling $${grandTotal.toFixed(2)}`);
+    setSuccessMessage(`Invoice "${invoiceName}" has been saved successfully with ${totalItems} bookings totaling $${grandTotal.toFixed(2)}`);
 
     // Navigate to invoices page after a brief delay
     setTimeout(() => {
@@ -81,7 +95,7 @@ export const InvoicePreview = ({ bookings, dateFrom, dateTo }: InvoicePreviewPro
       <CardHeader className="border-b">
         <CardTitle className="text-green-700">Invoice Preview</CardTitle>
         <CardDescription>
-          {bookings.length} bookings from {dateFrom ? format(dateFrom, "PPP") : ""} to {dateTo ? format(dateTo, "PPP") : ""}
+          {totalItems} bookings from {dateFrom ? format(dateFrom, "PPP") : ""} to {dateTo ? format(dateTo, "PPP") : ""}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
@@ -110,10 +124,20 @@ export const InvoicePreview = ({ bookings, dateFrom, dateTo }: InvoicePreviewPro
           </TableBody>
         </Table>
         
+        {totalPages > 1 && (
+          <div className="mt-4 flex justify-center">
+            <BookingPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+            />
+          </div>
+        )}
+        
         <div className="mt-6 border-t pt-4 flex flex-col items-end">
           <div className="w-full max-w-xs space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
+              <span>Subtotal ({totalItems} bookings):</span>
               <span className="font-medium">${totalAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">

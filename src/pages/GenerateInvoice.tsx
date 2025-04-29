@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { InvoiceFilterForm } from "@/components/invoices/InvoiceFilterForm";
 import { InvoicePreview } from "@/components/invoices/InvoicePreview"; 
@@ -13,6 +13,17 @@ const GenerateInvoice = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [bookings, setBookings] = useState<any[] | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Load example data on component mount
+  useEffect(() => {
+    handleGenerateInvoice();
+  }, []);
 
   // Handle booking status selection
   const handleStatusChange = (statusId: string, checked: boolean) => {
@@ -21,6 +32,36 @@ const GenerateInvoice = () => {
     } else {
       setSelectedStatuses(prev => prev.filter(id => id !== statusId));
     }
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    generatePaginatedBookings(page);
+  };
+
+  // Generate paginated invoice data
+  const generatePaginatedBookings = (page: number) => {
+    // Filter bookings based on selected statuses and date range
+    const filteredBookings = mockBookings.filter(booking => {
+      const bookingDate = new Date(booking.date);
+      return (
+        selectedStatuses.includes(booking.status) &&
+        bookingDate >= dateFrom! &&
+        bookingDate <= dateTo!
+      );
+    });
+    
+    // Calculate pagination values
+    setTotalItems(filteredBookings.length);
+    setTotalPages(Math.ceil(filteredBookings.length / itemsPerPage));
+    
+    // Get current page of bookings
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredBookings.length);
+    const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+    
+    setBookings(paginatedBookings);
   };
 
   // Generate invoice
@@ -35,17 +76,7 @@ const GenerateInvoice = () => {
 
     // Simulate API call
     setTimeout(() => {
-      // Filter bookings based on selected statuses and date range
-      const filteredBookings = mockBookings.filter(booking => {
-        const bookingDate = new Date(booking.date);
-        return (
-          selectedStatuses.includes(booking.status) &&
-          bookingDate >= dateFrom &&
-          bookingDate <= dateTo
-        );
-      });
-      
-      setBookings(filteredBookings);
+      generatePaginatedBookings(currentPage);
       setIsGenerating(false);
       toast.success("Invoice data generated successfully");
     }, 1000);
@@ -78,6 +109,10 @@ const GenerateInvoice = () => {
           bookings={bookings} 
           dateFrom={dateFrom} 
           dateTo={dateTo}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       )}
     </div>
