@@ -1,4 +1,3 @@
-
 import { Complaint } from "@/types/complaint";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
-import { MessageSquare, Edit, Trash2, MoreVertical } from "lucide-react";
+import { MessageSquare, Trash2, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface ComplaintsTableRowProps {
@@ -60,11 +59,6 @@ export const ComplaintsTableRow = ({ complaint, onDelete }: ComplaintsTableRowPr
           <Link to={`/complaints/${complaint.id}`}>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View or reply">
               <MessageSquare className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to={`/complaints/${complaint.id}/edit`}>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit complaint">
-              <Edit className="h-4 w-4" />
             </Button>
           </Link>
           <DropdownMenu>
