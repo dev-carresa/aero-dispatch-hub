@@ -5,13 +5,15 @@ import PhoneInputLib from 'react-phone-number-input'
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import './phone-input.css'
+import { E164Number } from "libphonenumber-js/types"
 
-interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value'> {
+interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   label?: string
   defaultCountry?: string
   className?: string
   error?: boolean
   value?: string
+  onChange?: (value?: E164Number) => void
 }
 
 const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
