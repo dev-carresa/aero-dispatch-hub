@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch";
+import { FileInput } from "@/components/ui/file-input";
 
 // Define form schema with conditional fields
 const baseSchema = {
@@ -27,6 +28,12 @@ const baseSchema = {
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["Admin", "Driver", "Dispatcher", "Fleet", "Customer"]),
   status: z.enum(["active", "inactive"]),
+  profileImage: z.instanceof(FileList).optional().refine(
+    (files) => !files || files.length === 0 || Array.from(files).every(file => 
+      ['image/jpeg', 'image/png', 'image/gif'].includes(file.type)
+    ),
+    "Only .jpg, .png, and .gif formats are supported."
+  ),
 };
 
 const driverSchema = {
@@ -65,6 +72,7 @@ type FormValues = z.infer<typeof formSchema> & {
   dateOfBirth?: string;
   vehicleType?: "sedan" | "suv" | "van" | "truck";
   driverAvailability?: "available" | "busy" | "offline" | "on_break";
+  profileImage?: FileList;
 };
 
 const NewUser = () => {
@@ -73,6 +81,7 @@ const NewUser = () => {
   const initialRole = searchParams.get("role") || "Driver";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRole, setSelectedRole] = useState(initialRole);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,12 +96,40 @@ const NewUser = () => {
     },
   });
 
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      form.setValue("profileImage", files);
+      
+      // Create a preview URL for the image
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProfileImageUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
+    // Create an imageUrl from the uploaded file if it exists
+    let imageUrl = "";
+    if (data.profileImage && data.profileImage[0]) {
+      // In a real app, we would upload to a server and get back a URL
+      // For demo purposes, we'll just use the file name
+      imageUrl = URL.createObjectURL(data.profileImage[0]);
+    }
+    
     // Simulate API call with timeout
     setTimeout(() => {
-      console.log("User data submitted:", data);
+      const userData = {
+        ...data,
+        name: `${data.firstName} ${data.lastName}`,
+        imageUrl: imageUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(`${data.firstName} ${data.lastName}`),
+      };
+      
+      console.log("User data submitted:", userData);
       toast.success(`${data.role} created successfully`);
       setIsSubmitting(false);
       navigate("/users");
@@ -121,6 +158,25 @@ const NewUser = () => {
         <div className="bg-white dark:bg-gray-950 p-6 rounded-lg border">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="profileImage"
+                render={({ field: { value, onChange, ...fieldProps } }) => (
+                  <FormItem>
+                    <FormLabel>Profile Image</FormLabel>
+                    <FormControl>
+                      <FileInput
+                        accept="image/*"
+                        previewUrl={profileImageUrl}
+                        onChange={handleProfileImageChange}
+                        {...fieldProps}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <div className="grid gap-4 grid-cols-2">
                 <FormField
                   control={form.control}
