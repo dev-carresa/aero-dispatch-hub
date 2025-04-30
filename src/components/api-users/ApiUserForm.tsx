@@ -27,7 +27,7 @@ import { ApiUser, ServiceType } from "@/types/apiUser";
 import { ApiKeyDisplay } from "./ApiKeyDisplay";
 import { AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, KeyRound } from "lucide-react";
 
 // Form schema
 const formSchema = z.object({
@@ -90,6 +90,11 @@ export function ApiUserForm({ apiUser, onSubmit, isLoading }: ApiUserFormProps) 
     setApiKey(generateKey("uk_", 20));
     setSecretKey(generateKey("sk_", 24));
     setIsRegenerateDialogOpen(false);
+  };
+
+  const handleGenerateNewKeys = () => {
+    setApiKey(generateKey("uk_", 20));
+    setSecretKey(generateKey("sk_", 24));
   };
 
   const handleSubmit = (values: FormValues) => {
@@ -260,7 +265,7 @@ export function ApiUserForm({ apiUser, onSubmit, isLoading }: ApiUserFormProps) 
             <div className="space-y-4 pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">API Credentials</h3>
-                {isEditing && (
+                {isEditing ? (
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -269,6 +274,16 @@ export function ApiUserForm({ apiUser, onSubmit, isLoading }: ApiUserFormProps) 
                   >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Regenerate Keys
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateNewKeys}
+                  >
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Generate New Keys
                   </Button>
                 )}
               </div>
