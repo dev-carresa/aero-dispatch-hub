@@ -14,6 +14,12 @@ interface ProfileTabsSectionProps {
 }
 
 export const ProfileTabsSection = ({ user, isLoading }: ProfileTabsSectionProps) => {
+  // Add a dummy onUserUpdate function since we're in read-only mode in the profile view
+  const handleUserUpdate = (updatedUser: User) => {
+    console.log("Profile view is read-only, updates not implemented", updatedUser);
+    // In a real app, this would update the user data
+  };
+  
   if (isLoading) {
     return (
       <div className="md:col-span-2 space-y-4">
@@ -36,19 +42,19 @@ export const ProfileTabsSection = ({ user, isLoading }: ProfileTabsSectionProps)
         </TabsList>
         
         <TabsContent value="details">
-          <UserDetailsTab user={user} />
+          <UserDetailsTab user={user as User} onUserUpdate={handleUserUpdate} />
         </TabsContent>
         
         <TabsContent value="preferences">
-          <UserPreferencesTab user={user} />
+          <UserPreferencesTab user={user as User} onUserUpdate={handleUserUpdate} />
         </TabsContent>
         
         <TabsContent value="security">
-          <UserSecurityTab user={user} />
+          <UserSecurityTab user={user as User} />
         </TabsContent>
         
         <TabsContent value="invoices">
-          <UserInvoicesTab userId={user?.id} />
+          <UserInvoicesTab userId={user?.id?.toString()} />
         </TabsContent>
       </Tabs>
     </div>

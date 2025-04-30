@@ -23,7 +23,7 @@ interface Invoice {
 }
 
 interface UserInvoicesTabProps {
-  userId?: string | number;
+  userId?: string;
 }
 
 export const UserInvoicesTab = ({ userId }: UserInvoicesTabProps) => {

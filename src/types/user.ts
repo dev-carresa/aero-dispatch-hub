@@ -4,7 +4,7 @@ export type UserStatus = "active" | "inactive";
 export type DriverAvailability = "available" | "busy" | "offline" | "on_break";
 
 export type User = {
-  id: number;
+  id: string | number; // Updated to accept both string and number
   name: string;
   firstName?: string;
   lastName?: string;

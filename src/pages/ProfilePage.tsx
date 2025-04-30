@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User } from "@/types/user";
+import { User, UserRole, UserStatus } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProfileHeader } from "@/components/users/profile/ProfileHeader";
@@ -39,8 +39,8 @@ export default function ProfilePage() {
             firstName: profileData.first_name,
             lastName: profileData.last_name,
             email: profileData.email,
-            role: profileData.role,
-            status: profileData.status,
+            role: profileData.role as UserRole,
+            status: profileData.status as UserStatus,
             lastActive: profileData.last_active || "Just now",
             imageUrl: profileData.image_url || "",
             phone: profileData.phone || "",
@@ -50,14 +50,14 @@ export default function ProfilePage() {
           });
         } else {
           // Fallback to mock data if no authenticated user
-          const mockUser = {
+          const mockUser: User = {
             id: "4",
             name: "Admin User",
             firstName: "Admin",
             lastName: "User",
             email: "admin@example.com",
-            role: "Admin" as const,
-            status: "active" as const,
+            role: "Admin",
+            status: "active",
             lastActive: "Just now",
             imageUrl: "",
             phone: "+1 (555) 123-4567",
