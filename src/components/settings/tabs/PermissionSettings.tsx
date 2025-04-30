@@ -24,42 +24,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Define proper TypeScript interfaces for our data structures
-interface RoleData {
-  id: string;
-  name: string;
-  permissions: Record<Permission, boolean>;
-  isBuiltIn: boolean;
-}
-
-interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  initials: string;
-  color: string;
-  role: string;
-}
-
-interface DbRole {
-  id: string;
-  name: string;
-  description: string;
-  is_system: boolean;
-}
-
-interface DbPermission {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface DbRolePermission {
-  role_id: string;
-  permission_id: string;
-  permission_name: string;
-}
-
 // Group permissions by category for better organization
 const permissionCategories = {
   "Dashboard": ["dashboard:view"],
@@ -76,10 +40,26 @@ const permissionCategories = {
   "Settings": ["settings:view", "settings:edit", "settings:permissions", "settings:api"]
 };
 
+interface SimpleRole {
+  id: string;
+  name: string;
+  isBuiltIn: boolean;
+  permissions: Record<string, boolean>;
+}
+
+interface SimpleUser {
+  id: string;
+  name: string;
+  email: string;
+  initials: string;
+  color: string;
+  role: string;
+}
+
 export function PermissionSettings() {
   const { hasPermission, isAdmin } = usePermission();
-  const [roles, setRoles] = useState<RoleData[]>([]);
-  const [users, setUsers] = useState<UserData[]>([]);
+  const [roles, setRoles] = useState<SimpleRole[]>([]);
+  const [users, setUsers] = useState<SimpleUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newRoleName, setNewRoleName] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -87,16 +67,25 @@ export function PermissionSettings() {
   const [dbMode, setDbMode] = useState<boolean>(true);
   const [dbError, setDbError] = useState<string | null>(null);
 
-  // Load roles and permissions from the database
+  // Load roles and permissions using RPC functions
   useEffect(() => {
     const fetchRolesAndPermissions = async () => {
       try {
         setIsLoading(true);
         
-        // Fetch roles from the database
-        const { data: rolesData, error: rolesError } = await supabase
-          .from('roles')
-          .select('*');
+        // Check if DB functions are available
+        const { data: checkData, error: checkError } = await supabase.rpc('get_all_roles');
+        
+        if (checkError) {
+          // We're in memory mode - initialize with basic roles
+          console.warn('Database functions not available, using memory mode');
+          setDbMode(false);
+          initializeMemoryMode();
+          return;
+        }
+
+        // Fetch roles using RPC
+        const { data: rolesData, error: rolesError } = await supabase.rpc('get_all_roles');
           
         if (rolesError) {
           console.error('Error fetching roles:', rolesError);
@@ -104,10 +93,8 @@ export function PermissionSettings() {
           throw rolesError;
         }
         
-        // Fetch permissions from the database
-        const { data: permissionsData, error: permissionsError } = await supabase
-          .from('permissions')
-          .select('*');
+        // Fetch role permissions mapping using RPC
+        const { data: rolePermissionsData, error: permissionsError } = await supabase.rpc('get_all_role_permissions');
           
         if (permissionsError) {
           console.error('Error fetching permissions:', permissionsError);
@@ -115,38 +102,20 @@ export function PermissionSettings() {
           throw permissionsError;
         }
         
-        // Fetch role-permission mappings
-        const { data: rolePermissionsData, error: rolePermissionsError } = await supabase
-          .from('role_permissions')
-          .select(`
-            role_id,
-            permission_id,
-            permissions (
-              name
-            )
-          `);
-          
-        if (rolePermissionsError) {
-          console.error('Error fetching role permissions:', rolePermissionsError);
-          setDbError("Failed to load role permissions. Please initialize the database.");
-          throw rolePermissionsError;
-        }
-        
         // Transform the data for the UI
-        const transformedRoles: RoleData[] = (rolesData as DbRole[]).map(role => {
+        const transformedRoles: SimpleRole[] = rolesData.map((role: any) => {
           // Create an object with all permissions set to false by default
-          const allPermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
+          const allPermissions: Record<string, boolean> = {};
           
           // Initialize all possible permissions as false
           Object.values(permissionCategories).flat().forEach(perm => {
-            allPermissions[perm as Permission] = false;
+            allPermissions[perm] = false;
           });
           
           // Set the permissions this role has to true
-          rolePermissionsData.forEach(rp => {
-            if (rp.role_id === role.id && rp.permissions?.name) {
-              allPermissions[rp.permissions.name as Permission] = true;
-            }
+          const permissions = rolePermissionsData.filter((rp: any) => rp.role_id === role.id);
+          permissions.forEach((p: any) => {
+            allPermissions[p.permission_name] = true;
           });
           
           return {
@@ -163,6 +132,7 @@ export function PermissionSettings() {
         console.error("Error initializing roles and permissions:", error);
         // Fall back to memory-based permissions
         setDbMode(false);
+        initializeMemoryMode();
       } finally {
         setIsLoading(false);
       }
@@ -170,11 +140,98 @@ export function PermissionSettings() {
 
     fetchRolesAndPermissions();
   }, []);
+  
+  // Initialize memory mode with mock data
+  const initializeMemoryMode = () => {
+    const defaultRoles: SimpleRole[] = [
+      {
+        id: 'admin',
+        name: 'Admin',
+        isBuiltIn: true,
+        permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
+          acc[perm] = true;
+          return acc;
+        }, {} as Record<string, boolean>)
+      },
+      {
+        id: 'driver',
+        name: 'Driver',
+        isBuiltIn: true,
+        permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
+          acc[perm] = ["dashboard:view", "bookings:view", "driver_comments:create", "complaints:view", "complaints:create"].includes(perm);
+          return acc;
+        }, {} as Record<string, boolean>)
+      },
+      {
+        id: 'fleet',
+        name: 'Fleet',
+        isBuiltIn: true,
+        permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
+          acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", "bookings:edit", 
+                     "vehicles:view", "vehicles:create", "vehicles:edit", "users:view", 
+                     "complaints:view", "complaints:respond", "driver_comments:view",
+                     "quality_reviews:view", "reports:view", "invoices:view"].includes(perm);
+          return acc;
+        }, {} as Record<string, boolean>)
+      },
+      {
+        id: 'dispatcher',
+        name: 'Dispatcher',
+        isBuiltIn: true,
+        permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
+          acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", "bookings:edit", 
+                     "bookings:assign_driver", "users:view", "vehicles:view", 
+                     "complaints:view", "complaints:respond"].includes(perm);
+          return acc;
+        }, {} as Record<string, boolean>)
+      },
+      {
+        id: 'customer',
+        name: 'Customer',
+        isBuiltIn: true,
+        permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
+          acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", 
+                     "complaints:view", "complaints:create"].includes(perm);
+          return acc;
+        }, {} as Record<string, boolean>)
+      }
+    ];
+    
+    setRoles(defaultRoles);
+    
+    const mockUsers: SimpleUser[] = [
+      {
+        id: "1",
+        name: "Admin User",
+        email: "admin@transport-co.com",
+        initials: "AD",
+        color: "blue",
+        role: "admin"
+      },
+      {
+        id: "2",
+        name: "Jane Doe",
+        email: "jane@transport-co.com",
+        initials: "JD",
+        color: "green",
+        role: "driver"
+      },
+      {
+        id: "3",
+        name: "Mike Smith",
+        email: "mike@transport-co.com",
+        initials: "MS",
+        color: "purple",
+        role: "fleet"
+      }
+    ];
+    
+    setUsers(mockUsers);
+  };
 
   // Fetch users from the database
   const fetchUsers = async () => {
     try {
-      // In a real application, this would fetch from the database
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, name, email, role');
@@ -186,7 +243,7 @@ export function PermissionSettings() {
       const usersData = profilesData.map((profile) => {
         const initials = profile.name
           .split(' ')
-          .map(n => n[0])
+          .map((n: string) => n[0])
           .join('')
           .toUpperCase()
           .slice(0, 2);
@@ -211,9 +268,9 @@ export function PermissionSettings() {
       toast.error("Failed to load users");
       
       // Fallback to mock users if database access fails
-      const mockUsers: UserData[] = [
+      const mockUsers: SimpleUser[] = [
         {
-          id: 1,
+          id: "1",
           name: "Admin User",
           email: "admin@transport-co.com",
           initials: "AD",
@@ -221,7 +278,7 @@ export function PermissionSettings() {
           role: "admin"
         },
         {
-          id: 2,
+          id: "2",
           name: "Jane Doe",
           email: "jane@transport-co.com",
           initials: "JD",
@@ -229,7 +286,7 @@ export function PermissionSettings() {
           role: "driver"
         },
         {
-          id: 3,
+          id: "3",
           name: "Mike Smith",
           email: "mike@transport-co.com",
           initials: "MS",
@@ -245,34 +302,18 @@ export function PermissionSettings() {
   const handleRolePermissionChange = async (roleId: string, permissionKey: string, value: boolean) => {
     try {
       if (dbMode) {
-        // Get permission id from name
-        const { data: permData, error: permError } = await supabase
-          .from('permissions')
-          .select('id')
-          .eq('name', permissionKey)
-          .single();
-          
-        if (permError) throw permError;
-        
         if (value) {
-          // Add permission to role
-          const { error: insertError } = await supabase
-            .from('role_permissions')
-            .insert({
-              role_id: roleId,
-              permission_id: permData.id
-            });
-            
-          if (insertError) throw insertError;
+          // Add permission to role using RPC
+          await supabase.rpc('add_permission_to_role_by_name', { 
+            p_role_id: roleId, 
+            p_permission_name: permissionKey 
+          });
         } else {
-          // Remove permission from role
-          const { error: deleteError } = await supabase
-            .from('role_permissions')
-            .delete()
-            .eq('role_id', roleId)
-            .eq('permission_id', permData.id);
-            
-          if (deleteError) throw deleteError;
+          // Remove permission from role using RPC
+          await supabase.rpc('remove_permission_from_role_by_name', { 
+            p_role_id: roleId, 
+            p_permission_name: permissionKey 
+          });
         }
       }
       
@@ -295,28 +336,16 @@ export function PermissionSettings() {
     }
   };
 
-  const handleUserRoleChange = async (userId: string | number, newRoleValue: string) => {
+  const handleUserRoleChange = async (userId: string, newRoleValue: string) => {
     try {
       if (dbMode) {
-        // Get role id from name
-        const { data: roleData, error: roleError } = await supabase
-          .from('roles')
-          .select('id')
-          .ilike('name', newRoleValue)
-          .single();
-          
-        if (roleError) throw roleError;
+        // Update user role using RPC
+        const { error } = await supabase.rpc('update_user_role_by_name', { 
+          p_user_id: userId, 
+          p_role_name: newRoleValue.charAt(0).toUpperCase() + newRoleValue.slice(1)
+        });
         
-        // Update user's role in the database
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            role: newRoleValue.charAt(0).toUpperCase() + newRoleValue.slice(1),
-            role_id: roleData.id
-          })
-          .eq('id', userId);
-          
-        if (updateError) throw updateError;
+        if (error) throw error;
       }
       
       // Update UI state
@@ -351,12 +380,9 @@ export function PermissionSettings() {
       }
       
       if (dbMode) {
-        // Delete role from database
-        const { error } = await supabase
-          .from('roles')
-          .delete()
-          .eq('id', roleId);
-          
+        // Delete role using RPC
+        const { error } = await supabase.rpc('delete_role', { p_role_id: roleId });
+        
         if (error) throw error;
       }
       
@@ -376,9 +402,7 @@ export function PermissionSettings() {
     }
     
     try {
-      const roleId = newRoleName.toLowerCase().replace(/\s+/g, '_');
-      
-      // Check if role with this ID already exists
+      // Check if role with this name already exists
       if (roles.some(role => role.name.toLowerCase() === newRoleName.toLowerCase())) {
         toast.error("A role with a similar name already exists");
         return;
@@ -387,34 +411,29 @@ export function PermissionSettings() {
       let newRoleId = "";
       
       if (dbMode) {
-        // Create role in database
-        const { data, error } = await supabase
-          .from('roles')
-          .insert({
-            name: newRoleName,
-            description: `Custom role: ${newRoleName}`,
-            is_system: false
-          })
-          .select();
-          
-        if (error) throw error;
+        // Create role using RPC
+        const { data, error } = await supabase.rpc('create_role', {
+          p_name: newRoleName,
+          p_description: `Custom role: ${newRoleName}`
+        });
         
-        newRoleId = data[0].id;
+        if (error) throw error;
+        newRoleId = data;
       } else {
         // Generate a UUID-like string for memory mode
         newRoleId = 'custom_' + Math.random().toString(36).substring(2, 15);
       }
       
       // Create empty permissions object
-      const permissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
+      const permissions: Record<string, boolean> = {};
       
       // Initialize all permissions as false
       Object.values(permissionCategories).flat().forEach(perm => {
-        permissions[perm as Permission] = false;
+        permissions[perm] = false;
       });
       
       // Add the new role
-      const newRole: RoleData = {
+      const newRole: SimpleRole = {
         id: newRoleId,
         name: newRoleName,
         permissions,
@@ -521,7 +540,7 @@ export function PermissionSettings() {
                                 <input 
                                   type="checkbox" 
                                   id={`${role.id}-${permKey}`}
-                                  checked={role.permissions[permKey as Permission] || false}
+                                  checked={role.permissions[permKey] || false}
                                   disabled={role.isBuiltIn && dbMode}
                                   onChange={(e) => handleRolePermissionChange(role.id, permKey, e.target.checked)}
                                   className="h-4 w-4" 

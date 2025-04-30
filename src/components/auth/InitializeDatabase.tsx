@@ -5,6 +5,7 @@ import { Spinner } from "../ui/spinner";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle } from "lucide-react";
+import { checkDatabaseInitialized } from "@/lib/db/permissionsRpc";
 
 export function InitializeDatabase({ children }: { children: React.ReactNode }) {
   const [initialized, setInitialized] = useState(true);
@@ -14,17 +15,9 @@ export function InitializeDatabase({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const checkDatabase = async () => {
       try {
-        // Check if roles table exists and has data
-        const { count, error } = await supabase
-          .from('roles')
-          .select('*', { count: 'exact', head: true });
-        
-        if (error) {
-          console.error('Database initialization check failed:', error);
-          setInitialized(false);
-        } else {
-          setInitialized(count > 0);
-        }
+        // Check if database is initialized
+        const isInitialized = await checkDatabaseInitialized();
+        setInitialized(isInitialized);
       } catch (err) {
         console.error('Failed to check database:', err);
         setInitialized(false);

@@ -26,15 +26,15 @@ serve(async (req: Request) => {
     const { action } = await req.json();
 
     if (action === "create_functions") {
-      // Create get_user_permissions function
-      await supabase.rpc("admin_create_get_user_permissions_function");
+      // Create RPC functions
+      await supabase.rpc("admin_create_permission_functions");
       return new Response(JSON.stringify({ success: true, action: "Functions created" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     } 
     else if (action === "seed_data") {
-      // Create get_user_permissions function
+      // Seed initial data
       await supabase.rpc("admin_seed_roles_and_permissions");
       return new Response(JSON.stringify({ success: true, action: "Data seeded" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

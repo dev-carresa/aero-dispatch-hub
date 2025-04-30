@@ -5,6 +5,7 @@ import { Permission } from "@/lib/permissions";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { checkDatabaseInitialized } from "@/lib/db/permissionsRpc";
 
 interface PermissionContextType {
   userRole: UserRole | null;
@@ -26,6 +27,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbInitialized, setDbInitialized] = useState(false);
   
   // Helper functions to check specific roles
   const isAdmin = userRole === "Admin";
@@ -33,6 +35,15 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const isFleet = userRole === "Fleet";
   const isDispatcher = userRole === "Dispatcher";
   const isCustomer = userRole === "Customer";
+
+  // Check if database is initialized
+  useEffect(() => {
+    const checkDb = async () => {
+      const initialized = await checkDatabaseInitialized();
+      setDbInitialized(initialized);
+    };
+    checkDb();
+  }, []);
 
   // Fetch user role and permissions from the database
   useEffect(() => {
@@ -47,36 +58,56 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         
-        // First get the user's role
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          throw profileError;
-        }
-
-        // Set the role from profile data
-        const role = profileData?.role as UserRole | null;
-        setUserRole(role);
-
-        // Then get the permissions for that role
-        if (role) {
+        if (dbInitialized) {
+          // Use RPC function to get user's role name
+          const { data: roleData, error: roleError } = await supabase
+            .rpc('get_user_role_name', { user_id: user.id });
+          
+          if (roleError) {
+            console.error('Error fetching user role:', roleError);
+            throw roleError;
+          }
+          
+          // Set the role from RPC call
+          setUserRole(roleData as UserRole);
+          
           // Use RPC to get permissions for the current user
           const { data: permissionsData, error: permissionsError } = await supabase
             .rpc('get_user_permissions', { user_id: user.id });
-
+          
           if (permissionsError) {
             console.error('Error fetching user permissions:', permissionsError);
             throw permissionsError;
           }
+          
+          // Set permissions from the RPC call
+          setUserPermissions((permissionsData || []) as Permission[]);
+        } else {
+          // If DB is not initialized, fall back to meta data
+          // First get the user's role from profiles
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
 
-          // Set permissions from the database
-          const permissions = permissionsData?.map(p => p.name) || [];
-          setUserPermissions(permissions as Permission[]);
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            throw profileError;
+          }
+
+          // Set the role from profile data
+          const role = profileData?.role as UserRole | null;
+          setUserRole(role);
+          
+          // Default permissions based on role for basic functionality
+          if (role === "Admin") {
+            setUserPermissions(Object.values(Permission));
+          } else if (role) {
+            // Add minimal permissions based on role
+            const defaultPermissions: Permission[] = ["dashboard:view"];
+            setUserPermissions(defaultPermissions);
+          }
         }
       } catch (error) {
         console.error('Error in permission context:', error);
@@ -91,12 +122,15 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchUserRoleAndPermissions();
-  }, [user]);
+  }, [user, dbInitialized]);
 
   // Check if the user has a specific permission
   const checkPermission = (permission: Permission): boolean => {
     if (loading) return false;
     if (!userRole) return false;
+    
+    // Admin always has all permissions
+    if (userRole === "Admin") return true;
     
     // Check if the permission exists in the userPermissions array
     return userPermissions.includes(permission);
@@ -106,6 +140,9 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const checkAnyPermission = (permissions: Permission[]): boolean => {
     if (loading) return false;
     if (!userRole) return false;
+    
+    // Admin always has all permissions
+    if (userRole === "Admin") return true;
     
     // Check if any of the permissions exist in the userPermissions array
     return permissions.some(permission => userPermissions.includes(permission));
