@@ -12,7 +12,9 @@ export function useRolePermission() {
     isDriver,
     isFleet,
     isDispatcher,
-    isCustomer
+    isCustomer,
+    loading,
+    userPermissions
   } = usePermission();
 
   return {
@@ -27,6 +29,12 @@ export function useRolePermission() {
     
     // Current user role
     userRole,
+    
+    // Loading state
+    loading,
+    
+    // All user permissions
+    permissions: userPermissions,
     
     // Role shortcuts
     isAdmin,

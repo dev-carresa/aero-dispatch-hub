@@ -18,11 +18,12 @@ export const RoleProtectedRoute = ({
   requiredPermissions,
   redirectPath = "/auth" 
 }: RoleProtectedRouteProps) => {
-  const { user, loading } = useAuth();
-  const { hasPermission, hasAnyPermission } = usePermission();
+  const { user, loading: authLoading } = useAuth();
+  const { hasPermission, hasAnyPermission, loading: permissionLoading } = usePermission();
   const location = useLocation();
 
-  if (loading) {
+  // Show spinner while loading auth or permissions
+  if (authLoading || permissionLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Spinner size="lg" />

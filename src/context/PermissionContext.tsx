@@ -1,8 +1,10 @@
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Permission, hasPermission, hasAnyPermission } from "@/lib/permissions";
+import { Permission } from "@/lib/permissions";
 import { UserRole } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PermissionContextType {
   userRole: UserRole | null;
@@ -13,16 +15,18 @@ interface PermissionContextType {
   isFleet: boolean;
   isDispatcher: boolean;
   isCustomer: boolean;
+  loading: boolean;
+  userPermissions: Permission[];
 }
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
 export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Get the user's role from the profile
-  const userRole = user?.user_metadata?.role as UserRole | null;
-
   // Helper functions to check specific roles
   const isAdmin = userRole === "Admin";
   const isDriver = userRole === "Driver";
@@ -30,16 +34,81 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const isDispatcher = userRole === "Dispatcher";
   const isCustomer = userRole === "Customer";
 
+  // Fetch user role and permissions from the database
+  useEffect(() => {
+    const fetchUserRoleAndPermissions = async () => {
+      if (!user) {
+        setUserRole(null);
+        setUserPermissions([]);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // First get the user's role
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          throw profileError;
+        }
+
+        // Set the role from profile data
+        const role = profileData?.role as UserRole | null;
+        setUserRole(role);
+
+        // Then get the permissions for that role
+        if (role) {
+          // Use RPC to get permissions for the current user
+          const { data: permissionsData, error: permissionsError } = await supabase
+            .rpc('get_user_permissions', { user_id: user.id });
+
+          if (permissionsError) {
+            console.error('Error fetching user permissions:', permissionsError);
+            throw permissionsError;
+          }
+
+          // Set permissions from the database
+          const permissions = permissionsData?.map(p => p.name) || [];
+          setUserPermissions(permissions as Permission[]);
+        }
+      } catch (error) {
+        console.error('Error in permission context:', error);
+        // Fallback to metadata role if database fetch fails
+        if (user.user_metadata?.role) {
+          setUserRole(user.user_metadata.role as UserRole);
+        }
+        toast.error("Failed to load permissions. Some features may be limited.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserRoleAndPermissions();
+  }, [user]);
+
   // Check if the user has a specific permission
   const checkPermission = (permission: Permission): boolean => {
+    if (loading) return false;
     if (!userRole) return false;
-    return hasPermission(userRole, permission);
+    
+    // Check if the permission exists in the userPermissions array
+    return userPermissions.includes(permission);
   };
 
   // Check if the user has any of the specified permissions
   const checkAnyPermission = (permissions: Permission[]): boolean => {
+    if (loading) return false;
     if (!userRole) return false;
-    return hasAnyPermission(userRole, permissions);
+    
+    // Check if any of the permissions exist in the userPermissions array
+    return permissions.some(permission => userPermissions.includes(permission));
   };
 
   return (
@@ -53,6 +122,8 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         isFleet,
         isDispatcher,
         isCustomer,
+        loading,
+        userPermissions
       }}
     >
       {children}
