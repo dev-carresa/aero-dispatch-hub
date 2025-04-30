@@ -126,6 +126,7 @@ export default function ApiUsers() {
         onView={handleViewApiUser}
         onEdit={handleEditApiUser}
         onDelete={handleDeleteApiUser}
+        onToggleStatus={handleToggleStatus}
       />
       
       <ApiUserStatusDialog

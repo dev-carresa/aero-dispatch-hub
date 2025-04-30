@@ -28,9 +28,16 @@ interface ApiUsersTableProps {
   onView: (apiUser: ApiUser) => void;
   onEdit: (apiUser: ApiUser) => void;
   onDelete: (apiUser: ApiUser) => void;
+  onToggleStatus?: (apiUser: ApiUser) => void;
 }
 
-export function ApiUsersTable({ apiUsers, onView, onEdit, onDelete }: ApiUsersTableProps) {
+export function ApiUsersTable({ 
+  apiUsers, 
+  onView, 
+  onEdit, 
+  onDelete, 
+  onToggleStatus 
+}: ApiUsersTableProps) {
   const [expandedApiKey, setExpandedApiKey] = useState<number | null>(null);
 
   const toggleExpand = (id: number) => {
@@ -111,7 +118,10 @@ export function ApiUsersTable({ apiUsers, onView, onEdit, onDelete }: ApiUsersTa
                 <TableCell>
                   <Badge 
                     variant={user.status === "active" ? "default" : "secondary"}
-                    className={user.status === "active" ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"}
+                    className={`${user.status === "active" 
+                      ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"} cursor-pointer`}
+                    onClick={() => onToggleStatus && onToggleStatus(user)}
                   >
                     {user.status === "active" ? "Active" : "Inactive"}
                   </Badge>
