@@ -1,7 +1,7 @@
 
 import { UseFormReturn } from "react-hook-form";
 import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import PlacesAutocompleteInput from "@/components/places/PlacesAutocompleteInput";
+import CustomPlacesAutocomplete from "@/components/places/CustomPlacesAutocomplete";
 import type { BookingFormData } from "@/lib/schemas/bookingSchema";
 
 interface BookingDetailsTabProps {
@@ -22,10 +22,6 @@ interface BookingDetailsTabProps {
 }
 
 export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: BookingDetailsTabProps) {
-  const handlePlaceSelect = (field: string, address: string) => {
-    form.setValue(field as any, address);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -111,9 +107,10 @@ export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: Booking
               <FormItem>
                 <FormLabel>Pickup Location</FormLabel>
                 <FormControl>
-                  <PlacesAutocompleteInput
+                  <CustomPlacesAutocomplete
                     value={field.value}
-                    onPlaceSelect={(address) => handlePlaceSelect('pickupLocation', address)}
+                    onPlaceSelect={(address) => field.onChange(address)}
+                    onChange={(value) => field.onChange(value)}
                     placeholder="Enter pickup location"
                   />
                 </FormControl>
@@ -129,9 +126,10 @@ export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: Booking
               <FormItem>
                 <FormLabel>Destination</FormLabel>
                 <FormControl>
-                  <PlacesAutocompleteInput
+                  <CustomPlacesAutocomplete
                     value={field.value}
-                    onPlaceSelect={(address) => handlePlaceSelect('destination', address)}
+                    onPlaceSelect={(address) => field.onChange(address)}
+                    onChange={(value) => field.onChange(value)}
                     placeholder="Enter destination"
                   />
                 </FormControl>
