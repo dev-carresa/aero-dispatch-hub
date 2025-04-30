@@ -30,13 +30,13 @@ export default function Airports() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <AirportsHeader 
         airportCount={sampleAirports.length} 
         totalMeetingPoints={totalMeetingPoints} 
       />
       
-      <Card>
+      <Card className="shadow-sm hover:shadow transition-shadow duration-200">
         <CardContent className="pt-6">
           <div className="space-y-4">
             <AirportFilters 

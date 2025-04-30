@@ -10,6 +10,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 
 interface AirportFiltersProps {
   onFilterChange: (filters: { search: string; country: string }) => void;
@@ -38,15 +39,17 @@ export function AirportFilters({ onFilterChange, countries }: AirportFiltersProp
 
   return (
     <div className="flex flex-col gap-4 md:flex-row">
-      <div className="flex-grow">
+      <div className="flex-grow relative">
         <Label htmlFor="search" className="sr-only">
           Search
         </Label>
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           id="search"
           placeholder="Search by airport name, code, or city..."
           value={search}
           onChange={handleSearchChange}
+          className="pl-9"
         />
       </div>
 
@@ -70,7 +73,12 @@ export function AirportFilters({ onFilterChange, countries }: AirportFiltersProp
           </Select>
         </div>
 
-        <Button variant="outline" onClick={handleReset}>
+        <Button 
+          variant="outline" 
+          onClick={handleReset} 
+          className="hover:bg-gray-100"
+          disabled={!search && !country}
+        >
           Reset
         </Button>
       </div>

@@ -19,7 +19,7 @@ export function AirportsHeader({ airportCount, totalMeetingPoints }: AirportsHea
       </div>
       <div className="flex space-x-2">
         <Link to="/airports/meeting-points/new">
-          <Button>
+          <Button className="shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Meeting Point
           </Button>
