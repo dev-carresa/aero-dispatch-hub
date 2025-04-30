@@ -23,8 +23,11 @@ import EditProfilePage from "./pages/EditProfilePage";
 import AuthPage from "./pages/AuthPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import LandingPage from "./pages/LandingPage";
+import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthContext";
+import { PermissionProvider } from "./context/PermissionContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Vehicle pages
 import Vehicles from "./pages/Vehicles";
@@ -72,78 +75,90 @@ const App = () => (
   <ThemeProvider defaultTheme="light">
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/welcome" element={<LandingPage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-              
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Layout><Dashboard /></Layout>} />
-                <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
-                <Route path="/bookings/:id" element={<Layout><BookingDetails /></Layout>} />
-                <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
-                <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
-                <Route path="/users" element={<Layout><Users /></Layout>} />
-                <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
-                <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
-                <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
-                <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
-                <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
-                <Route path="/settings" element={<Layout><Settings /></Layout>} />
+        <PermissionProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/welcome" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
                 
-                {/* Profile pages */}
-                <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
-                <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  {/* Dashboard */}
+                  <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Bookings */}
+                  <Route path="/bookings" element={<RoleProtectedRoute requiredPermission="bookings:view"><Layout><BookingsIndex /></Layout></RoleProtectedRoute>} />
+                  <Route path="/bookings/:id" element={<RoleProtectedRoute requiredPermission="bookings:view"><Layout><BookingDetails /></Layout></RoleProtectedRoute>} />
+                  <Route path="/bookings/:id/edit" element={<RoleProtectedRoute requiredPermission="bookings:edit"><Layout><EditBooking /></Layout></RoleProtectedRoute>} />
+                  <Route path="/bookings/new" element={<RoleProtectedRoute requiredPermission="bookings:create"><Layout><NewBooking /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Users */}
+                  <Route path="/users" element={<RoleProtectedRoute requiredPermission="users:view"><Layout><Users /></Layout></RoleProtectedRoute>} />
+                  <Route path="/users/:id" element={<RoleProtectedRoute requiredPermission="users:view"><Layout><UserProfile /></Layout></RoleProtectedRoute>} />
+                  <Route path="/users/new" element={<RoleProtectedRoute requiredPermission="users:create"><Layout><NewUser /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* API Users */}
+                  <Route path="/api-users" element={<RoleProtectedRoute requiredPermission="api_users:view"><Layout><ApiUsers /></Layout></RoleProtectedRoute>} />
+                  <Route path="/api-users/new" element={<RoleProtectedRoute requiredPermission="api_users:create"><Layout><NewApiUser /></Layout></RoleProtectedRoute>} />
+                  <Route path="/api-users/:id" element={<RoleProtectedRoute requiredPermission="api_users:view"><Layout><ApiUserDetails /></Layout></RoleProtectedRoute>} />
+                  <Route path="/api-users/:id/edit" element={<RoleProtectedRoute requiredPermission="api_users:edit"><Layout><EditApiUser /></Layout></RoleProtectedRoute>} />
+
+                  {/* Invoices */}
+                  <Route path="/invoices" element={<RoleProtectedRoute requiredPermission="invoices:view"><Layout><Invoices /></Layout></RoleProtectedRoute>} />
+                  <Route path="/invoices/generate" element={<RoleProtectedRoute requiredPermission="invoices:create"><Layout><GenerateInvoice /></Layout></RoleProtectedRoute>} />
+                  <Route path="/invoices/:id" element={<RoleProtectedRoute requiredPermission="invoices:view"><Layout><InvoiceDetails /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Settings */}
+                  <Route path="/settings" element={<RoleProtectedRoute requiredPermission="settings:view"><Layout><Settings /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Profile pages - all logged-in users can access their own profile */}
+                  <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+                  <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
+                  
+                  {/* Vehicle routes */}
+                  <Route path="/vehicles" element={<RoleProtectedRoute requiredPermission="vehicles:view"><Layout><Vehicles /></Layout></RoleProtectedRoute>} />
+                  <Route path="/vehicles/new" element={<RoleProtectedRoute requiredPermission="vehicles:create"><Layout><NewVehicle /></Layout></RoleProtectedRoute>} />
+                  <Route path="/vehicles/:id/edit" element={<RoleProtectedRoute requiredPermission="vehicles:edit"><Layout><EditVehicle /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Report routes */}
+                  <Route path="/reports" element={<RoleProtectedRoute requiredPermission="reports:view"><Layout><Reports /></Layout></RoleProtectedRoute>} />
+                  <Route path="/reports/generate" element={<RoleProtectedRoute requiredPermission="reports:create"><Layout><GenerateReport /></Layout></RoleProtectedRoute>} />
+                  <Route path="/reports/saved" element={<RoleProtectedRoute requiredPermission="reports:view"><Layout><SavedReports /></Layout></RoleProtectedRoute>} />
+                  <Route path="/reports/view/:id" element={<RoleProtectedRoute requiredPermission="reports:view"><Layout><ReportDetails /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Complaint routes */}
+                  <Route path="/complaints" element={<RoleProtectedRoute requiredPermission="complaints:view"><Layout><Complaints /></Layout></RoleProtectedRoute>} />
+                  <Route path="/complaints/new" element={<RoleProtectedRoute requiredPermission="complaints:create"><Layout><NewComplaint /></Layout></RoleProtectedRoute>} />
+                  <Route path="/complaints/:id" element={<RoleProtectedRoute requiredPermissions={["complaints:view", "complaints:respond"]}><Layout><ComplaintDetails /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Driver Comment routes */}
+                  <Route path="/driver-comments" element={<RoleProtectedRoute requiredPermission="driver_comments:view"><Layout><DriverComments /></Layout></RoleProtectedRoute>} />
+                  <Route path="/driver-comments/:id" element={<RoleProtectedRoute requiredPermission="driver_comments:view"><Layout><DriverCommentDetails /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Quality Reviews routes */}
+                  <Route path="/quality-reviews" element={<RoleProtectedRoute requiredPermission="quality_reviews:view"><Layout><QualityReviews /></Layout></RoleProtectedRoute>} />
+                  
+                  {/* Airport and Meeting Point routes */}
+                  <Route path="/airports" element={<RoleProtectedRoute requiredPermission="airports:view"><Layout><Airports /></Layout></RoleProtectedRoute>} />
+                  <Route path="/airports/:id" element={<RoleProtectedRoute requiredPermission="airports:view"><Layout><AirportDetails /></Layout></RoleProtectedRoute>} />
+                  <Route path="/airports/new" element={<RoleProtectedRoute requiredPermission="airports:create"><Layout><NewAirport /></Layout></RoleProtectedRoute>} />
+                  <Route path="/airports/:id/edit" element={<RoleProtectedRoute requiredPermission="airports:edit"><Layout><EditAirport /></Layout></RoleProtectedRoute>} />
+                  <Route path="/airports/meeting-points/new" element={<RoleProtectedRoute requiredPermission="airports:create"><Layout><NewMeetingPoint /></Layout></RoleProtectedRoute>} />
+                  <Route path="/airports/meeting-points/:id/edit" element={<RoleProtectedRoute requiredPermission="airports:edit"><Layout><EditMeetingPoint /></Layout></RoleProtectedRoute>} />
+                </Route>
                 
-                {/* Vehicle routes */}
-                <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
-                <Route path="/vehicles/new" element={<Layout><NewVehicle /></Layout>} />
-                <Route path="/vehicles/:id/edit" element={<Layout><EditVehicle /></Layout>} />
-                
-                {/* Report routes */}
-                <Route path="/reports" element={<Layout><Reports /></Layout>} />
-                <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
-                <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
-                <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
-                
-                {/* Complaint routes */}
-                <Route path="/complaints" element={<Layout><Complaints /></Layout>} />
-                <Route path="/complaints/new" element={<Layout><NewComplaint /></Layout>} />
-                <Route path="/complaints/:id" element={<Layout><ComplaintDetails /></Layout>} />
-                
-                {/* Driver Comment routes */}
-                <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
-                <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
-                
-                {/* Quality Reviews routes */}
-                <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
-                
-                {/* Airport and Meeting Point routes */}
-                <Route path="/airports" element={<Layout><Airports /></Layout>} />
-                <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
-                <Route path="/airports/new" element={<Layout><NewAirport /></Layout>} />
-                <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
-                <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
-                <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
-                
-                {/* API Users routes */}
-                <Route path="/api-users" element={<Layout><ApiUsers /></Layout>} />
-                <Route path="/api-users/new" element={<Layout><NewApiUser /></Layout>} />
-                <Route path="/api-users/:id" element={<Layout><ApiUserDetails /></Layout>} />
-                <Route path="/api-users/:id/edit" element={<Layout><EditApiUser /></Layout>} />
-              </Route>
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </PermissionProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>

@@ -3,16 +3,18 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserRole } from "@/types/user";
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  userRole: UserRole | null;
   signIn: (email: string, password: string) => Promise<{
     error: Error | null;
     data: Session | null;
   }>;
-  signUp: (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => Promise<{
+  signUp: (email: string, password: string, metadata?: { firstName?: string; lastName?: string; role?: UserRole }) => Promise<{
     error: Error | null;
     data: { user: User | null; session: Session | null };
   }>;
@@ -26,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -33,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (_, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setUserRole(session?.user?.user_metadata?.role as UserRole || null);
         setLoading(false);
       }
     );
@@ -41,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setUserRole(session?.user?.user_metadata?.role as UserRole || null);
       setLoading(false);
     });
 
@@ -55,6 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) throw error;
+      
+      // Set user role from metadata
+      if (data.user) {
+        setUserRole(data.user.user_metadata?.role as UserRole || null);
+      }
+      
       return { data: data.session, error: null };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sign in");
@@ -62,8 +73,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => {
+  const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; role?: UserRole }) => {
     try {
+      const role = metadata?.role || "Customer"; // Default role is Customer if not specified
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -72,11 +85,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name: metadata ? `${metadata.firstName || ''} ${metadata.lastName || ''}`.trim() : '',
             first_name: metadata?.firstName || '',
             last_name: metadata?.lastName || '',
+            role: role,
           },
         },
       });
       
       if (error) throw error;
+      
+      // Set user role
+      if (data.user) {
+        setUserRole(data.user.user_metadata?.role as UserRole || null);
+      }
+      
       return { data: { user: data.user, session: data.session }, error: null };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sign up");
@@ -87,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      setUserRole(null);
       toast.success("Signed out successfully");
     } catch (error) {
       toast.error("Error signing out");
@@ -114,6 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     user,
     loading,
+    userRole,
     signIn,
     signUp,
     signOut,
