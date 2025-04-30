@@ -38,7 +38,7 @@ export const PlacesAutocompleteInput = ({
     if (!window.google) {
       setIsLoading(true);
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=GOOGLE_API_KEY_PLACEHOLDER&libraries=places&callback=initializeAutocomplete`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA4fi6Kf6-HgLZkON89ASKUn-u2pdIEspE&libraries=places&callback=initializeAutocomplete`;
       script.async = true;
       script.defer = true;
       
