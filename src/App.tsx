@@ -45,6 +45,12 @@ import DriverCommentDetails from "./pages/DriverCommentDetails";
 // Quality Reviews pages
 import QualityReviews from "./pages/QualityReviews";
 
+// Airport and Meeting Point pages
+import Airports from "./pages/Airports";
+import AirportDetails from "./pages/AirportDetails";
+import NewMeetingPoint from "./pages/NewMeetingPoint";
+import EditMeetingPoint from "./pages/EditMeetingPoint";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -90,6 +96,12 @@ const App = () => (
             
             {/* Quality Reviews routes */}
             <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
+            
+            {/* Airport and Meeting Point routes */}
+            <Route path="/airports" element={<Layout><Airports /></Layout>} />
+            <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
+            <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
+            <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
