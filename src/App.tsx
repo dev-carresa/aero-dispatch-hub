@@ -18,6 +18,8 @@ import InvoiceDetails from "./pages/InvoiceDetails";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
 
 // Vehicle pages
 import Vehicles from "./pages/Vehicles";
@@ -81,6 +83,10 @@ const App = () => (
             <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
             <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
+            
+            {/* Profile pages */}
+            <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+            <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
             
             {/* Vehicle routes */}
             <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
