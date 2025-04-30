@@ -222,15 +222,7 @@ export default function ProfilePage() {
                         <Button variant="outline" size="sm">Change Password</Button>
                       </div>
                     </div>
-                    <div className="border-t p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">Two-Factor Authentication</h3>
-                          <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
-                        </div>
-                        <Button variant="outline" size="sm">Enable 2FA</Button>
-                      </div>
-                    </div>
+                    {/* Two-Factor Authentication section removed */}
                     <div className="border-t p-4">
                       <div className="flex items-center justify-between">
                         <div>

@@ -115,25 +115,7 @@ export const UserSecurityTab = ({ user }: UserSecurityTabProps) => {
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Add an extra layer of security to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Two-factor authentication is disabled</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Protect your account with two-factor authentication
-              </p>
-            </div>
-            <Button variant="outline">Enable</Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Two-Factor Authentication card removed */}
     </div>
   );
 };
