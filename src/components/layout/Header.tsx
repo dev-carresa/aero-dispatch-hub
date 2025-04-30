@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { 
   Bell, 
@@ -6,8 +5,7 @@ import {
   Settings, 
   LogOut, 
   Search,
-  Plus,
-  HelpCircle
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +24,6 @@ export function Header() {
     <div className="flex flex-col">
       <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-900">
         <div className="container mx-auto flex items-center">
-          <HelpCircle className="h-4 w-4 mr-2" />
           <p>Welcome to the new interface! Check out our updated features and improved navigation.</p>
         </div>
       </div>
