@@ -55,19 +55,31 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
     setIsSubmitting(true);
     setAuthError("");
     
-    const { error } = await signIn(values.email, values.password);
-    
-    setIsSubmitting(false);
-    
-    if (error) {
-      setAuthError(error.message);
-      onAuthError(error.message);
-      return;
+    try {
+      const { error } = await signIn(values.email, values.password);
+      
+      if (error) {
+        // Check if using demo credentials
+        if (values.email === demoEmail && values.password === demoPassword) {
+          setAuthError("Demo user not found. Please create this user in your Supabase project first.");
+        } else {
+          setAuthError(error.message);
+        }
+        onAuthError(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Redirect to the page the user was trying to access, or to the home page
+      const from = location.state?.from || "/";
+      navigate(from, { replace: true });
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setAuthError(errorMessage);
+      onAuthError(errorMessage);
+      setIsSubmitting(false);
     }
-    
-    // Redirect to the page the user was trying to access, or to the home page
-    const from = location.state?.from || "/";
-    navigate(from, { replace: true });
   };
 
   return (
@@ -127,25 +139,29 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
         </form>
       </Form>
 
-      {/* Demo credentials section */}
+      {/* Demo credentials section with improved explanation */}
       <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-900">
         <div className="flex items-start gap-2">
           <Info className="h-5 w-5 text-blue-500 mt-0.5" />
           <div>
             <h3 className="font-medium text-sm">Demo Credentials</h3>
-            <p className="text-xs text-muted-foreground mt-1">Use these credentials to test the app:</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              <strong>Important:</strong> You must create this user in your Supabase dashboard first:
+            </p>
             <div className="mt-2 text-xs">
               <p><strong>Email:</strong> {demoEmail}</p>
               <p><strong>Password:</strong> {demoPassword}</p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fillDemoCredentials} 
-              className="mt-2 text-xs h-7 w-full"
-            >
-              Fill Demo Credentials
-            </Button>
+            <div className="flex flex-col gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fillDemoCredentials} 
+                className="text-xs h-7 w-full"
+              >
+                Fill Demo Credentials
+              </Button>
+            </div>
           </div>
         </div>
       </div>
