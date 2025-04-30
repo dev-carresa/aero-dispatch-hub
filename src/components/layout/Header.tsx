@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { 
   Bell, 
@@ -18,8 +19,30 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
+  const { user, signOut } = useAuth();
+  
+  // Helper function to get initials from the user name
+  const getInitials = () => {
+    if (!user) return "?";
+    
+    if (user.user_metadata?.name) {
+      return user.user_metadata.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    
+    if (user.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    
+    return "?";
+  };
+
   return (
     <div className="flex flex-col">
       <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-900">
@@ -82,15 +105,19 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-medium text-sm">
-                  AD
+                  {getInitials()}
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
-                  <p className="text-xs leading-none text-muted-foreground">admin@example.com</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user_metadata?.name || user?.email || "User"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -107,7 +134,10 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-red-500 cursor-pointer">
+              <DropdownMenuItem 
+                className="flex items-center gap-2 text-red-500 cursor-pointer"
+                onClick={() => signOut()}
+              >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

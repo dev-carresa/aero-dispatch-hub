@@ -20,6 +20,11 @@ import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
+import AuthPage from "./pages/AuthPage";
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import LandingPage from "./pages/LandingPage";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Vehicle pages
 import Vehicles from "./pages/Vehicles";
@@ -66,70 +71,80 @@ const queryClient = new QueryClient();
 const App = () => (
   <ThemeProvider defaultTheme="light">
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout><Dashboard /></Layout>} />
-            <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
-            <Route path="/bookings/:id" element={<Layout><BookingDetails /></Layout>} />
-            <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
-            <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
-            <Route path="/users" element={<Layout><Users /></Layout>} />
-            <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
-            <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
-            <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
-            <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
-            <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
-            <Route path="/settings" element={<Layout><Settings /></Layout>} />
-            
-            {/* Profile pages */}
-            <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
-            <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
-            
-            {/* Vehicle routes */}
-            <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
-            <Route path="/vehicles/new" element={<Layout><NewVehicle /></Layout>} />
-            <Route path="/vehicles/:id/edit" element={<Layout><EditVehicle /></Layout>} />
-            
-            {/* Report routes */}
-            <Route path="/reports" element={<Layout><Reports /></Layout>} />
-            <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
-            <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
-            <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
-            
-            {/* Complaint routes */}
-            <Route path="/complaints" element={<Layout><Complaints /></Layout>} />
-            <Route path="/complaints/new" element={<Layout><NewComplaint /></Layout>} />
-            <Route path="/complaints/:id" element={<Layout><ComplaintDetails /></Layout>} />
-            
-            {/* Driver Comment routes */}
-            <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
-            <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
-            
-            {/* Quality Reviews routes */}
-            <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
-            
-            {/* Airport and Meeting Point routes */}
-            <Route path="/airports" element={<Layout><Airports /></Layout>} />
-            <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
-            <Route path="/airports/new" element={<Layout><NewAirport /></Layout>} />
-            <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
-            <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
-            <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
-            
-            {/* API Users routes */}
-            <Route path="/api-users" element={<Layout><ApiUsers /></Layout>} />
-            <Route path="/api-users/new" element={<Layout><NewApiUser /></Layout>} />
-            <Route path="/api-users/:id" element={<Layout><ApiUserDetails /></Layout>} />
-            <Route path="/api-users/:id/edit" element={<Layout><EditApiUser /></Layout>} />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/welcome" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+              
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Layout><Dashboard /></Layout>} />
+                <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
+                <Route path="/bookings/:id" element={<Layout><BookingDetails /></Layout>} />
+                <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
+                <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
+                <Route path="/users" element={<Layout><Users /></Layout>} />
+                <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
+                <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
+                <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
+                <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
+                <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
+                <Route path="/settings" element={<Layout><Settings /></Layout>} />
+                
+                {/* Profile pages */}
+                <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+                <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
+                
+                {/* Vehicle routes */}
+                <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
+                <Route path="/vehicles/new" element={<Layout><NewVehicle /></Layout>} />
+                <Route path="/vehicles/:id/edit" element={<Layout><EditVehicle /></Layout>} />
+                
+                {/* Report routes */}
+                <Route path="/reports" element={<Layout><Reports /></Layout>} />
+                <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
+                <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
+                <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
+                
+                {/* Complaint routes */}
+                <Route path="/complaints" element={<Layout><Complaints /></Layout>} />
+                <Route path="/complaints/new" element={<Layout><NewComplaint /></Layout>} />
+                <Route path="/complaints/:id" element={<Layout><ComplaintDetails /></Layout>} />
+                
+                {/* Driver Comment routes */}
+                <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
+                <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
+                
+                {/* Quality Reviews routes */}
+                <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
+                
+                {/* Airport and Meeting Point routes */}
+                <Route path="/airports" element={<Layout><Airports /></Layout>} />
+                <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
+                <Route path="/airports/new" element={<Layout><NewAirport /></Layout>} />
+                <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
+                <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
+                <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
+                
+                {/* API Users routes */}
+                <Route path="/api-users" element={<Layout><ApiUsers /></Layout>} />
+                <Route path="/api-users/new" element={<Layout><NewApiUser /></Layout>} />
+                <Route path="/api-users/:id" element={<Layout><ApiUserDetails /></Layout>} />
+                <Route path="/api-users/:id/edit" element={<Layout><EditApiUser /></Layout>} />
+              </Route>
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
 );
