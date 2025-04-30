@@ -15,7 +15,7 @@ interface PlacesAutocompleteInputProps {
 
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
     initializeAutocomplete: () => void;
   }
 }
