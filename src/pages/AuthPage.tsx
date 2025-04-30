@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,32 +18,18 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
-// Form schema for signup with password confirmation
-const signupSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters" }).optional(),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }).optional(),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
 // Reset password schema
 const resetPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-type SignupFormValues = z.infer<typeof signupSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, resetPassword, user } = useAuth();
-  const [activeTab, setActiveTab] = useState("login");
+  const { signIn, resetPassword, user } = useAuth();
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,18 +60,6 @@ export default function AuthPage() {
     },
   });
 
-  // Signup form
-  const signupForm = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
   // Reset password form
   const resetPasswordForm = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -112,27 +85,6 @@ export default function AuthPage() {
     // Redirect to the page the user was trying to access, or to the home page
     const from = location.state?.from || "/";
     navigate(from, { replace: true });
-  };
-
-  // Handle signup submission
-  const handleSignup = async (values: SignupFormValues) => {
-    setIsSubmitting(true);
-    setAuthError("");
-    
-    const { error } = await signUp(values.email, values.password, {
-      firstName: values.firstName,
-      lastName: values.lastName,
-    });
-    
-    setIsSubmitting(false);
-    
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    
-    // Show success message for new signup
-    setActiveTab("login");
   };
 
   // Handle reset password submission
@@ -161,219 +113,102 @@ export default function AuthPage() {
           <p className="text-muted-foreground">
             {showResetPassword 
               ? "Enter your email to reset your password"
-              : activeTab === "login" 
-                ? "Sign in to your account" 
-                : "Create a new account"}
+              : "Sign in to your account"}
           </p>
         </div>
 
         {!showResetPassword ? (
           <Card>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
+            {authError && (
+              <Alert variant="destructive" className="mb-4 mx-6 mt-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
 
-              {authError && (
-                <Alert variant="destructive" className="mb-4 mx-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{authError}</AlertDescription>
-                </Alert>
-              )}
+            <CardContent className="pt-6">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="example@email.com" 
+                            type="email" 
+                            autoComplete="email"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="••••••••" 
+                            type="password"
+                            autoComplete="current-password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              </Form>
 
-              <TabsContent value="login">
-                <CardContent>
-                  <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                      <FormField
-                        control={loginForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="example@email.com" 
-                                type="email" 
-                                autoComplete="email"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={loginForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="••••••••" 
-                                type="password"
-                                autoComplete="current-password"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Signing in..." : "Sign In"}
-                      </Button>
-                    </form>
-                  </Form>
-
-                  {/* Demo credentials section */}
-                  <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-900">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-5 w-5 text-blue-500 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium text-sm">Demo Credentials</h3>
-                        <p className="text-xs text-muted-foreground mt-1">Use these credentials to test the app:</p>
-                        <div className="mt-2 text-xs">
-                          <p><strong>Email:</strong> {demoEmail}</p>
-                          <p><strong>Password:</strong> {demoPassword}</p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={fillDemoCredentials} 
-                          className="mt-2 text-xs h-7 w-full"
-                        >
-                          Fill Demo Credentials
-                        </Button>
-                      </div>
+              {/* Demo credentials section */}
+              <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-900">
+                <div className="flex items-start gap-2">
+                  <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-sm">Demo Credentials</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Use these credentials to test the app:</p>
+                    <div className="mt-2 text-xs">
+                      <p><strong>Email:</strong> {demoEmail}</p>
+                      <p><strong>Password:</strong> {demoPassword}</p>
                     </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <div className="text-center w-full">
                     <Button 
-                      variant="link" 
-                      onClick={() => setShowResetPassword(true)}
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      variant="outline" 
+                      size="sm" 
+                      onClick={fillDemoCredentials} 
+                      className="mt-2 text-xs h-7 w-full"
                     >
-                      Forgot your password?
+                      Fill Demo Credentials
                     </Button>
                   </div>
-                </CardFooter>
-              </TabsContent>
-
-              <TabsContent value="register">
-                <CardContent>
-                  <Form {...signupForm}>
-                    <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={signupForm.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="John"
-                                  autoComplete="given-name"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signupForm.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Doe" 
-                                  autoComplete="family-name"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={signupForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="example@email.com" 
-                                type="email"
-                                autoComplete="email"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signupForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="••••••••" 
-                                type="password"
-                                autoComplete="new-password"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signupForm.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="••••••••" 
-                                type="password"
-                                autoComplete="new-password"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Signing up..." : "Sign Up"}
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </TabsContent>
-            </Tabs>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <div className="text-center w-full">
+                <Button 
+                  variant="link" 
+                  onClick={() => setShowResetPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  Forgot your password?
+                </Button>
+              </div>
+            </CardFooter>
           </Card>
         ) : (
           <Card>
