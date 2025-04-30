@@ -1,18 +1,9 @@
 
-import { useState, useRef, forwardRef } from 'react';
+import { useState, useRef, forwardRef, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { usePlacesAutocomplete } from './hooks/usePlacesAutoComplete';
 import { PredictionsList } from './components/PredictionsList';
 import { SearchInputWithClear } from './components/SearchInputWithClear';
-
-interface PlacePrediction {
-  description: string;
-  place_id: string;
-  structured_formatting: {
-    main_text: string;
-    secondary_text: string;
-  };
-}
 
 interface CustomPlacesAutocompleteProps {
   onPlaceSelect: (address: string, placeId?: string) => void;
@@ -40,30 +31,39 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
       onPlaceSelect 
     });
 
-    // Handle input change
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle input change with useCallback
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setInputValue(value);
       
       if (onChange) {
         onChange(value);
       }
-    };
+    }, [onChange]);
 
-    // Clear input
-    const clearInput = () => {
+    // Clear input with useCallback
+    const clearInput = useCallback(() => {
       setInputValue('');
       if (onChange) {
         onChange('');
       }
-    };
+    }, [onChange]);
 
-    // Handle focus event
-    const handleFocus = () => {
+    // Handle focus event with useCallback
+    const handleFocus = useCallback(() => {
       if (inputValue.length > 2 && predictions.length > 0) {
         setShowDropdown(true);
       }
-    };
+    }, [inputValue, predictions.length, setShowDropdown]);
+
+    // Handle place selection wrapper
+    const onSelectPlace = useCallback((prediction: any) => {
+      handlePlaceSelect(prediction);
+      // Prevent field focus loss after selection
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    }, [handlePlaceSelect]);
 
     return (
       <div className="relative">
@@ -91,7 +91,7 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
         {showDropdown && predictions.length > 0 && (
           <PredictionsList 
             predictions={predictions}
-            onSelect={handlePlaceSelect}
+            onSelect={onSelectPlace}
             inputRef={inputRef}
             setShowDropdown={setShowDropdown}
           />
@@ -103,4 +103,5 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
 
 CustomPlacesAutocomplete.displayName = "CustomPlacesAutocomplete";
 
-export default CustomPlacesAutocomplete;
+// Use memo to prevent unnecessary re-renders
+export default memo(CustomPlacesAutocomplete);

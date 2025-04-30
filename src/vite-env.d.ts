@@ -111,3 +111,7 @@ declare namespace google {
   }
 }
 
+// Add a global callback function for Google Maps API
+interface Window {
+  initializeAutocomplete?: () => void;
+}
