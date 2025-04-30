@@ -48,6 +48,8 @@ import QualityReviews from "./pages/QualityReviews";
 // Airport and Meeting Point pages
 import Airports from "./pages/Airports";
 import AirportDetails from "./pages/AirportDetails";
+import NewAirport from "./pages/NewAirport";
+import EditAirport from "./pages/EditAirport";
 import NewMeetingPoint from "./pages/NewMeetingPoint";
 import EditMeetingPoint from "./pages/EditMeetingPoint";
 
@@ -100,6 +102,8 @@ const App = () => (
             {/* Airport and Meeting Point routes */}
             <Route path="/airports" element={<Layout><Airports /></Layout>} />
             <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
+            <Route path="/airports/new" element={<Layout><NewAirport /></Layout>} />
+            <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
             <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
             <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
             

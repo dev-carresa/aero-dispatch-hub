@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MeetingPointsList } from "@/components/airports/meeting-points/MeetingPointsList";
 import { sampleAirports } from "@/data/sampleAirports";
@@ -112,12 +111,20 @@ export default function AirportDetails() {
             </div>
           </div>
         </div>
-        <Button asChild className="shadow-sm">
-          <Link to={`/airports/meeting-points/new?airportId=${airport.id}`}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Meeting Point
-          </Link>
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" asChild className="shadow-sm">
+            <Link to={`/airports/${airport.id}/edit`}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Airport
+            </Link>
+          </Button>
+          <Button asChild className="shadow-sm">
+            <Link to={`/airports/meeting-points/new?airportId=${airport.id}`}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Meeting Point
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <AirportBreadcrumbs airport={airport} />
