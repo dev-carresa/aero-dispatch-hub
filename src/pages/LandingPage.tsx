@@ -1,22 +1,20 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
-
+  const {
+    user,
+    loading
+  } = useAuth();
   useEffect(() => {
     if (!loading && user) {
       // If already logged in, redirect to dashboard
       navigate("/");
     }
   }, [user, loading, navigate]);
-
-  return (
-    <div className="flex flex-col min-h-screen bg-white">
+  return <div className="flex flex-col min-h-screen bg-white">
       {/* Navigation */}
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="font-bold text-xl text-primary">TransportHub</div>
@@ -31,7 +29,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero section */}
-      <section className="flex flex-col items-center justify-center flex-grow px-6 pb-12 text-center">
+      <section className="flex flex-col items-center justify-center flex-grow px-6 pb-12 text-center mx-0 py-[48px]">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           All-in-one Transport Management System
         </h1>
@@ -103,6 +101,5 @@ export default function LandingPage() {
           <p>© 2025 TransportHub. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
