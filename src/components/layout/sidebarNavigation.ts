@@ -10,13 +10,15 @@ import {
   MessageSquare,
   MessageCircle,
   ThumbsUp,
-  Plane
+  Plane,
+  Key
 } from 'lucide-react';
 
 export const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Bookings', href: '/bookings', icon: CalendarCheck },
   { name: 'Users', href: '/users', icon: Users },
+  { name: 'API Users', href: '/api-users', icon: Key },
   { name: 'Vehicles', href: '/vehicles', icon: Car },
   { name: 'Meeting Points', href: '/airports', icon: Plane },
   { name: 'Reports', href: '/reports', icon: BarChart, 

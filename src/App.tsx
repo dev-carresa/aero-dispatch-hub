@@ -53,6 +53,12 @@ import EditAirport from "./pages/EditAirport";
 import NewMeetingPoint from "./pages/NewMeetingPoint";
 import EditMeetingPoint from "./pages/EditMeetingPoint";
 
+// API Users pages
+import ApiUsers from "./pages/ApiUsers";
+import NewApiUser from "./pages/NewApiUser";
+import EditApiUser from "./pages/EditApiUser";
+import ApiUserDetails from "./pages/ApiUserDetails";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -106,6 +112,12 @@ const App = () => (
             <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
             <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
             <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
+            
+            {/* API Users routes */}
+            <Route path="/api-users" element={<Layout><ApiUsers /></Layout>} />
+            <Route path="/api-users/new" element={<Layout><NewApiUser /></Layout>} />
+            <Route path="/api-users/:id" element={<Layout><ApiUserDetails /></Layout>} />
+            <Route path="/api-users/:id/edit" element={<Layout><EditApiUser /></Layout>} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
