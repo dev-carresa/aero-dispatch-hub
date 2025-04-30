@@ -5,15 +5,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+// Define proper TypeScript interfaces for our data structures
+interface Permission {
+  [key: string]: boolean;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  permissions: Permission;
+  isBuiltIn: boolean;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  initials: string;
+  color: string;
+  role: string;
+}
+
 export function PermissionSettings() {
-  const [roles, setRoles] = useState([
+  const [roles, setRoles] = useState<Role[]>([
     {
       id: "admin",
       name: "Administrator",
       permissions: {
         fullAccess: true,
         manageUsers: true,
-        modifySettings: true
+        modifySettings: true,
+        manageBookings: true,
+        viewReports: true,
+        viewBookings: true,
+        editBookings: true,
+        assignDrivers: true
       },
       isBuiltIn: true
     },
@@ -22,10 +48,13 @@ export function PermissionSettings() {
       name: "Manager",
       permissions: {
         fullAccess: false,
-        manageBookings: true,
-        modifySettings: false,
         manageUsers: false,
-        viewReports: true
+        modifySettings: false,
+        manageBookings: true,
+        viewReports: true,
+        viewBookings: true,
+        editBookings: true,
+        assignDrivers: true
       },
       isBuiltIn: false
     },
@@ -34,10 +63,13 @@ export function PermissionSettings() {
       name: "Dispatcher",
       permissions: {
         fullAccess: false,
+        manageUsers: false,
+        modifySettings: false,
+        manageBookings: false,
+        viewReports: false,
         viewBookings: true,
         editBookings: true,
-        assignDrivers: true,
-        viewReports: false
+        assignDrivers: true
       },
       isBuiltIn: false
     },
@@ -46,16 +78,19 @@ export function PermissionSettings() {
       name: "Fleet",
       permissions: {
         fullAccess: false,
-        viewBookings: true,
-        assignDrivers: true,
+        manageUsers: false,
+        modifySettings: false,
+        manageBookings: false,
         viewReports: true,
-        editBookings: false
+        viewBookings: true,
+        editBookings: false,
+        assignDrivers: true
       },
       isBuiltIn: false
     }
   ]);
 
-  const [users, setUsers] = useState([
+  const [users, setUsers] = useState<User[]>([
     {
       id: 1,
       name: "Admin User",
@@ -213,3 +248,4 @@ export function PermissionSettings() {
     </div>
   );
 }
+
