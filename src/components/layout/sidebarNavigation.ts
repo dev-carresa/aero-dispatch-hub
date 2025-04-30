@@ -18,12 +18,7 @@ export const navigation = [
   { name: 'Bookings', href: '/bookings', icon: CalendarCheck },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Vehicles', href: '/vehicles', icon: Car },
-  { name: 'Airports', href: '/airports', icon: Plane, 
-    children: [
-      { name: 'All Airports', href: '/airports' },
-      { name: 'Meeting Points', href: '/airports/meeting-points' },
-    ]
-  },
+  { name: 'Meeting Points', href: '/airports', icon: Plane },
   { name: 'Reports', href: '/reports', icon: BarChart, 
     children: [
       { name: 'Overview', href: '/reports' },
