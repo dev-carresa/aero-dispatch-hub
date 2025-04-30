@@ -9,13 +9,918 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      airports: {
+        Row: {
+          city: string
+          code: string
+          country: string
+          created_at: string
+          id: number
+          image_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          code: string
+          country: string
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          code?: string
+          country?: string
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      api_users: {
+        Row: {
+          api_key: string
+          company: string | null
+          country: string
+          created_at: string
+          email: string
+          id: number
+          last_used: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          secret_key: string | null
+          service_type: string
+          status: string
+        }
+        Insert: {
+          api_key: string
+          company?: string | null
+          country: string
+          created_at?: string
+          email: string
+          id?: number
+          last_used?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          secret_key?: string | null
+          service_type: string
+          status: string
+        }
+        Update: {
+          api_key?: string
+          company?: string | null
+          country?: string
+          created_at?: string
+          email?: string
+          id?: number
+          last_used?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          secret_key?: string | null
+          service_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      attachments: {
+        Row: {
+          complaint_id: string | null
+          complaint_reply_id: string | null
+          created_at: string
+          id: string
+          name: string
+          size: number
+          type: string
+          url: string
+        }
+        Insert: {
+          complaint_id?: string | null
+          complaint_reply_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          size: number
+          type: string
+          url: string
+        }
+        Update: {
+          complaint_id?: string | null
+          complaint_reply_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          size?: number
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_complaint_reply_id_fkey"
+            columns: ["complaint_reply_id"]
+            isOneToOne: false
+            referencedRelation: "complaint_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          created_at: string
+          customer: string
+          customer_id: string | null
+          date: string
+          destination: string
+          driver: string
+          driver_id: string | null
+          fleet: string | null
+          fleet_id: string | null
+          flight_number: string | null
+          id: string
+          origin: string
+          price: string
+          reference: string | null
+          service_type: string | null
+          source: string | null
+          status: string
+          time: string
+          updated_at: string
+          vehicle: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer: string
+          customer_id?: string | null
+          date: string
+          destination: string
+          driver: string
+          driver_id?: string | null
+          fleet?: string | null
+          fleet_id?: string | null
+          flight_number?: string | null
+          id?: string
+          origin: string
+          price: string
+          reference?: string | null
+          service_type?: string | null
+          source?: string | null
+          status: string
+          time: string
+          updated_at?: string
+          vehicle: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer?: string
+          customer_id?: string | null
+          date?: string
+          destination?: string
+          driver?: string
+          driver_id?: string | null
+          fleet?: string | null
+          fleet_id?: string | null
+          flight_number?: string | null
+          id?: string
+          origin?: string
+          price?: string
+          reference?: string | null
+          service_type?: string | null
+          source?: string | null
+          status?: string
+          time?: string
+          updated_at?: string
+          vehicle?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_fleet_id_fkey"
+            columns: ["fleet_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      complaint_replies: {
+        Row: {
+          complaint_id: string
+          id: string
+          message: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          timestamp: string
+        }
+        Insert: {
+          complaint_id: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          timestamp?: string
+        }
+        Update: {
+          complaint_id?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_name?: string
+          sender_role?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_replies_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaint_replies_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      complaints: {
+        Row: {
+          booking_reference: string
+          created_at: string
+          fleet_id: string
+          fleet_name: string
+          id: string
+          message: string
+          reference: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          booking_reference: string
+          created_at?: string
+          fleet_id: string
+          fleet_name: string
+          id?: string
+          message: string
+          reference: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          booking_reference?: string
+          created_at?: string
+          fleet_id?: string
+          fleet_name?: string
+          id?: string
+          message?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_fleet_id_fkey"
+            columns: ["fleet_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_comments: {
+        Row: {
+          booking_reference: string | null
+          comment: string
+          created_at: string
+          driver_id: number
+          driver_name: string
+          id: string
+          status: string
+        }
+        Insert: {
+          booking_reference?: string | null
+          comment: string
+          created_at?: string
+          driver_id: number
+          driver_name: string
+          id?: string
+          status: string
+        }
+        Update: {
+          booking_reference?: string | null
+          comment?: string
+          created_at?: string
+          driver_id?: number
+          driver_name?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          due_date: string
+          fleet_id: string | null
+          fleet_name: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          reference: string
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name: string
+          due_date: string
+          fleet_id?: string | null
+          fleet_name?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          reference: string
+          status: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          due_date?: string
+          fleet_id?: string | null
+          fleet_name?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          reference?: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_fleet_id_fkey"
+            columns: ["fleet_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_points: {
+        Row: {
+          airport_id: number
+          created_at: string
+          fleet_id: string | null
+          fleet_name: string | null
+          id: number
+          image_url: string
+          latitude: number
+          longitude: number
+          pickup_instructions: string
+          terminal: string
+          updated_at: string
+        }
+        Insert: {
+          airport_id: number
+          created_at?: string
+          fleet_id?: string | null
+          fleet_name?: string | null
+          id?: number
+          image_url: string
+          latitude: number
+          longitude: number
+          pickup_instructions: string
+          terminal: string
+          updated_at?: string
+        }
+        Update: {
+          airport_id?: number
+          created_at?: string
+          fleet_id?: string | null
+          fleet_name?: string | null
+          id?: number
+          image_url?: string
+          latitude?: number
+          longitude?: number
+          pickup_instructions?: string
+          terminal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_points_airport_id_fkey"
+            columns: ["airport_id"]
+            isOneToOne: false
+            referencedRelation: "airports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_points_fleet_id_fkey"
+            columns: ["fleet_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          date_of_birth: string | null
+          driver_availability: string | null
+          email: string
+          first_name: string | null
+          fleet_id: string | null
+          id: string
+          image_url: string | null
+          last_active: string | null
+          last_name: string | null
+          name: string
+          nationality: string | null
+          phone: string | null
+          role: string
+          status: string
+          updated_at: string
+          vehicle_type: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          driver_availability?: string | null
+          email: string
+          first_name?: string | null
+          fleet_id?: string | null
+          id: string
+          image_url?: string | null
+          last_active?: string | null
+          last_name?: string | null
+          name: string
+          nationality?: string | null
+          phone?: string | null
+          role: string
+          status: string
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          driver_availability?: string | null
+          email?: string
+          first_name?: string | null
+          fleet_id?: string | null
+          id?: string
+          image_url?: string | null
+          last_active?: string | null
+          last_name?: string | null
+          name?: string
+          nationality?: string | null
+          phone?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Relationships: []
+      }
+      quality_reviews: {
+        Row: {
+          booking_reference: string
+          customer_name: string | null
+          driver_id: number
+          driver_name: string
+          fleet_id: number
+          fleet_name: string
+          id: string
+          message: string
+          review_date: string
+          score: string
+          star_rating: number
+        }
+        Insert: {
+          booking_reference: string
+          customer_name?: string | null
+          driver_id: number
+          driver_name: string
+          fleet_id: number
+          fleet_name: string
+          id?: string
+          message: string
+          review_date?: string
+          score: string
+          star_rating: number
+        }
+        Update: {
+          booking_reference?: string
+          customer_name?: string | null
+          driver_id?: number
+          driver_name?: string
+          fleet_id?: number
+          fleet_name?: string
+          id?: string
+          message?: string
+          review_date?: string
+          score?: string
+          star_rating?: number
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: number
+          filters: Json
+          id: number
+          name: string
+          results: Json | null
+          status: string
+          total_bookings: number | null
+          total_income: number | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: number
+          filters: Json
+          id?: number
+          name: string
+          results?: Json | null
+          status: string
+          total_bookings?: number | null
+          total_income?: number | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: number
+          filters?: Json
+          id?: number
+          name?: string
+          results?: Json | null
+          status?: string
+          total_bookings?: number | null
+          total_income?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tracking_history: {
+        Row: {
+          booking_id: string
+          coords: Json
+          id: string
+          location: string
+          notes: string | null
+          status: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_id: string
+          coords: Json
+          id?: string
+          location: string
+          notes?: string | null
+          status: string
+          timestamp: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string
+          coords?: Json
+          id?: string
+          location?: string
+          notes?: string | null
+          status?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_history_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracking_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference: string | null
+          status: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method: string
+          reference?: string | null
+          status: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          assigned_driver_id: string | null
+          capacity: number
+          color: string
+          created_at: string
+          fleet_id: string | null
+          fuel_type: string
+          id: string
+          image_url: string | null
+          insurance_expiry: string | null
+          last_maintenance: string | null
+          license_plate: string
+          make: string
+          mileage: number
+          model: string
+          next_maintenance: string | null
+          notes: string | null
+          registration_number: string | null
+          status: string
+          technical_control_expiry: string | null
+          type: string
+          updated_at: string
+          vin: string
+          year: number
+        }
+        Insert: {
+          assigned_driver_id?: string | null
+          capacity: number
+          color: string
+          created_at?: string
+          fleet_id?: string | null
+          fuel_type: string
+          id?: string
+          image_url?: string | null
+          insurance_expiry?: string | null
+          last_maintenance?: string | null
+          license_plate: string
+          make: string
+          mileage: number
+          model: string
+          next_maintenance?: string | null
+          notes?: string | null
+          registration_number?: string | null
+          status: string
+          technical_control_expiry?: string | null
+          type: string
+          updated_at?: string
+          vin: string
+          year: number
+        }
+        Update: {
+          assigned_driver_id?: string | null
+          capacity?: number
+          color?: string
+          created_at?: string
+          fleet_id?: string | null
+          fuel_type?: string
+          id?: string
+          image_url?: string | null
+          insurance_expiry?: string | null
+          last_maintenance?: string | null
+          license_plate?: string
+          make?: string
+          mileage?: number
+          model?: string
+          next_maintenance?: string | null
+          notes?: string | null
+          registration_number?: string | null
+          status?: string
+          technical_control_expiry?: string | null
+          type?: string
+          updated_at?: string
+          vin?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_fleet_id_fkey"
+            columns: ["fleet_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_profile_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_dispatcher: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_driver: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_fleet: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

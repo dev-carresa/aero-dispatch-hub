@@ -17,25 +17,57 @@ export default function ProfilePage() {
     const fetchUserProfile = async () => {
       setIsLoading(true);
       try {
-        // In a real app with Supabase, you would fetch the actual user data
-        // For now, we'll use sample data
-        const mockUser = {
-          id: 4,
-          name: "Admin User",
-          firstName: "Admin",
-          lastName: "User",
-          email: "admin@example.com",
-          role: "Admin" as const,
-          status: "active" as const,
-          lastActive: "Just now",
-          imageUrl: "",
-          phone: "+1 (555) 123-4567",
-          nationality: "American",
-          dateOfBirth: "1990-01-01",
-          countryCode: "US"
-        };
+        // Get the current authenticated user
+        const { data: authData, error: authError } = await supabase.auth.getUser();
         
-        setUser(mockUser);
+        if (authError) throw authError;
+        
+        if (authData?.user) {
+          // Fetch the user profile from the profiles table
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+            
+          if (profileError) throw profileError;
+          
+          // Map the profile data to our User type
+          setUser({
+            id: profileData.id,
+            name: profileData.name,
+            firstName: profileData.first_name,
+            lastName: profileData.last_name,
+            email: profileData.email,
+            role: profileData.role,
+            status: profileData.status,
+            lastActive: profileData.last_active || "Just now",
+            imageUrl: profileData.image_url || "",
+            phone: profileData.phone || "",
+            nationality: profileData.nationality || "",
+            dateOfBirth: profileData.date_of_birth || "",
+            countryCode: profileData.country_code || "US"
+          });
+        } else {
+          // Fallback to mock data if no authenticated user
+          const mockUser = {
+            id: "4",
+            name: "Admin User",
+            firstName: "Admin",
+            lastName: "User",
+            email: "admin@example.com",
+            role: "Admin" as const,
+            status: "active" as const,
+            lastActive: "Just now",
+            imageUrl: "",
+            phone: "+1 (555) 123-4567",
+            nationality: "American",
+            dateOfBirth: "1990-01-01",
+            countryCode: "US"
+          };
+          
+          setUser(mockUser);
+        }
       } catch (error) {
         toast.error("Failed to load user profile");
         console.error(error);
