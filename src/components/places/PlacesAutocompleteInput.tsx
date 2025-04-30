@@ -13,12 +13,8 @@ interface PlacesAutocompleteInputProps {
   required?: boolean;
 }
 
-declare global {
-  interface Window {
-    google: typeof google;
-    initializeAutocomplete: () => void;
-  }
-}
+// Remove the conflicting declaration
+// Instead of redeclaring, use the global declaration from vite-env.d.ts
 
 export const PlacesAutocompleteInput = ({
   onPlaceSelect,
