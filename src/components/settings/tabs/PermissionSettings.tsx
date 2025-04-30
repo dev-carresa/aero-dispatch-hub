@@ -23,6 +23,8 @@ import { DatabaseInitializer } from "../DatabaseInitializer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { fetchPermissions, fetchRolePermissions, fetchRoles } from "@/lib/db/permissionsService";
+import { DbRole, RoleWithPermissions } from "@/lib/types/permissions";
 
 // Group permissions by category for better organization
 const permissionCategories = {
@@ -67,43 +69,36 @@ export function PermissionSettings() {
   const [dbMode, setDbMode] = useState<boolean>(true);
   const [dbError, setDbError] = useState<string | null>(null);
 
-  // Load roles and permissions using RPC functions
+  // Load roles and permissions using edge functions
   useEffect(() => {
     const fetchRolesAndPermissions = async () => {
       try {
         setIsLoading(true);
         
-        // Check if DB functions are available
-        const { data: checkData, error: checkError } = await supabase.rpc('get_all_roles');
+        // Try to fetch roles from the database
+        let rolesData: DbRole[] = [];
+        let rolePermissionsData: { role_id: string; permissions: Permission[] }[] = [];
         
-        if (checkError) {
-          // We're in memory mode - initialize with basic roles
+        try {
+          rolesData = await fetchRoles();
+          rolePermissionsData = await fetchRolePermissions();
+          setDbMode(true);
+        } catch (error) {
           console.warn('Database functions not available, using memory mode');
           setDbMode(false);
           initializeMemoryMode();
           return;
         }
 
-        // Fetch roles using RPC
-        const { data: rolesData, error: rolesError } = await supabase.rpc('get_all_roles');
-          
-        if (rolesError) {
-          console.error('Error fetching roles:', rolesError);
-          setDbError("Failed to load roles. Please initialize the database.");
-          throw rolesError;
+        if (!rolesData || !rolePermissionsData) {
+          console.warn('Invalid data returned, using memory mode');
+          setDbMode(false);
+          initializeMemoryMode();
+          return;
         }
-        
-        // Fetch role permissions mapping using RPC
-        const { data: rolePermissionsData, error: permissionsError } = await supabase.rpc('get_all_role_permissions');
           
-        if (permissionsError) {
-          console.error('Error fetching permissions:', permissionsError);
-          setDbError("Failed to load permissions. Please initialize the database.");
-          throw permissionsError;
-        }
-        
         // Transform the data for the UI
-        const transformedRoles: SimpleRole[] = rolesData.map((role: any) => {
+        const transformedRoles: SimpleRole[] = rolesData.map((role: DbRole) => {
           // Create an object with all permissions set to false by default
           const allPermissions: Record<string, boolean> = {};
           
@@ -112,11 +107,15 @@ export function PermissionSettings() {
             allPermissions[perm] = false;
           });
           
+          // Find permissions for this role
+          const rolePerms = rolePermissionsData.find(rp => rp.role_id === role.id);
+          
           // Set the permissions this role has to true
-          const permissions = rolePermissionsData.filter((rp: any) => rp.role_id === role.id);
-          permissions.forEach((p: any) => {
-            allPermissions[p.permission_name] = true;
-          });
+          if (rolePerms && Array.isArray(rolePerms.permissions)) {
+            rolePerms.permissions.forEach((permName: Permission) => {
+              allPermissions[permName] = true;
+            });
+          }
           
           return {
             id: role.id,
@@ -158,7 +157,7 @@ export function PermissionSettings() {
         name: 'Driver',
         isBuiltIn: true,
         permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
-          acc[perm] = ["dashboard:view", "bookings:view", "driver_comments:create", "complaints:view", "complaints:create"].includes(perm);
+          acc[perm] = ["dashboard:view", "bookings:view", "driver_comments:create", "complaints:view", "complaints:create"].includes(perm as Permission);
           return acc;
         }, {} as Record<string, boolean>)
       },
@@ -170,7 +169,7 @@ export function PermissionSettings() {
           acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", "bookings:edit", 
                      "vehicles:view", "vehicles:create", "vehicles:edit", "users:view", 
                      "complaints:view", "complaints:respond", "driver_comments:view",
-                     "quality_reviews:view", "reports:view", "invoices:view"].includes(perm);
+                     "quality_reviews:view", "reports:view", "invoices:view"].includes(perm as Permission);
           return acc;
         }, {} as Record<string, boolean>)
       },
@@ -181,7 +180,7 @@ export function PermissionSettings() {
         permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
           acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", "bookings:edit", 
                      "bookings:assign_driver", "users:view", "vehicles:view", 
-                     "complaints:view", "complaints:respond"].includes(perm);
+                     "complaints:view", "complaints:respond"].includes(perm as Permission);
           return acc;
         }, {} as Record<string, boolean>)
       },
@@ -191,7 +190,7 @@ export function PermissionSettings() {
         isBuiltIn: true,
         permissions: Object.values(permissionCategories).flat().reduce((acc, perm) => {
           acc[perm] = ["dashboard:view", "bookings:view", "bookings:create", 
-                     "complaints:view", "complaints:create"].includes(perm);
+                     "complaints:view", "complaints:create"].includes(perm as Permission);
           return acc;
         }, {} as Record<string, boolean>)
       }
@@ -242,20 +241,24 @@ export function PermissionSettings() {
       
       const usersData = profilesData.map((profile) => {
         const initials = profile.name
-          .split(' ')
-          .map((n: string) => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
+          ? profile.name
+              .split(' ')
+              .map((n: string) => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)
+          : 'XX';
           
         // Generate a consistent color based on the user id
         const colors = ['blue', 'green', 'purple', 'red', 'amber', 'pink', 'indigo', 'cyan'];
-        const colorIndex = Math.abs(profile.id.charCodeAt(0) % colors.length);
+        const colorIndex = profile.id 
+          ? Math.abs(profile.id.charCodeAt(0) % colors.length)
+          : 0;
         
         return {
           id: profile.id,
-          name: profile.name,
-          email: profile.email,
+          name: profile.name || 'Unknown User',
+          email: profile.email || 'No email',
           initials,
           color: colors[colorIndex],
           role: profile.role ? profile.role.toLowerCase() : 'customer'
@@ -303,16 +306,14 @@ export function PermissionSettings() {
     try {
       if (dbMode) {
         if (value) {
-          // Add permission to role using RPC
-          await supabase.rpc('add_permission_to_role_by_name', { 
-            p_role_id: roleId, 
-            p_permission_name: permissionKey 
+          // Add permission to role using edge function
+          await supabase.functions.invoke('add_permission_to_role_by_name', { 
+            body: { p_role_id: roleId, p_permission_name: permissionKey }
           });
         } else {
-          // Remove permission from role using RPC
-          await supabase.rpc('remove_permission_from_role_by_name', { 
-            p_role_id: roleId, 
-            p_permission_name: permissionKey 
+          // Remove permission from role using edge function
+          await supabase.functions.invoke('remove_permission_from_role_by_name', { 
+            body: { p_role_id: roleId, p_permission_name: permissionKey }
           });
         }
       }
@@ -339,13 +340,10 @@ export function PermissionSettings() {
   const handleUserRoleChange = async (userId: string, newRoleValue: string) => {
     try {
       if (dbMode) {
-        // Update user role using RPC
-        const { error } = await supabase.rpc('update_user_role_by_name', { 
-          p_user_id: userId, 
-          p_role_name: newRoleValue.charAt(0).toUpperCase() + newRoleValue.slice(1)
+        // Update user role using edge function
+        await supabase.functions.invoke('update_user_role_by_name', { 
+          body: { p_user_id: userId, p_role_name: newRoleValue.charAt(0).toUpperCase() + newRoleValue.slice(1) }
         });
-        
-        if (error) throw error;
       }
       
       // Update UI state
@@ -380,10 +378,10 @@ export function PermissionSettings() {
       }
       
       if (dbMode) {
-        // Delete role using RPC
-        const { error } = await supabase.rpc('delete_role', { p_role_id: roleId });
-        
-        if (error) throw error;
+        // Delete role using edge function
+        await supabase.functions.invoke('delete_role', { 
+          body: { p_role_id: roleId }
+        });
       }
       
       // Update UI state
@@ -411,14 +409,12 @@ export function PermissionSettings() {
       let newRoleId = "";
       
       if (dbMode) {
-        // Create role using RPC
-        const { data, error } = await supabase.rpc('create_role', {
-          p_name: newRoleName,
-          p_description: `Custom role: ${newRoleName}`
+        // Create role using edge function
+        const { data } = await supabase.functions.invoke('create_role', {
+          body: { p_name: newRoleName, p_description: `Custom role: ${newRoleName}` }
         });
         
-        if (error) throw error;
-        newRoleId = data;
+        newRoleId = data as string;
       } else {
         // Generate a UUID-like string for memory mode
         newRoleId = 'custom_' + Math.random().toString(36).substring(2, 15);

@@ -1,7 +1,7 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Permission } from "@/lib/permissions";
+import { Permission, rolePermissions } from "@/lib/permissions";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,28 +59,32 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         
         if (dbInitialized) {
-          // Use RPC function to get user's role name
-          const { data: roleData, error: roleError } = await supabase
-            .rpc('get_user_role_name', { user_id: user.id });
+          // Use Edge function to get user's role name
+          const { data: roleData, error: roleError } = await supabase.functions
+            .invoke('get_user_role_name', {
+              body: { user_id: user.id }
+            });
           
           if (roleError) {
             console.error('Error fetching user role:', roleError);
             throw roleError;
           }
           
-          // Set the role from RPC call
+          // Set the role from Edge function call
           setUserRole(roleData as UserRole);
           
-          // Use RPC to get permissions for the current user
-          const { data: permissionsData, error: permissionsError } = await supabase
-            .rpc('get_user_permissions', { user_id: user.id });
+          // Use Edge function to get permissions for the current user
+          const { data: permissionsData, error: permissionsError } = await supabase.functions
+            .invoke('get_user_permissions', {
+              body: { user_id: user.id }
+            });
           
           if (permissionsError) {
             console.error('Error fetching user permissions:', permissionsError);
             throw permissionsError;
           }
           
-          // Set permissions from the RPC call
+          // Set permissions from the Edge function call
           setUserPermissions((permissionsData || []) as Permission[]);
         } else {
           // If DB is not initialized, fall back to meta data
@@ -102,18 +106,21 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
           
           // Default permissions based on role for basic functionality
           if (role === "Admin") {
-            setUserPermissions(Object.values(Permission));
+            setUserPermissions(rolePermissions.Admin);
           } else if (role) {
-            // Add minimal permissions based on role
-            const defaultPermissions: Permission[] = ["dashboard:view"];
-            setUserPermissions(defaultPermissions);
+            // Add role-specific permissions from our local permissions definition
+            setUserPermissions(rolePermissions[role] || []);
+          } else {
+            setUserPermissions([]);
           }
         }
       } catch (error) {
         console.error('Error in permission context:', error);
         // Fallback to metadata role if database fetch fails
         if (user.user_metadata?.role) {
-          setUserRole(user.user_metadata.role as UserRole);
+          const role = user.user_metadata.role as UserRole;
+          setUserRole(role);
+          setUserPermissions(rolePermissions[role] || []);
         }
         toast.error("Failed to load permissions. Some features may be limited.");
       } finally {
