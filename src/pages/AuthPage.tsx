@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -48,6 +48,16 @@ export default function AuthPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Demo credentials for quick testing
+  const demoEmail = "demo@example.com";
+  const demoPassword = "demo123456";
+
+  // Fill in the demo credentials
+  const fillDemoCredentials = () => {
+    loginForm.setValue("email", demoEmail);
+    loginForm.setValue("password", demoPassword);
+  };
 
   // Redirect if user is already logged in
   if (user) {
@@ -221,6 +231,29 @@ export default function AuthPage() {
                       </Button>
                     </form>
                   </Form>
+
+                  {/* Demo credentials section */}
+                  <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-900">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-sm">Demo Credentials</h3>
+                        <p className="text-xs text-muted-foreground mt-1">Use these credentials to test the app:</p>
+                        <div className="mt-2 text-xs">
+                          <p><strong>Email:</strong> {demoEmail}</p>
+                          <p><strong>Password:</strong> {demoPassword}</p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={fillDemoCredentials} 
+                          className="mt-2 text-xs h-7 w-full"
+                        >
+                          Fill Demo Credentials
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter>
                   <div className="text-center w-full">
