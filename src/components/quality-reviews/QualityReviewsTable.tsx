@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { QualityScore } from "./QualityScore";
+import { StarRating } from "./StarRating";
 import { ReviewMessageDialog } from "./ReviewMessageDialog";
 import { QualityReview } from "@/types/qualityReview";
 
@@ -29,7 +30,7 @@ export const QualityReviewsTable = ({
             {isAdmin && <TableHead>Fleet</TableHead>}
             <TableHead>Driver</TableHead>
             <TableHead>Review Date</TableHead>
-            <TableHead>Score</TableHead>
+            <TableHead>Rating</TableHead>
             <TableHead className="w-10">Message</TableHead>
           </TableRow>
         </TableHeader>
@@ -55,7 +56,10 @@ export const QualityReviewsTable = ({
                 <TableCell>{review.driverName}</TableCell>
                 <TableCell>{review.reviewDate}</TableCell>
                 <TableCell>
-                  <QualityScore score={review.score} showLabel />
+                  <div className="flex items-center gap-2">
+                    <StarRating rating={review.starRating} />
+                    <QualityScore score={review.score} size="sm" />
+                  </div>
                 </TableCell>
                 <TableCell className="text-center">
                   <ReviewMessageDialog review={review} />

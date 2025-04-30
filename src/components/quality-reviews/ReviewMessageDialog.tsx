@@ -1,16 +1,18 @@
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
-import { QualityReview } from "@/types/qualityReview";
 import { QualityScore } from "./QualityScore";
+import { StarRating } from "./StarRating";
+import { QualityReview } from "@/types/qualityReview";
 
 interface ReviewMessageDialogProps {
   review: QualityReview;
@@ -20,38 +22,44 @@ export const ReviewMessageDialog = ({ review }: ReviewMessageDialogProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground"
-        >
+        <Button variant="ghost" size="icon">
           <MessageSquare className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Review for Booking {review.bookingReference} 
-            <QualityScore score={review.score} showLabel size="sm" />
+            <div className="mr-auto">Review for Booking {review.bookingReference}</div>
+            <StarRating rating={review.starRating} size="md" showValue />
           </DialogTitle>
-          <DialogDescription>
-            Submitted on {review.reviewDate} by {review.customerName || 'Customer'}
+          <DialogDescription className="flex items-center gap-2">
+            <span>{new Date(review.reviewDate).toLocaleDateString()}</span>
+            <span>•</span>
+            <QualityScore score={review.score} showLabel />
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium">Driver</h4>
-            <p className="text-sm text-muted-foreground">{review.driverName}</p>
+
+        <div className="border rounded-lg p-4 my-2 bg-muted/20">
+          <p className="text-sm leading-6">{review.message}</p>
+          {review.customerName && (
+            <p className="text-sm font-medium mt-2">— {review.customerName}</p>
+          )}
+        </div>
+
+        <div className="bg-muted/30 p-3 rounded-md text-sm space-y-2">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Driver:</span>
+            <span className="font-medium">{review.driverName}</span>
           </div>
-          <div>
-            <h4 className="text-sm font-medium">Fleet</h4>
-            <p className="text-sm text-muted-foreground">{review.fleetName}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium">Review Message</h4>
-            <p className="text-sm p-3 bg-muted/50 rounded-md mt-1">{review.message}</p>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Fleet:</span>
+            <span className="font-medium">{review.fleetName}</span>
           </div>
         </div>
+
+        <DialogFooter>
+          <Button variant="outline">Close</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -19,11 +19,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 export function Header() {
   return (
     <div className="flex flex-col">
-      <div className="bg-blue-50 px-4 py-2 text-sm text-blue-700 border-b border-blue-100">
+      <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-900">
         <div className="container mx-auto flex items-center">
           <HelpCircle className="h-4 w-4 mr-2" />
           <p>Welcome to the new interface! Check out our updated features and improved navigation.</p>
@@ -36,7 +37,7 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search bookings, users..."
-              className="pl-9 w-[240px] lg:w-[320px] bg-gray-50 border-gray-100"
+              className="pl-9 w-[240px] lg:w-[320px] bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800"
             />
           </div>
         </div>
@@ -48,6 +49,8 @@ export function Header() {
               New Booking
             </Button>
           </Link>
+
+          <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -81,7 +84,7 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-sm">
+                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-medium text-sm">
                   AD
                 </div>
               </Button>

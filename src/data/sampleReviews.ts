@@ -11,6 +11,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "John Smith",
     reviewDate: "2025-04-25",
     score: "positive",
+    starRating: 5,
     message: "Driver was punctual and very professional. The car was clean and comfortable. Excellent service overall!",
     customerName: "Alice Johnson"
   },
@@ -23,6 +24,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Emily Davis",
     reviewDate: "2025-04-24",
     score: "positive",
+    starRating: 4,
     message: "Great service, arrived early and was very helpful with my luggage. Would use again.",
     customerName: "Robert Williams"
   },
@@ -35,6 +37,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Michael Brown",
     reviewDate: "2025-04-24",
     score: "negative",
+    starRating: 2,
     message: "Driver was late by 15 minutes. No apology offered. Car was not very clean.",
     customerName: "Sarah Miller"
   },
@@ -47,6 +50,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "David Wilson",
     reviewDate: "2025-04-23",
     score: "positive",
+    starRating: 5,
     message: "Excellent experience. Driver was courteous and took the fastest route.",
     customerName: "Thomas Anderson"
   },
@@ -59,6 +63,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "James Taylor",
     reviewDate: "2025-04-22",
     score: "negative",
+    starRating: 1,
     message: "Driver was talking on phone during most of the journey. Felt unsafe.",
     customerName: "Jennifer White"
   },
@@ -71,6 +76,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Sophia Martinez",
     reviewDate: "2025-04-21",
     score: "positive",
+    starRating: 4,
     message: "Driver knew the area well and suggested a better route. Very satisfied.",
     customerName: "William Harris"
   },
@@ -83,6 +89,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Emma Garcia",
     reviewDate: "2025-04-20",
     score: "positive",
+    starRating: 5,
     message: "Very comfortable ride. Driver was professional and friendly.",
     customerName: "Daniel Lee"
   },
@@ -95,6 +102,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Olivia Rodriguez",
     reviewDate: "2025-04-19",
     score: "negative",
+    starRating: 2,
     message: "Driver seemed lost and took wrong turns multiple times.",
     customerName: "Elizabeth Clark"
   },
@@ -107,6 +115,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Noah Lewis",
     reviewDate: "2025-04-18",
     score: "positive",
+    starRating: 4,
     message: "Very smooth ride. Driver helped with luggage and was very polite.",
     customerName: "Richard Walker"
   },
@@ -119,6 +128,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Isabella Hall",
     reviewDate: "2025-04-17",
     score: "positive",
+    starRating: 5,
     message: "Outstanding service. Car was luxurious and the driver was exceptional.",
     customerName: "Patricia Young"
   },
@@ -131,6 +141,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Mason Clark",
     reviewDate: "2025-04-16",
     score: "negative",
+    starRating: 2,
     message: "Driver was rude when I asked to change the destination slightly.",
     customerName: "Joseph King"
   },
@@ -143,6 +154,7 @@ export const sampleReviews: QualityReview[] = [
     driverName: "Charlotte Hill",
     reviewDate: "2025-04-15",
     score: "positive",
+    starRating: 4,
     message: "Arrived exactly on time. Vehicle was clean and driver was professional.",
     customerName: "Nancy Allen"
   }

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import PlacesAutocompleteInput from "@/components/places/PlacesAutocompleteInput";
 import type { BookingFormData } from "@/lib/schemas/bookingSchema";
 
 interface BookingDetailsTabProps {
@@ -21,6 +22,10 @@ interface BookingDetailsTabProps {
 }
 
 export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: BookingDetailsTabProps) {
+  const handlePlaceSelect = (field: string, address: string) => {
+    form.setValue(field as any, address);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -106,7 +111,11 @@ export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: Booking
               <FormItem>
                 <FormLabel>Pickup Location</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <PlacesAutocompleteInput
+                    value={field.value}
+                    onPlaceSelect={(address) => handlePlaceSelect('pickupLocation', address)}
+                    placeholder="Enter pickup location"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -120,7 +129,11 @@ export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: Booking
               <FormItem>
                 <FormLabel>Destination</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <PlacesAutocompleteInput
+                    value={field.value}
+                    onPlaceSelect={(address) => handlePlaceSelect('destination', address)}
+                    placeholder="Enter destination"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
