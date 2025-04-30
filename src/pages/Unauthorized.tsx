@@ -17,9 +17,13 @@ export default function Unauthorized() {
         
         <h1 className="mb-2 text-3xl font-bold">Access Denied</h1>
         
-        <p className="mb-8 text-gray-600">
+        <p className="mb-4 text-gray-600">
           You don't have permission to access this page. Please contact an administrator if you 
           believe this is an error.
+        </p>
+        
+        <p className="mb-8 text-sm text-gray-500 italic">
+          Note: To access all features, log in with an Admin account which has all permissions.
         </p>
         
         <div className="flex flex-col gap-3">
@@ -31,6 +35,12 @@ export default function Unauthorized() {
             onClick={() => navigate(-1)}
           >
             Go Back
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/auth")}
+          >
+            Login as Admin
           </Button>
         </div>
       </div>

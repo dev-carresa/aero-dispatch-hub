@@ -31,9 +31,9 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  // Demo credentials for quick testing
-  const demoEmail = "demo@example.com";
-  const demoPassword = "demo123456";
+  // Demo credentials for an admin account
+  const demoEmail = "admin@example.com";
+  const demoPassword = "admin123456";
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -61,7 +61,7 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
       if (error) {
         // Check if using demo credentials
         if (values.email === demoEmail && values.password === demoPassword) {
-          setAuthError("Demo user not found. Please create this user in your Supabase project first.");
+          setAuthError("Demo admin account not found. Please create this user in your Supabase project with Admin role and all permissions.");
         } else {
           setAuthError(error.message);
         }
@@ -144,13 +144,14 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
         <div className="flex items-start gap-2">
           <Info className="h-5 w-5 text-blue-500 mt-0.5" />
           <div>
-            <h3 className="font-medium text-sm">Demo Credentials</h3>
+            <h3 className="font-medium text-sm">Demo Admin Credentials</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              <strong>Important:</strong> You must create this user in your Supabase dashboard first:
+              <strong>Important:</strong> Create this admin user in your Supabase dashboard first:
             </p>
             <div className="mt-2 text-xs">
               <p><strong>Email:</strong> {demoEmail}</p>
               <p><strong>Password:</strong> {demoPassword}</p>
+              <p><strong>Role:</strong> Admin (with all permissions)</p>
             </div>
             <div className="flex flex-col gap-2 mt-2">
               <Button 
@@ -159,7 +160,7 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
                 onClick={fillDemoCredentials} 
                 className="text-xs h-7 w-full"
               >
-                Fill Demo Credentials
+                Fill Demo Admin Credentials
               </Button>
             </div>
           </div>
