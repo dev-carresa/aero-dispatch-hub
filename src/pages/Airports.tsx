@@ -20,6 +20,15 @@ export default function Airports() {
     setCountries(uniqueCountries);
   }, []);
 
+  const handleFilterChange = (newFilters: { search: string; country: string }) => {
+    // If the country filter is "all", set it to an empty string for filtering logic
+    const processedFilters = {
+      ...newFilters,
+      country: newFilters.country === "all" ? "" : newFilters.country
+    };
+    setFilters(processedFilters);
+  };
+
   return (
     <div className="space-y-6">
       <AirportsHeader 
@@ -31,7 +40,7 @@ export default function Airports() {
         <CardContent className="pt-6">
           <div className="space-y-4">
             <AirportFilters 
-              onFilterChange={setFilters} 
+              onFilterChange={handleFilterChange} 
               countries={countries} 
             />
             <AirportsTable 

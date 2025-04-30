@@ -60,7 +60,7 @@ export function AirportFilters({ onFilterChange, countries }: AirportFiltersProp
               <SelectValue placeholder="All Countries" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Countries</SelectItem>
+              <SelectItem value="all">All Countries</SelectItem>
               {countries.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}

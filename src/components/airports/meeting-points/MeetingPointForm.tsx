@@ -220,6 +220,7 @@ export function MeetingPointForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="none">No Fleet Assigned</SelectItem>
                     {FLEETS.map((fleet) => (
                       <SelectItem key={fleet.id} value={fleet.id.toString()}>
                         {fleet.name}
