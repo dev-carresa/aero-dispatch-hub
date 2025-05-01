@@ -38,28 +38,7 @@ export const seedRolesAndPermissions = async () => {
 // Function to check if database has been properly initialized
 export const checkDatabaseInitialized = async (): Promise<boolean> => {
   try {
-    // First try to query the roles table directly
-    const { data: roleData, error: roleError } = await supabase
-      .from('roles')
-      .select('id')
-      .limit(1);
-    
-    // If we can query the roles table and get data, the DB is initialized
-    if (!roleError && roleData && roleData.length > 0) {
-      return true;
-    }
-    
-    // If table doesn't exist, try calling the get_all_roles function
-    try {
-      const { data, error } = await supabase.rpc('get_all_roles');
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return true;
-      }
-    } catch (funcErr) {
-      console.log('Function get_all_roles not available', funcErr);
-    }
-
-    // Try edge function as a last resort
+    // Use the edge function approach as our primary method
     try {
       const { data, error } = await supabase.functions.invoke('get_all_roles');
       if (!error && Array.isArray(data) && data.length > 0) {
@@ -68,8 +47,24 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
     } catch (edgeFuncErr) {
       console.log('Edge function get_all_roles not available', edgeFuncErr);
     }
+    
+    // Try to query user profiles as a fallback
+    // We check if profiles exist since this table definitely exists in our schema
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+      
+      if (!profileError && profileData) {
+        // If we can query profiles, the database exists but roles system might not be initialized
+        return false;
+      }
+    } catch (err) {
+      console.error('Failed to check profiles table:', err);
+    }
 
-    // If we get here, the database is not initialized
+    // If we get here, the database might not be accessible
     return false;
   } catch (err) {
     console.error('Failed to check database initialization:', err);
