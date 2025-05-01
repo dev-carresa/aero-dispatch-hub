@@ -47,7 +47,7 @@ export function Header() {
     <div className="flex flex-col">
       <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-900">
         <div className="container mx-auto flex items-center">
-          <p>Welcome to the new interface! Check out our updated features and improved navigation.</p>
+          <p className="w-full">Welcome to the new interface! Check out our updated features and improved navigation.</p>
         </div>
       </div>
       
