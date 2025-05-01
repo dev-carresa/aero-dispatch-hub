@@ -25,7 +25,7 @@ const BookingsIndex = () => {
   const totalPages = 3;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in bg-white">
       <BookingsHeader />
       
       <BookingsTabs activeTab={activeTab} setActiveTab={setActiveTab} />
