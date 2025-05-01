@@ -1,5 +1,1 @@
-
 project_id = "qqfnokbhdzmffywksmvl"
-
-[functions.setup-demo-user]
-verify_jwt = false
