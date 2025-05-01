@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { usePermission } from "@/context/PermissionContext";
-import { Search, Check, ChevronDown, Plus, Save, Trash2, Copy, X } from "lucide-react";
+import { Search, Check, ChevronDown, Plus, Save, Trash2, Copy, X, Shield, User, Settings } from "lucide-react";
 import { Permission } from "@/lib/permissions";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
