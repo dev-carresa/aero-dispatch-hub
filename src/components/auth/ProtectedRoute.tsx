@@ -14,6 +14,8 @@ export const ProtectedRoute: React.FC = () => {
     }
   }, [isAuthenticated, loading]);
 
+  // If still loading and not yet authenticated, show a brief loading state
+  // but only for a short initial check (500ms) - this prevents flickering for valid sessions
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

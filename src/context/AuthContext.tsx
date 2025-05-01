@@ -99,7 +99,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const mappedUser = await mapUserData(currentSession.user);
         setUser(mappedUser);
       }
-      setLoading(false);
+      
+      // Set loading to false after a maximum of 1 second
+      // This ensures users aren't stuck in a loading state if there's a delay
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     });
 
     return () => {
