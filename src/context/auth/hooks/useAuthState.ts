@@ -10,6 +10,7 @@ export function useAuthState() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Use a ref to track if initialization is complete to prevent multiple renders
   const initialized = useRef(false);
@@ -20,18 +21,27 @@ export function useAuthState() {
   // Add a timeout ref to prevent infinite loading
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Set a maximum time for initialization to prevent infinite loading
+  // Set a maximum time for initialization to prevent infinite loading (reduced to 5 seconds)
   useEffect(() => {
-    // Set a maximum timeout for initialization (10 seconds)
+    // Set a maximum timeout for initialization (5 seconds)
     timeoutRef.current = setTimeout(() => {
       if (loading && isMounted.current) {
         console.warn("Auth initialization timed out - forcing completion");
         setLoading(false);
+        setAuthError("Authentication initialization timed out");
       }
-    }, 10000);
+    }, 5000);
 
     return () => cleanupTimeouts(timeoutRef);
   }, []);
+
+  // Function to force reset loading state (can be called from outside)
+  const forceResetLoading = () => {
+    if (isMounted.current) {
+      console.log("Forcing reset of loading state");
+      setLoading(false);
+    }
+  };
 
   // Initialize auth state
   useEffect(() => {
@@ -62,6 +72,7 @@ export function useAuthState() {
             // Update session state
             setSession(currentSession);
             setIsAuthenticated(!!currentSession);
+            setAuthError(null);
             
             // Update user data if session exists
             if (currentSession?.user) {
@@ -69,9 +80,13 @@ export function useAuthState() {
                 const mappedUser = await mapUserData(currentSession.user);
                 if (isMounted.current) {
                   setUser(mappedUser);
+                  
+                  // Log role information for debugging
+                  console.log("User role from profile:", mappedUser?.role);
                 }
               } catch (error) {
                 console.error("Error updating user data:", error);
+                setAuthError("Error fetching user profile data");
               }
             } else {
               setUser(null);
@@ -91,9 +106,18 @@ export function useAuthState() {
           
           // Fetch user profile data if session exists
           if (currentSession?.user) {
-            const mappedUser = await mapUserData(currentSession.user);
-            if (isMounted.current) {
-              setUser(mappedUser);
+            try {
+              const mappedUser = await mapUserData(currentSession.user);
+              if (isMounted.current) {
+                setUser(mappedUser);
+                
+                // Log role information for debugging
+                console.log("User role from profile:", mappedUser?.role);
+              }
+            } catch (error) {
+              console.error("Error updating user data:", error);
+              setAuthError("Error fetching user profile data");
+              setLoading(false);
             }
           } else {
             setUser(null);
@@ -112,6 +136,7 @@ export function useAuthState() {
         console.error("Error initializing auth:", error);
         if (isMounted.current) {
           setLoading(false);
+          setAuthError("Authentication initialization failed");
         }
       }
     };
@@ -124,9 +149,11 @@ export function useAuthState() {
     session,
     loading,
     isAuthenticated,
+    authError,
     setUser,
     setSession,
     setLoading,
-    setIsAuthenticated
+    setIsAuthenticated,
+    forceResetLoading
   };
 }

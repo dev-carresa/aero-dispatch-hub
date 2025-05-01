@@ -23,7 +23,10 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     hasAnyPermission,
     isAdmin,
     roles,
-    loadingPermissions
+    loadingPermissions,
+    permissionError,
+    forceResetPermissionsLoading,
+    userPermissions
   } = usePermissions();
 
   return (
@@ -33,7 +36,10 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         hasAnyPermission,
         isAdmin,
         roles,
-        loadingPermissions
+        loadingPermissions,
+        permissionError,
+        forceResetPermissionsLoading,
+        userPermissions
       }}
     >
       {children}

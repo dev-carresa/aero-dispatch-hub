@@ -7,4 +7,7 @@ export interface PermissionContextType {
   isAdmin: boolean;
   roles: Record<string, Permission[]>;
   loadingPermissions: boolean;
+  permissionError?: string | null;
+  forceResetPermissionsLoading?: () => void;
+  userPermissions?: Permission[];
 }

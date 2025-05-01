@@ -16,4 +16,6 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
+  authError: string | null;
+  forceResetLoading?: () => void;
 }

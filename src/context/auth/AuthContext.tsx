@@ -9,7 +9,8 @@ export const AuthContext = createContext<AuthContextType>({
   signIn: async () => {},
   signOut: async () => {},
   isAuthenticated: false,
-  session: null
+  session: null,
+  authError: null
 });
 
 // Hook for using auth context
