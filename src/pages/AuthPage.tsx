@@ -16,6 +16,10 @@ export default function AuthPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   
+  console.log("AuthPage - Rendering, user state:", user ? "logged in" : "not logged in");
+  console.log("AuthPage - Current location:", location.pathname);
+  console.log("AuthPage - Location state:", location.state);
+  
   // Handle auth errors from child components
   const handleAuthError = (error: string) => {
     setAuthError(error);
@@ -26,15 +30,18 @@ export default function AuthPage() {
     if (user) {
       console.log("User already logged in, redirecting...");
       const from = location.state?.from || "/";
+      console.log("Redirecting to:", from);
       navigate(from, { replace: true });
     }
   }, [user, navigate, location.state]);
 
   // Don't render anything if user is logged in and we're about to redirect
   if (user) {
+    console.log("AuthPage - User is logged in, returning null");
     return null;
   }
 
+  console.log("AuthPage - Rendering auth form, showResetPassword:", showResetPassword);
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">

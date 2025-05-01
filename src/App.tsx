@@ -81,7 +81,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Public routes - accessible to everyone */}
+                {/* Public routes - accessible to everyone without any auth check */}
                 <Route path="/welcome" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
