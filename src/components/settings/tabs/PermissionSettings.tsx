@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { usePermission } from "@/context/PermissionContext";
+import { useAuth } from "@/context/AuthContext";
 import { Search, Check, ChevronDown, Plus, Save, Trash2, Copy, X, Shield, User, Settings } from "lucide-react";
 import { Permission } from "@/lib/permissions";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ interface UserData {
   initials: string;
   color: string;
   role: string;
+  actualId: string; // Store the actual UUID for database operations
 }
 
 // Group permissions by category for better organization
@@ -169,7 +171,8 @@ const roleColorClasses: Record<string, string> = {
 };
 
 export function PermissionSettings() {
-  const { hasPermission, isAdmin } = usePermission();
+  const { hasPermission, isAdmin, roles: contextRoles, loadingPermissions } = usePermission();
+  const { user } = useAuth();
   const [roles, setRoles] = useState<RoleData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,59 +183,91 @@ export function PermissionSettings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [confirmDeleteRoleId, setConfirmDeleteRoleId] = useState<string | null>(null);
-
+  const [isSaving, setIsSaving] = useState(false);
+  
   // State for role operations
   const [selectedRole, setSelectedRole] = useState<RoleData | null>(null);
   const [isRoleOpDialogOpen, setIsRoleOpDialogOpen] = useState(false);
   const [roleOpType, setRoleOpType] = useState<'edit' | 'copy'>('edit');
   const [copiedRoleName, setCopiedRoleName] = useState("");
 
-  // Initialize role data from our predefined permissions
-  useEffect(() => {
-    fetchRolesFromDB();
-    fetchUsers();
-  }, []);
-
-  // Fetch roles from the database or initialize from predefined permissions
+  // Fetch roles from the database
   const fetchRolesFromDB = async () => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would fetch from Supabase roles and role_permissions tables
-      // For now, we'll simulate with our predefined rolePermissions
-      const { roles: rolePermissions } = usePermission();
+      // Get all roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .rpc('get_all_roles');
       
-      // Convert our predefined rolePermissions into the format needed by the UI
-      const initialRoles: RoleData[] = Object.entries(rolePermissions).map(([roleId, permissions]) => {
+      if (rolesError) {
+        console.error("Error fetching roles:", rolesError);
+        toast.error("Impossible de charger les rôles");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get all permissions (to know what permissions exist)
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .rpc('get_all_permissions');
+      
+      if (permissionsError) {
+        console.error("Error fetching permissions:", permissionsError);
+        toast.error("Impossible de charger les permissions");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get all role-permission mappings
+      const { data: rolePermData, error: rolePermError } = await supabase
+        .rpc('get_role_permissions');
+      
+      if (rolePermError) {
+        console.error("Error fetching role permissions:", rolePermError);
+        toast.error("Impossible de charger les associations rôle-permission");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Build roles with their permissions
+      const allPermissions = permissionsData.map(p => p.name as Permission);
+      
+      const initialRoles: RoleData[] = rolesData.map(role => {
         // Create an object with all permissions set to false by default
-        const allPermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
+        const rolePermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
         
-        // Initialize all possible permissions as false
-        const allPermissionKeys = Object.values(permissionCategories).flatMap(cat => cat.permissions);
-        allPermissionKeys.forEach(perm => {
-          allPermissions[perm as Permission] = false;
+        // Initialize all permissions as false
+        allPermissions.forEach(perm => {
+          rolePermissions[perm] = false;
         });
         
         // Set the permissions this role has to true
-        permissions.forEach(perm => {
-          allPermissions[perm] = true;
+        const rolePermList = rolePermData
+          .filter(rp => rp.role_id === role.id)
+          .map(rp => rp.permission_name);
+        
+        rolePermList.forEach(perm => {
+          rolePermissions[perm as Permission] = true;
         });
+        
+        // Get user count for this role (for display purposes)
+        // Will be updated when we fetch users
         
         // Return the role data structure
         return {
-          id: roleId.toLowerCase(),
-          name: roleId,
-          permissions: allPermissions,
-          isBuiltIn: ["Admin", "Driver", "Fleet", "Dispatcher", "Customer"].includes(roleId),
-          description: `${roleId} role with predefined permissions`,
-          userCount: Math.floor(Math.random() * 10) // Mock user count for demo
+          id: role.id,
+          name: role.name,
+          permissions: rolePermissions,
+          isBuiltIn: role.is_system || false,
+          description: role.description || `${role.name} role`,
+          userCount: 0 // Will be updated when we fetch users
         };
       });
       
       setRoles(initialRoles);
-      setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching roles:", error);
-      toast.error("Impossible de charger les rôles");
+      console.error("Error in fetchRolesFromDB:", error);
+      toast.error("Une erreur est survenue lors du chargement des rôles");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -240,10 +275,9 @@ export function PermissionSettings() {
   // Fetch users from the database
   const fetchUsers = async () => {
     try {
-      // In a real application, this would fetch from the database
       const { data: profilesData, error } = await supabase
         .from('profiles')
-        .select('id, name, email, role')
+        .select('id, name, email, role, role_id')
         .order('name');
       
       if (error) {
@@ -262,7 +296,8 @@ export function PermissionSettings() {
         const color = colors[index % colors.length];
         
         return {
-          id: typeof profile.id === 'number' ? profile.id : parseInt(profile.id, 10),
+          id: index, // Use as a key in the UI
+          actualId: profile.id, // Store actual UUID for database operations
           name: profile.name,
           email: profile.email,
           initials: initials.toUpperCase(),
@@ -271,12 +306,35 @@ export function PermissionSettings() {
         };
       });
       
+      // Update role user counts
+      const roleCounts: Record<string, number> = {};
+      fetchedUsers.forEach(user => {
+        if (roleCounts[user.role]) {
+          roleCounts[user.role]++;
+        } else {
+          roleCounts[user.role] = 1;
+        }
+      });
+      
+      setRoles(prevRoles => 
+        prevRoles.map(role => ({
+          ...role,
+          userCount: roleCounts[role.name] || 0
+        }))
+      );
+      
       setUsers(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Impossible de charger les utilisateurs");
     }
   };
+
+  // Initialize role data from our database
+  useEffect(() => {
+    fetchRolesFromDB();
+    fetchUsers();
+  }, []);
 
   const handleRolePermissionChange = (roleId: string, permissionKey: string, value: boolean) => {
     setRoles(roles.map(role => {
@@ -310,70 +368,122 @@ export function PermissionSettings() {
     }));
   };
 
-  const handleUserRoleChange = (userId: number, newRole: string) => {
-    setUsers(users.map(user => {
-      if (user.id === userId) {
-        return {
-          ...user,
-          role: newRole
-        };
+  const handleUserRoleChange = async (userId: string, newRoleId: string) => {
+    try {
+      // Find the role name from the role ID
+      const role = roles.find(r => r.id === newRoleId);
+      if (!role) {
+        toast.error("Rôle introuvable");
+        return;
       }
-      return user;
-    }));
-  };
 
-  const handleDeleteRole = (roleId: string) => {
-    // Check if role is in use
-    const roleInUse = users.some(user => user.role.toLowerCase() === roleId);
-    
-    if (roleInUse) {
-      toast.error("Impossible de supprimer un rôle attribué à des utilisateurs");
-      return;
+      // Update user's role in Supabase
+      const { error } = await supabase.rpc('update_user_role', {
+        p_user_id: userId,
+        p_role_id: newRoleId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setUsers(users.map(user => {
+        if (user.actualId === userId) {
+          return {
+            ...user,
+            role: role.name
+          };
+        }
+        return user;
+      }));
+
+      toast.success(`Le rôle de l'utilisateur a été mis à jour avec succès`);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      toast.error("Impossible de mettre à jour le rôle de l'utilisateur");
     }
-    
-    setRoles(roles.filter(role => role.id !== roleId));
-    setConfirmDeleteRoleId(null);
-    toast.success("Rôle supprimé avec succès");
   };
 
-  const handleCreateRole = () => {
+  const handleDeleteRole = async (roleId: string) => {
+    try {
+      // Check if role is in use
+      const roleInUse = users.some(user => {
+        const role = roles.find(r => r.id === roleId);
+        return role && user.role === role.name;
+      });
+      
+      if (roleInUse) {
+        toast.error("Impossible de supprimer un rôle attribué à des utilisateurs");
+        return;
+      }
+      
+      // Delete the role from the database
+      const { error } = await supabase.rpc('delete_role', {
+        p_role_id: roleId
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setRoles(roles.filter(role => role.id !== roleId));
+      setConfirmDeleteRoleId(null);
+      
+      toast.success("Rôle supprimé avec succès");
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      toast.error("Impossible de supprimer le rôle");
+    }
+  };
+
+  const handleCreateRole = async () => {
     if (!newRoleName.trim()) {
       toast.error("Le nom du rôle ne peut pas être vide");
       return;
     }
     
-    const roleId = newRoleName.toLowerCase().replace(/\s+/g, '_');
-    
-    // Check if role with this ID already exists
-    if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
-      return;
+    try {
+      // Create role in the database
+      const { data: roleId, error } = await supabase.rpc('create_role', {
+        p_name: newRoleName,
+        p_description: newRoleDescription || `Custom role: ${newRoleName}`
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Create empty permissions object
+      const permissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
+      
+      // Initialize all permissions as false
+      const allPermissionKeys = Object.values(permissionCategories).flatMap(cat => cat.permissions);
+      allPermissionKeys.forEach(perm => {
+        permissions[perm as Permission] = false;
+      });
+      
+      // Add the new role to local state
+      const newRole: RoleData = {
+        id: roleId,
+        name: newRoleName,
+        description: newRoleDescription || `Custom role: ${newRoleName}`,
+        permissions,
+        isBuiltIn: false,
+        userCount: 0
+      };
+      
+      setRoles([...roles, newRole]);
+      setNewRoleName("");
+      setNewRoleDescription("");
+      setIsCreateDialogOpen(false);
+      
+      toast.success(`Rôle "${newRoleName}" créé avec succès`);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      toast.error("Impossible de créer le rôle");
     }
-    
-    // Create empty permissions object
-    const permissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
-    
-    // Initialize all permissions as false
-    const allPermissionKeys = Object.values(permissionCategories).flatMap(cat => cat.permissions);
-    allPermissionKeys.forEach(perm => {
-      permissions[perm as Permission] = false;
-    });
-    
-    // Add the new role
-    const newRole: RoleData = {
-      id: roleId,
-      name: newRoleName,
-      description: newRoleDescription || `Custom role: ${newRoleName}`,
-      permissions,
-      isBuiltIn: false,
-      userCount: 0
-    };
-    
-    setRoles([...roles, newRole]);
-    setNewRoleName("");
-    setNewRoleDescription("");
-    setIsCreateDialogOpen(false);
-    toast.success(`Rôle "${newRoleName}" créé avec succès`);
   };
 
   const handleEditRole = () => {
@@ -384,43 +494,106 @@ export function PermissionSettings() {
     toast.success(`Rôle "${editingRole.name}" mis à jour avec succès`);
   };
 
-  const handleCopyRole = () => {
+  const handleCopyRole = async () => {
     if (!selectedRole || !copiedRoleName.trim()) return;
 
-    const roleId = copiedRoleName.toLowerCase().replace(/\s+/g, '_');
-    
-    // Check if role with this ID already exists
-    if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
-      return;
+    try {
+      // Create role in the database
+      const { data: roleId, error } = await supabase.rpc('create_role', {
+        p_name: copiedRoleName,
+        p_description: `Copy of ${selectedRole.name}`
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Create a new role based on the selected role
+      const newRole: RoleData = {
+        ...selectedRole,
+        id: roleId,
+        name: copiedRoleName,
+        isBuiltIn: false,
+        description: `Copy of ${selectedRole.name}`,
+        userCount: 0
+      };
+
+      // Add the new role to local state
+      setRoles([...roles, newRole]);
+      
+      // For each permission that is enabled in the original role, add it to the new role
+      const enabledPermissions = Object.entries(selectedRole.permissions)
+        .filter(([_, enabled]) => enabled)
+        .map(([perm]) => perm);
+      
+      // Add each permission to the role (in sequence to avoid race conditions)
+      for (const perm of enabledPermissions) {
+        await supabase.rpc('add_permission_to_role_by_name', {
+          p_role_id: roleId,
+          p_permission_name: perm
+        });
+      }
+
+      setCopiedRoleName("");
+      setSelectedRole(null);
+      setIsRoleOpDialogOpen(false);
+      toast.success(`Rôle "${copiedRoleName}" créé avec succès`);
+    } catch (error) {
+      console.error("Error copying role:", error);
+      toast.error("Impossible de dupliquer le rôle");
     }
-
-    // Create a new role based on the selected role
-    const newRole: RoleData = {
-      ...selectedRole,
-      id: roleId,
-      name: copiedRoleName,
-      isBuiltIn: false,
-      description: `Copy of ${selectedRole.name}`,
-      userCount: 0
-    };
-
-    setRoles([...roles, newRole]);
-    setCopiedRoleName("");
-    setSelectedRole(null);
-    setIsRoleOpDialogOpen(false);
-    toast.success(`Rôle "${copiedRoleName}" créé avec succès`);
   };
 
-  const saveUserPermissions = () => {
-    // In a real application, this would save to the database
-    toast.success("Permissions des utilisateurs enregistrées avec succès");
+  const saveUserPermissions = async () => {
+    setIsSaving(true);
+    try {
+      // We've already saved user role changes as they were made
+      toast.success("Permissions des utilisateurs enregistrées avec succès");
+    } catch (error) {
+      console.error("Error saving user permissions:", error);
+      toast.error("Impossible d'enregistrer les permissions des utilisateurs");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const saveRolePermissions = (role: RoleData) => {
-    // In a real application, this would save to the database
-    setRoles(roles.map(r => r.id === role.id ? role : r));
-    toast.success(`Permissions pour le rôle "${role.name}" enregistrées avec succès`);
+  const saveRolePermissions = async (role: RoleData) => {
+    setIsSaving(true);
+    try {
+      // For each permission, determine if it needs to be added or removed
+      const allPermissionKeys = Object.keys(role.permissions) as Permission[];
+      
+      for (const permKey of allPermissionKeys) {
+        const isEnabled = role.permissions[permKey];
+        
+        // Check if this is a built-in role
+        if (role.isBuiltIn) {
+          // Skip updates for built-in roles
+          continue;
+        }
+        
+        if (isEnabled) {
+          // Add permission to role if it doesn't already have it
+          await supabase.rpc('add_permission_to_role_by_name', {
+            p_role_id: role.id,
+            p_permission_name: permKey
+          });
+        } else {
+          // Remove permission from role if it has it
+          await supabase.rpc('remove_permission_from_role_by_name', {
+            p_role_id: role.id,
+            p_permission_name: permKey
+          });
+        }
+      }
+      
+      toast.success(`Permissions pour le rôle "${role.name}" enregistrées avec succès`);
+    } catch (error) {
+      console.error("Error saving role permissions:", error);
+      toast.error(`Impossible d'enregistrer les permissions pour le rôle "${role.name}"`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Count how many permissions are enabled in a category for a role
@@ -449,14 +622,20 @@ export function PermissionSettings() {
     (role.description && role.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Filter users by search query
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter users by search query and role filter
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesRoleFilter = roleFilter === null || 
+      user.role.toLowerCase() === roles.find(r => r.id === roleFilter)?.name.toLowerCase();
+      
+    return matchesSearch && matchesRoleFilter;
+  });
 
-  if (isLoading) {
+  if (isLoading || loadingPermissions) {
     return (
       <Card>
         <CardHeader>
@@ -645,8 +824,13 @@ export function PermissionSettings() {
                     <Button 
                       onClick={() => saveRolePermissions(role)}
                       size="sm"
+                      disabled={isSaving || role.isBuiltIn}
                     >
-                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
                       <span>Sauvegarder</span>
                     </Button>
                   </div>
@@ -785,36 +969,34 @@ export function PermissionSettings() {
                 </div>
 
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                  {filteredUsers
-                    .filter(user => roleFilter === null || user.role.toLowerCase() === roleFilter)
-                    .map((user) => (
-                      <div key={user.id} className="border rounded-md p-4 transition-all hover:shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`h-10 w-10 rounded-full bg-${user.color}-100 flex items-center justify-center text-${user.color}-700 font-medium`}>
-                              {user.initials}
-                            </div>
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                            </div>
+                  {filteredUsers.map((user) => (
+                    <div key={user.id} className="border rounded-md p-4 transition-all hover:shadow">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full bg-${user.color}-100 flex items-center justify-center text-${user.color}-700 font-medium`}>
+                            {user.initials}
                           </div>
-                          <div className="w-[180px]">
-                            <select
-                              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
-                              value={user.role.toLowerCase()}
-                              onChange={(e) => handleUserRoleChange(user.id, e.target.value)}
-                            >
-                              {roles.map(role => (
-                                <option key={`${user.id}-${role.id}`} value={role.id}>{role.name}</option>
-                              ))}
-                            </select>
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
+                        <div className="w-[180px]">
+                          <select
+                            className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                            value={roles.find(role => role.name === user.role)?.id || ''}
+                            onChange={(e) => handleUserRoleChange(user.actualId, e.target.value)}
+                          >
+                            {roles.map(role => (
+                              <option key={`${user.id}-${role.id}`} value={role.id}>{role.name}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                   
-                  {filteredUsers.filter(user => roleFilter === null || user.role.toLowerCase() === roleFilter).length === 0 && (
+                  {filteredUsers.length === 0 && (
                     <div className="text-center p-6 border rounded-md border-dashed">
                       <p className="text-muted-foreground">Aucun utilisateur trouvé avec ces critères</p>
                       <Button 
@@ -832,8 +1014,12 @@ export function PermissionSettings() {
                 </div>
                 
                 <div className="pt-4 flex justify-end">
-                  <Button onClick={saveUserPermissions} className="px-8">
-                    <Save className="h-4 w-4 mr-2" />
+                  <Button onClick={saveUserPermissions} disabled={isSaving} className="px-8">
+                    {isSaving ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Enregistrer les attributions
                   </Button>
                 </div>
@@ -896,7 +1082,11 @@ export function PermissionSettings() {
             <Button variant="outline" onClick={() => setIsRoleOpDialogOpen(false)}>Annuler</Button>
             <Button 
               onClick={roleOpType === 'edit' ? handleEditRole : handleCopyRole}
+              disabled={isSaving}
             >
+              {isSaving ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
+              ) : null}
               {roleOpType === 'edit' ? 'Enregistrer' : 'Dupliquer'}
             </Button>
           </DialogFooter>
