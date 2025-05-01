@@ -44,15 +44,17 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
   try {
     console.log("Checking database initialization...");
     
-    // Try the new init-permissions check function first
+    // Try the improved init-permissions check function first
     try {
       const { data, error } = await supabase.functions.invoke('init-permissions', {
         body: { action: 'check_initialization' }
       });
       
-      if (!error && data && data.initialized) {
-        console.log("Database initialized according to init-permissions function");
-        return true;
+      if (!error && data) {
+        console.log("Database initialization check from edge function:", data);
+        if (data.initialized === true) {
+          return true;
+        }
       }
     } catch (edgeFuncErr) {
       console.log('Edge function init-permissions check failed:', edgeFuncErr);
@@ -74,22 +76,33 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
       // Check for roles table data directly
       const { data: rolesData, error: rolesError } = await supabase
         .from('roles')
-        .select('id')
-        .limit(1);
+        .select('id, name')
+        .limit(5);
       
       if (!rolesError && rolesData && rolesData.length > 0) {
-        console.log("Database initialized based on direct roles table check");
+        console.log("Database initialized based on direct roles table check:", rolesData);
         return true;
       }
       
       // Check for permissions table data directly
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('permissions')
-        .select('id')
-        .limit(1);
+        .select('id, name')
+        .limit(5);
       
       if (!permissionsError && permissionsData && permissionsData.length > 0) {
-        console.log("Database initialized based on direct permissions table check");
+        console.log("Database initialized based on direct permissions table check:", permissionsData);
+        return true;
+      }
+      
+      // Check for role_permissions mappings
+      const { data: rolePermissionsData, error: rolePermissionsError } = await supabase
+        .from('role_permissions')
+        .select('role_id, permission_id')
+        .limit(5);
+        
+      if (!rolePermissionsError && rolePermissionsData && rolePermissionsData.length > 0) {
+        console.log("Database initialized based on role_permissions check:", rolePermissionsData);
         return true;
       }
     } catch (dbErr) {

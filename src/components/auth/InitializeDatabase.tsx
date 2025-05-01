@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Spinner } from "../ui/spinner";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { checkDatabaseInitialized } from "@/lib/db/permissionsRpc";
 import { toast } from "sonner";
 
@@ -17,17 +17,74 @@ export function InitializeDatabase({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(false);
+  const [statusDetails, setStatusDetails] = useState<any>(null);
 
   useEffect(() => {
     const checkDatabase = async () => {
       try {
-        // Check if database is initialized
+        setLoading(true);
+        setError(null);
+        
+        console.log("Starting database initialization check...");
+        
+        // Try using the edge function for checking initialization
+        try {
+          const { data, error } = await supabase.functions.invoke('init-permissions', {
+            body: { action: 'check_initialization' }
+          });
+          
+          console.log("Edge function check result:", data);
+          
+          if (error) {
+            console.error("Edge function error:", error);
+            throw error;
+          }
+          
+          if (data && typeof data === 'object') {
+            setStatusDetails(data.details || data.tables || data);
+            
+            if (data.initialized === true) {
+              console.log("Database is initialized according to edge function");
+              setInitialized(true);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (edgeFuncError) {
+          console.error("Error calling init-permissions edge function:", edgeFuncError);
+          // Continue to fallback methods
+        }
+        
+        // Fallback: Try direct database queries
         const isInitialized = await checkDatabaseInitialized();
+        console.log("Direct database check result:", isInitialized);
+        
         setInitialized(isInitialized);
+        
+        if (!isInitialized) {
+          // Last resort: direct table check
+          try {
+            const { data: rolesData } = await supabase
+              .from('roles')
+              .select('id, name')
+              .limit(1);
+              
+            const { data: permissionsData } = await supabase
+              .from('permissions')
+              .select('id')
+              .limit(1);
+            
+            if (rolesData && rolesData.length > 0 && permissionsData && permissionsData.length > 0) {
+              console.log("Tables exist but initialization status check failed. Assuming initialized.");
+              setInitialized(true);
+            }
+          } catch (directCheckError) {
+            console.error("Error in direct table check:", directCheckError);
+          }
+        }
       } catch (err) {
         console.error('Failed to check database:', err);
-        setInitialized(false);
-        setError('Failed to check database initialization status. Assuming database needs initialization.');
+        setError('Failed to check database initialization status. You may need to initialize the database manually.');
       } finally {
         setLoading(false);
       }
@@ -37,10 +94,9 @@ export function InitializeDatabase({
     const timeoutId = setTimeout(() => {
       if (loading) {
         setLoading(false);
-        setInitialized(false);
         setError('Database check timed out. Please initialize the database manually.');
       }
-    }, 5000);
+    }, 10000); // Increased timeout to 10 seconds
     
     checkDatabase();
     
@@ -51,8 +107,9 @@ export function InitializeDatabase({
     try {
       setInitializing(true);
       setError(null);
-
-      // Call the edge function to set up the database
+      
+      // First step: create the database functions
+      console.log("Creating database functions...");
       const {
         error: functionError
       } = await supabase.functions.invoke('init-permissions', {
@@ -62,11 +119,14 @@ export function InitializeDatabase({
       });
       
       if (functionError) {
+        console.error("Error creating functions:", functionError);
         throw functionError;
       }
       
       toast.success("Database functions created successfully");
       
+      // Second step: seed the data
+      console.log("Seeding database data...");
       const {
         error: seedError
       } = await supabase.functions.invoke('init-permissions', {
@@ -76,11 +136,21 @@ export function InitializeDatabase({
       });
       
       if (seedError) {
+        console.error("Error seeding data:", seedError);
         throw seedError;
       }
       
       toast.success("Database seeded successfully");
+      
+      // Final check to confirm initialization
+      const { data } = await supabase.functions.invoke('init-permissions', {
+        body: { action: 'check_initialization' }
+      });
+      
+      console.log("Final initialization check:", data);
+      
       setInitialized(true);
+      setStatusDetails(data?.details || data?.tables);
     } catch (err: any) {
       console.error('Error initializing database:', err);
       setError(`Failed to initialize database: ${err.message || 'Unknown error'}`);
@@ -115,8 +185,22 @@ export function InitializeDatabase({
             </AlertDescription>
           </Alert>
           
+          {statusDetails && (
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Database Status</AlertTitle>
+              <AlertDescription>
+                <pre className="text-xs overflow-auto max-h-32">
+                  {JSON.stringify(statusDetails, null, 2)}
+                </pre>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {error && (
             <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -135,6 +219,10 @@ export function InitializeDatabase({
               "Initialize Database"
             )}
           </Button>
+          
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            If initialization fails, please contact your system administrator.
+          </p>
         </div>
       </div>
     );

@@ -47,17 +47,62 @@ serve(async (req: Request) => {
       result = { message: "Roles and permissions seeded successfully" };
     }
     else if (action === "check_initialization") {
-      // Check if permissions system is initialized by checking for roles
-      const { data, error } = await supabase.from("roles")
-        .select("id")
-        .limit(1);
+      // Check if permissions system is initialized 
+      // First, check if roles table has data
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("roles")
+        .select("id, name")
+        .limit(10);
       
-      if (error) throw error;
+      if (rolesError) {
+        console.error("Error checking roles:", rolesError);
+        throw rolesError;
+      }
+      
+      // Next, check if permissions table has data
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from("permissions")
+        .select("id, name")
+        .limit(10);
+        
+      if (permissionsError) {
+        console.error("Error checking permissions:", permissionsError);
+        throw permissionsError;
+      }
+      
+      // Check if role_permissions table has data
+      const { data: rolePermissionsData, error: rolePermissionsError } = await supabase
+        .from("role_permissions")
+        .select("role_id, permission_id")
+        .limit(10);
+        
+      if (rolePermissionsError) {
+        console.error("Error checking role_permissions:", rolePermissionsError);
+        throw rolePermissionsError;
+      }
+      
+      const roleCount = rolesData?.length || 0;
+      const permissionCount = permissionsData?.length || 0;
+      const mappingsCount = rolePermissionsData?.length || 0;
+      
+      // System is initialized if all three tables have data
+      const isInitialized = roleCount > 0 && permissionCount > 0 && mappingsCount > 0;
       
       result = { 
-        initialized: data && data.length > 0,
-        rolesCount: data?.length || 0
+        initialized: isInitialized,
+        details: {
+          rolesCount: roleCount,
+          permissionsCount: permissionCount,
+          rolePermissionMappingsCount: mappingsCount
+        },
+        tables: {
+          rolesTable: roleCount > 0 ? "exists" : "empty",
+          permissionsTable: permissionCount > 0 ? "exists" : "empty",
+          roleMappingsTable: mappingsCount > 0 ? "exists" : "empty"
+        }
       };
+      
+      console.log("Initialization check result:", JSON.stringify(result, null, 2));
     }
     else {
       throw new Error(`Unknown action: ${action}`);
