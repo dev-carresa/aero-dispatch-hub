@@ -20,82 +20,94 @@ export function InitializeDatabase({
   const [statusDetails, setStatusDetails] = useState<any>(null);
   const [bypassAttempts, setBypassAttempts] = useState(0);
   
+  // Check if localStorage has a bypass flag (for development purposes)
+  useEffect(() => {
+    // Always bypass initialization check in development mode or if user has explicitly set the flag
+    const shouldBypass = window.location.hostname === 'localhost' || 
+                         localStorage.getItem('db_initialized_bypass') === 'true' ||
+                         localStorage.getItem('db_initialized') === 'true';
+    
+    if (shouldBypass) {
+      console.log("Database initialization check bypassed");
+      setInitialized(true);
+      setLoading(false);
+      return;
+    }
+    
+    // If not bypassed, proceed with the normal initialization check
+    checkDatabase();
+  }, []);
+  
   // Function to manually bypass initialization check
   const bypassCheck = () => {
-    setBypassAttempts(prev => prev + 1);
-    if (bypassAttempts >= 2) {
-      localStorage.setItem('db_initialized', 'true');
-      setInitialized(true);
-      toast.success("Bypassed initialization check - development mode only");
-    } else {
-      toast.info("Click bypass button again to confirm");
-    }
+    localStorage.setItem('db_initialized', 'true');
+    localStorage.setItem('db_initialized_bypass', 'true');
+    setInitialized(true);
+    toast.success("Bypassed initialization check");
   };
 
-  useEffect(() => {
-    const checkDatabase = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        console.log("Starting database initialization check...");
-        
-        // Check if we've already confirmed initialization in localStorage
-        if (localStorage.getItem('db_initialized') === 'true') {
-          console.log("Using cached initialization status: true");
-          setInitialized(true);
-          setLoading(false);
-          return;
-        }
-        
-        // Try using the checkDatabaseInitialized function
-        const isInitialized = await checkDatabaseInitialized();
-        console.log("Database check result:", isInitialized);
-        
-        setInitialized(isInitialized);
-        
-        if (!isInitialized) {
-          // Last resort: direct table check
-          try {
-            const { data: rolesData } = await supabase
-              .from('roles')
-              .select('id, name')
-              .limit(1);
-              
-            const { data: permissionsData } = await supabase
-              .from('permissions')
-              .select('id')
-              .limit(1);
-            
-            if (rolesData && rolesData.length > 0 && permissionsData && permissionsData.length > 0) {
-              console.log("Tables exist but initialization status check failed. Assuming initialized.");
-              localStorage.setItem('db_initialized', 'true');
-              setInitialized(true);
-            }
-          } catch (directCheckError) {
-            console.error("Error in direct table check:", directCheckError);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to check database:', err);
-        setError('Failed to check database initialization status. You may need to initialize the database manually.');
-      } finally {
+  const checkDatabase = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log("Starting database initialization check...");
+      
+      // Check if we've already confirmed initialization in localStorage
+      if (localStorage.getItem('db_initialized') === 'true') {
+        console.log("Using cached initialization status: true");
+        setInitialized(true);
         setLoading(false);
+        return;
       }
-    };
-    
-    // Set a timeout to prevent infinite loading if the check fails
+      
+      // Try using the checkDatabaseInitialized function
+      const isInitialized = await checkDatabaseInitialized();
+      console.log("Database check result:", isInitialized);
+      
+      setInitialized(isInitialized);
+      
+      if (!isInitialized) {
+        // Last resort: direct table check
+        try {
+          const { data: rolesData } = await supabase
+            .from('roles')
+            .select('id, name')
+            .limit(1);
+            
+          const { data: permissionsData } = await supabase
+            .from('permissions')
+            .select('id')
+            .limit(1);
+          
+          if (rolesData && rolesData.length > 0 && permissionsData && permissionsData.length > 0) {
+            console.log("Tables exist but initialization status check failed. Assuming initialized.");
+            localStorage.setItem('db_initialized', 'true');
+            setInitialized(true);
+          }
+        } catch (directCheckError) {
+          console.error("Error in direct table check:", directCheckError);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check database:', err);
+      setError('Failed to check database initialization status. Please bypass the check to continue.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Set a timeout to auto-show the bypass button if check takes too long
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (loading) {
         setLoading(false);
-        setError('Database check timed out. Please initialize the database manually or bypass the check.');
+        setError('Database check timed out. Please bypass the check to continue.');
       }
-    }, 10000); // Increased timeout to 10 seconds
-    
-    checkDatabase();
+    }, 5000); // Reduced timeout to 5 seconds for better UX
     
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [loading]);
 
   const initializeDatabase = async () => {
     try {
@@ -162,6 +174,13 @@ export function InitializeDatabase({
         <div className="text-center">
           <Spinner size="lg" className="mb-4" />
           <p className="text-muted-foreground">Checking database status...</p>
+          <Button
+            onClick={bypassCheck}
+            variant="ghost"
+            className="mt-4"
+          >
+            Skip this check
+          </Button>
         </div>
       </div>
     );
@@ -221,12 +240,12 @@ export function InitializeDatabase({
               variant="outline" 
               className="w-full"
             >
-              Bypass Check ({3 - bypassAttempts} clicks needed)
+              Bypass Check and Continue
             </Button>
           </div>
           
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            If initialization fails, please contact your system administrator.
+            If initialization fails, you can bypass it to access the application.
           </p>
         </div>
       </div>

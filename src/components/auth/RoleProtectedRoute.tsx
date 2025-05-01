@@ -52,13 +52,13 @@ export const RoleProtectedRoute = ({
   // Check for single permission
   if (requiredPermission && !hasPermission(requiredPermission)) {
     console.log("RoleProtectedRoute - Missing permission:", requiredPermission);
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Check for any of multiple permissions
   if (requiredPermissions && !hasAnyPermission(requiredPermissions)) {
     console.log("RoleProtectedRoute - Missing permissions:", requiredPermissions);
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to={redirectPath} replace />;
   }
 
   console.log("RoleProtectedRoute - Access granted");
