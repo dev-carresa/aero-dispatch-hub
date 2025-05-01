@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -50,7 +49,7 @@ const Users = () => {
             phone: profile.phone,
             nationality: profile.nationality,
             dateOfBirth: profile.date_of_birth,
-            fleetId: profile.fleet_id,
+            fleetId: profile.fleet_id ? Number(profile.fleet_id) : undefined, // Convert string to number or use undefined
             countryCode: profile.country_code,
             vehicleType: profile.vehicle_type,
             driverAvailability: profile.driver_availability as DriverAvailability || 'offline'
