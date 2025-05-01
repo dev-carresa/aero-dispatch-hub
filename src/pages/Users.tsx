@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -134,11 +135,13 @@ const Users = () => {
 
   // Dropdown actions
   const handleViewProfile = (user: User) => {
-    navigate(`/users/${String(user.id)}`); // Ensure user.id is a string
+    // Explicitly convert user.id to string to fix type error
+    navigate(`/users/${typeof user.id === 'number' ? user.id.toString() : user.id}`);
   };
 
   const handleEditUser = (user: User) => {
-    navigate(`/users/${String(user.id)}`); // Ensure user.id is a string
+    // Explicitly convert user.id to string to fix type error
+    navigate(`/users/${typeof user.id === 'number' ? user.id.toString() : user.id}`);
   };
 
   // Toggle user status
