@@ -60,7 +60,7 @@ export function InitializeDatabase({
     }
   };
   if (loading) {
-    return <div className="flex h-screen items-center justify-center d-none">
+    return <div className="flex h-screen items-center justify-center ">
         <Spinner size="lg" />
       </div>;
   }
