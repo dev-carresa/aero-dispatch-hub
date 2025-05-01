@@ -23,6 +23,7 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import Index from "./pages/Index";
 import { AuthProvider } from "./context/AuthContext";
+import { PermissionProvider } from "./context/PermissionContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Vehicle pages
@@ -75,92 +76,94 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/welcome" element={<LandingPage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Layout><Index /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Layout><Dashboard /></Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Bookings - Protected */}
-              <Route path="/bookings" element={
-                <ProtectedRoute>
-                  <Layout><BookingsIndex /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bookings/:id" element={
-                <ProtectedRoute>
-                  <Layout><BookingDetails /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bookings/:id/edit" element={
-                <ProtectedRoute>
-                  <Layout><EditBooking /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bookings/new" element={
-                <ProtectedRoute>
-                  <Layout><NewBooking /></Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Rest of the protected routes */}
-              <Route path="/users" element={<ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>} />
-              <Route path="/users/:id" element={<ProtectedRoute><Layout><UserProfile /></Layout></ProtectedRoute>} />
-              <Route path="/users/new" element={<ProtectedRoute><Layout><NewUser /></Layout></ProtectedRoute>} />
-              
-              <Route path="/api-users" element={<ProtectedRoute><Layout><ApiUsers /></Layout></ProtectedRoute>} />
-              <Route path="/api-users/new" element={<ProtectedRoute><Layout><NewApiUser /></Layout></ProtectedRoute>} />
-              <Route path="/api-users/:id" element={<ProtectedRoute><Layout><ApiUserDetails /></Layout></ProtectedRoute>} />
-              <Route path="/api-users/:id/edit" element={<ProtectedRoute><Layout><EditApiUser /></Layout></ProtectedRoute>} />
+            <PermissionProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/welcome" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Layout><Index /></Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Layout><Dashboard /></Layout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Bookings - Protected */}
+                <Route path="/bookings" element={
+                  <ProtectedRoute>
+                    <Layout><BookingsIndex /></Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bookings/:id" element={
+                  <ProtectedRoute>
+                    <Layout><BookingDetails /></Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bookings/:id/edit" element={
+                  <ProtectedRoute>
+                    <Layout><EditBooking /></Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bookings/new" element={
+                  <ProtectedRoute>
+                    <Layout><NewBooking /></Layout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Rest of the protected routes */}
+                <Route path="/users" element={<ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>} />
+                <Route path="/users/:id" element={<ProtectedRoute><Layout><UserProfile /></Layout></ProtectedRoute>} />
+                <Route path="/users/new" element={<ProtectedRoute><Layout><NewUser /></Layout></ProtectedRoute>} />
+                
+                <Route path="/api-users" element={<ProtectedRoute><Layout><ApiUsers /></Layout></ProtectedRoute>} />
+                <Route path="/api-users/new" element={<ProtectedRoute><Layout><NewApiUser /></Layout></ProtectedRoute>} />
+                <Route path="/api-users/:id" element={<ProtectedRoute><Layout><ApiUserDetails /></Layout></ProtectedRoute>} />
+                <Route path="/api-users/:id/edit" element={<ProtectedRoute><Layout><EditApiUser /></Layout></ProtectedRoute>} />
 
-              <Route path="/invoices" element={<ProtectedRoute><Layout><Invoices /></Layout></ProtectedRoute>} />
-              <Route path="/invoices/generate" element={<ProtectedRoute><Layout><GenerateInvoice /></Layout></ProtectedRoute>} />
-              <Route path="/invoices/:id" element={<ProtectedRoute><Layout><InvoiceDetails /></Layout></ProtectedRoute>} />
-              
-              <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
-              
-              <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
-              <Route path="/profile/edit" element={<ProtectedRoute><Layout><EditProfilePage /></Layout></ProtectedRoute>} />
-              
-              <Route path="/vehicles" element={<ProtectedRoute><Layout><Vehicles /></Layout></ProtectedRoute>} />
-              <Route path="/vehicles/new" element={<ProtectedRoute><Layout><NewVehicle /></Layout></ProtectedRoute>} />
-              <Route path="/vehicles/:id/edit" element={<ProtectedRoute><Layout><EditVehicle /></Layout></ProtectedRoute>} />
-              
-              <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
-              <Route path="/reports/generate" element={<ProtectedRoute><Layout><GenerateReport /></Layout></ProtectedRoute>} />
-              <Route path="/reports/saved" element={<ProtectedRoute><Layout><SavedReports /></Layout></ProtectedRoute>} />
-              <Route path="/reports/view/:id" element={<ProtectedRoute><Layout><ReportDetails /></Layout></ProtectedRoute>} />
-              
-              <Route path="/complaints" element={<ProtectedRoute><Layout><Complaints /></Layout></ProtectedRoute>} />
-              <Route path="/complaints/new" element={<ProtectedRoute><Layout><NewComplaint /></Layout></ProtectedRoute>} />
-              <Route path="/complaints/:id" element={<ProtectedRoute><Layout><ComplaintDetails /></Layout></ProtectedRoute>} />
-              
-              <Route path="/driver-comments" element={<ProtectedRoute><Layout><DriverComments /></Layout></ProtectedRoute>} />
-              <Route path="/driver-comments/:id" element={<ProtectedRoute><Layout><DriverCommentDetails /></Layout></ProtectedRoute>} />
-              
-              <Route path="/quality-reviews" element={<ProtectedRoute><Layout><QualityReviews /></Layout></ProtectedRoute>} />
-              
-              <Route path="/airports" element={<ProtectedRoute><Layout><Airports /></Layout></ProtectedRoute>} />
-              <Route path="/airports/:id" element={<ProtectedRoute><Layout><AirportDetails /></Layout></ProtectedRoute>} />
-              <Route path="/airports/new" element={<ProtectedRoute><Layout><NewAirport /></Layout></ProtectedRoute>} />
-              <Route path="/airports/:id/edit" element={<ProtectedRoute><Layout><EditAirport /></Layout></ProtectedRoute>} />
-              <Route path="/airports/meeting-points/new" element={<ProtectedRoute><Layout><NewMeetingPoint /></Layout></ProtectedRoute>} />
-              <Route path="/airports/meeting-points/:id/edit" element={<ProtectedRoute><Layout><EditMeetingPoint /></Layout></ProtectedRoute>} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="/invoices" element={<ProtectedRoute><Layout><Invoices /></Layout></ProtectedRoute>} />
+                <Route path="/invoices/generate" element={<ProtectedRoute><Layout><GenerateInvoice /></Layout></ProtectedRoute>} />
+                <Route path="/invoices/:id" element={<ProtectedRoute><Layout><InvoiceDetails /></Layout></ProtectedRoute>} />
+                
+                <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+                
+                <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
+                <Route path="/profile/edit" element={<ProtectedRoute><Layout><EditProfilePage /></Layout></ProtectedRoute>} />
+                
+                <Route path="/vehicles" element={<ProtectedRoute><Layout><Vehicles /></Layout></ProtectedRoute>} />
+                <Route path="/vehicles/new" element={<ProtectedRoute><Layout><NewVehicle /></Layout></ProtectedRoute>} />
+                <Route path="/vehicles/:id/edit" element={<ProtectedRoute><Layout><EditVehicle /></Layout></ProtectedRoute>} />
+                
+                <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+                <Route path="/reports/generate" element={<ProtectedRoute><Layout><GenerateReport /></Layout></ProtectedRoute>} />
+                <Route path="/reports/saved" element={<ProtectedRoute><Layout><SavedReports /></Layout></ProtectedRoute>} />
+                <Route path="/reports/view/:id" element={<ProtectedRoute><Layout><ReportDetails /></Layout></ProtectedRoute>} />
+                
+                <Route path="/complaints" element={<ProtectedRoute><Layout><Complaints /></Layout></ProtectedRoute>} />
+                <Route path="/complaints/new" element={<ProtectedRoute><Layout><NewComplaint /></Layout></ProtectedRoute>} />
+                <Route path="/complaints/:id" element={<ProtectedRoute><Layout><ComplaintDetails /></Layout></ProtectedRoute>} />
+                
+                <Route path="/driver-comments" element={<ProtectedRoute><Layout><DriverComments /></Layout></ProtectedRoute>} />
+                <Route path="/driver-comments/:id" element={<ProtectedRoute><Layout><DriverCommentDetails /></Layout></ProtectedRoute>} />
+                
+                <Route path="/quality-reviews" element={<ProtectedRoute><Layout><QualityReviews /></Layout></ProtectedRoute>} />
+                
+                <Route path="/airports" element={<ProtectedRoute><Layout><Airports /></Layout></ProtectedRoute>} />
+                <Route path="/airports/:id" element={<ProtectedRoute><Layout><AirportDetails /></Layout></ProtectedRoute>} />
+                <Route path="/airports/new" element={<ProtectedRoute><Layout><NewAirport /></Layout></ProtectedRoute>} />
+                <Route path="/airports/:id/edit" element={<ProtectedRoute><Layout><EditAirport /></Layout></ProtectedRoute>} />
+                <Route path="/airports/meeting-points/new" element={<ProtectedRoute><Layout><NewMeetingPoint /></Layout></ProtectedRoute>} />
+                <Route path="/airports/meeting-points/:id/edit" element={<ProtectedRoute><Layout><EditMeetingPoint /></Layout></ProtectedRoute>} />
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </PermissionProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

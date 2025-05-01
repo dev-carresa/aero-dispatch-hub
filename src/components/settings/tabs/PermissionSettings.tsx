@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +37,7 @@ interface UserData {
 }
 
 // Group permissions by category for better organization
-const permissionCategories = {
+const permissionCategories: Record<string, Permission[]> = {
   "Dashboard": ["dashboard:view"],
   "Bookings": ["bookings:view", "bookings:create", "bookings:edit", "bookings:delete", "bookings:assign_driver"],
   "Users": ["users:view", "users:create", "users:edit", "users:delete"],
