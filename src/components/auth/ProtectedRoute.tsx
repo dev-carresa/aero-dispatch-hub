@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth/AuthContext';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';

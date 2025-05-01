@@ -21,7 +21,7 @@ import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import LoginPage from "./pages/LoginPage";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/auth/AuthContext";
 import { PermissionProvider } from "./context/PermissionContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
