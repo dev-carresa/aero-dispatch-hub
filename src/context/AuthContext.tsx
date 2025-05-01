@@ -16,7 +16,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
 }
@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
   signIn: async () => {},
-  signOut: () => {},
+  signOut: async () => {},
   isAuthenticated: false,
   session: null
 });
@@ -74,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // First, set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         setLoading(true);
         setSession(currentSession);
         setIsAuthenticated(!!currentSession);
@@ -135,13 +136,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    console.log("Signing out...");
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+        toast.error(`Sign out failed: ${error.message}`);
+        throw error;
+      }
+      
+      // Clear user state regardless of API success
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
       toast.success("Successfully logged out");
+      console.log("Sign out successful");
+      
+      // Force a reload to ensure clean state
+      window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Sign out failed");

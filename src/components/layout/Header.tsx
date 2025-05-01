@@ -35,9 +35,15 @@ export function Header() {
     return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
   };
 
-  const handleLogout = () => {
-    signOut();
-    navigate('/');
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Logout button clicked");
+    try {
+      await signOut();
+      // Note: We don't need to navigate here as the signOut function now handles redirection
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
   };
 
   return (
