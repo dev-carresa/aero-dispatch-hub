@@ -1,15 +1,24 @@
-export type UserRole = 'Admin' | 'Manager' | 'Driver' | 'Fleet' | 'Support' | 'Accounting' | 'Client';
 
-export interface User {
-  id: string;
+export type UserRole = "Admin" | "Driver" | "Fleet" | "Dispatcher" | "Customer";
+export type UserStatus = "active" | "inactive";
+export type DriverAvailability = "available" | "busy" | "offline" | "on_break";
+
+export type User = {
+  id: string | number; // Updated to accept both string and number
+  name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
-  name?: string;
   role: UserRole;
-  avatar_url?: string;
-  created_at: string;
-  last_sign_in_at?: string;
+  status: UserStatus;
+  lastActive: string;
+  imageUrl: string;
+  // Driver-specific fields
   phone?: string;
-  address?: string;
-  status?: 'active' | 'inactive' | 'pending';
-  metadata?: Record<string, any>;
-}
+  nationality?: string;
+  dateOfBirth?: string;
+  fleetId?: number;
+  countryCode?: string;
+  vehicleType?: string;
+  driverAvailability?: DriverAvailability;
+};
