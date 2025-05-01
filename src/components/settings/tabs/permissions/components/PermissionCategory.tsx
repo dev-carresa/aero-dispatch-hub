@@ -1,4 +1,3 @@
-
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -14,9 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RoleData, permissionDescriptions } from "../types";
+import { RoleData, permissionDescriptions, permissionCategories } from "../types";
 import { countEnabledPermissionsInCategory, areAllPermissionsEnabledInCategory, formatPermissionName } from "../utils";
-import { permissionCategories } from "../types";
 
 interface PermissionCategoryProps {
   role: RoleData;

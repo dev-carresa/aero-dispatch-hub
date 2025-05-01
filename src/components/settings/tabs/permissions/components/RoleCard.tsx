@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +21,6 @@ import {
 import { Copy, Save, Settings, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { RoleData } from "../types";
-import { permissionCategories } from "../types";
 import { PermissionCategory } from "./PermissionCategory";
 
 interface RoleCardProps {
