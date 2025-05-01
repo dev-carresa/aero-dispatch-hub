@@ -81,13 +81,13 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Public routes */}
+                {/* Public routes - accessible to everyone */}
                 <Route path="/welcome" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
-                {/* Protected routes */}
+                {/* Protected routes - require authentication */}
                 <Route element={<ProtectedRoute />}>
                   {/* Dashboard */}
                   <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />

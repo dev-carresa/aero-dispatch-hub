@@ -24,6 +24,7 @@ export default function AuthPage() {
   // Redirect if user is already logged in - moved to useEffect to avoid React warnings
   useEffect(() => {
     if (user) {
+      console.log("User already logged in, redirecting...");
       const from = location.state?.from || "/";
       navigate(from, { replace: true });
     }
