@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import BookingsIndex from "./pages/BookingsIndex";
@@ -20,8 +20,7 @@ import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
-import LandingPage from "./pages/LandingPage";
-import Index from "./pages/Index";
+import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./context/AuthContext";
 import { PermissionProvider } from "./context/PermissionContext";
 
@@ -78,10 +77,9 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 {/* Public routes */}
-                <Route path="/welcome" element={<LandingPage />} />
+                <Route path="/" element={<LoginPage />} />
                 
-                {/* Application routes */}
-                <Route path="/" element={<Layout><Index /></Layout>} />
+                {/* Application routes - protected */}
                 <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                 
                 {/* Bookings */}

@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   User, 
@@ -23,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   // Helper function to get initials from a name
   const getInitials = () => {
@@ -32,6 +33,11 @@ export function Header() {
     if (nameParts.length === 1) return nameParts[0].substring(0, 2).toUpperCase();
     
     return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+  };
+
+  const handleLogout = () => {
+    signOut();
+    navigate('/');
   };
 
   return (
@@ -127,7 +133,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="flex items-center gap-2 text-red-500 cursor-pointer"
-                onClick={() => signOut()}
+                onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
