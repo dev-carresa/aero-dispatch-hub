@@ -7,7 +7,7 @@ const Index = () => {
   
   return (
     <Layout>
-      <div className="animate-fade-in">
+      <div className="animate-fade-in bg-white p-6 rounded-lg shadow-sm">
         <div className="space-y-6">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Welcome</h2>

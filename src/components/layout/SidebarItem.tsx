@@ -26,18 +26,20 @@ export function SidebarItem({ item }: SidebarItemProps) {
   const { location, expanded, mobileOpen } = useSidebar();
   const { hasPermission, hasAnyPermission, isAdmin } = usePermission();
   
-  // Skip rendering if item is admin-only and user is not admin
-  if (item.adminOnly && !isAdmin) {
+  // First check: If admin-only and user is not admin, don't render
+  if (item.adminOnly === true && !isAdmin) {
     return null;
   }
   
-  // Check if the user has permission to see this item
-  if (item.permission && !hasPermission(item.permission)) {
+  // Second check: Permission requirement - if a specific permission is required and user doesn't have it
+  // Note: Admin users bypass this check as they have all permissions
+  if (item.permission && !isAdmin && !hasPermission(item.permission)) {
     return null;
   }
   
-  // Check if the user has any of the permissions required
-  if (item.permissions && !hasAnyPermission(item.permissions)) {
+  // Third check: Multiple permissions - if any permission from a list is required and user has none
+  // Note: Admin users bypass this check as they have all permissions
+  if (item.permissions && !isAdmin && !hasAnyPermission(item.permissions)) {
     return null;
   }
   
@@ -46,8 +48,9 @@ export function SidebarItem({ item }: SidebarItemProps) {
     (item.href !== '/' && location.pathname.startsWith(item.href));
   
   // Filter children based on permissions
+  // Note: Admin users always see all children
   const authorizedChildren = item.children?.filter((subItem) => {
-    return !subItem.permission || hasPermission(subItem.permission);
+    return isAdmin || !subItem.permission || hasPermission(subItem.permission);
   });
   
   // If there are no authorized children, don't render them
