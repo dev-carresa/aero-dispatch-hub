@@ -1,7 +1,14 @@
 
+# This file determines how your edge functions are packaged and deployed to Supabase.
 project_id = "qqfnokbhdzmffywksmvl"
 
+[functions.init-permissions]
+verify_jwt = false
+
 [functions.get_all_roles]
+verify_jwt = false
+
+[functions.get_all_permissions]
 verify_jwt = false
 
 [functions.get_user_permissions]
@@ -13,7 +20,10 @@ verify_jwt = false
 [functions.get_role_permissions]
 verify_jwt = false
 
-[functions.init-permissions]
+[functions.create_role]
+verify_jwt = false
+
+[functions.delete_role]
 verify_jwt = false
 
 [functions.add_permission_to_role]
@@ -22,23 +32,14 @@ verify_jwt = false
 [functions.remove_permission_from_role]
 verify_jwt = false
 
-[functions.create_role]
-verify_jwt = false
-
-[functions.delete_role]
-verify_jwt = false
-
-[functions.update_user_role]
-verify_jwt = false
-
 [functions.add_permission_to_role_by_name]
 verify_jwt = false
 
 [functions.remove_permission_from_role_by_name]
 verify_jwt = false
 
-[functions.update_user_role_by_name]
+[functions.update_user_role]
 verify_jwt = false
 
-[functions.get_all_permissions]
+[functions.update_user_role_by_name]
 verify_jwt = false

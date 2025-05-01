@@ -60,11 +60,19 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
       console.log('Edge function init-permissions check failed:', edgeFuncErr);
     }
     
+    // First, try to override with local storage if we've already verified initialization
+    const hasBeenInitialized = localStorage.getItem('db_initialized');
+    if (hasBeenInitialized === 'true') {
+      console.log("Using cached initialization status: true");
+      return true;
+    }
+    
     // Try the get_all_roles edge function as before
     try {
       const { data, error } = await supabase.functions.invoke('get_all_roles');
       if (!error && Array.isArray(data) && data.length > 0) {
         console.log("Database initialized according to get_all_roles function");
+        localStorage.setItem('db_initialized', 'true');
         return true;
       }
     } catch (edgeFuncErr) {
@@ -81,6 +89,7 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
       
       if (!rolesError && rolesData && rolesData.length > 0) {
         console.log("Database initialized based on direct roles table check:", rolesData);
+        localStorage.setItem('db_initialized', 'true');
         return true;
       }
       
@@ -92,6 +101,7 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
       
       if (!permissionsError && permissionsData && permissionsData.length > 0) {
         console.log("Database initialized based on direct permissions table check:", permissionsData);
+        localStorage.setItem('db_initialized', 'true');
         return true;
       }
       
@@ -103,6 +113,7 @@ export const checkDatabaseInitialized = async (): Promise<boolean> => {
         
       if (!rolePermissionsError && rolePermissionsData && rolePermissionsData.length > 0) {
         console.log("Database initialized based on role_permissions check:", rolePermissionsData);
+        localStorage.setItem('db_initialized', 'true');
         return true;
       }
     } catch (dbErr) {

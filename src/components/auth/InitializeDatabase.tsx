@@ -18,6 +18,19 @@ export function InitializeDatabase({
   const [error, setError] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(false);
   const [statusDetails, setStatusDetails] = useState<any>(null);
+  const [bypassAttempts, setBypassAttempts] = useState(0);
+  
+  // Function to manually bypass initialization check
+  const bypassCheck = () => {
+    setBypassAttempts(prev => prev + 1);
+    if (bypassAttempts >= 2) {
+      localStorage.setItem('db_initialized', 'true');
+      setInitialized(true);
+      toast.success("Bypassed initialization check - development mode only");
+    } else {
+      toast.info("Click bypass button again to confirm");
+    }
+  };
 
   useEffect(() => {
     const checkDatabase = async () => {
@@ -27,37 +40,17 @@ export function InitializeDatabase({
         
         console.log("Starting database initialization check...");
         
-        // Try using the edge function for checking initialization
-        try {
-          const { data, error } = await supabase.functions.invoke('init-permissions', {
-            body: { action: 'check_initialization' }
-          });
-          
-          console.log("Edge function check result:", data);
-          
-          if (error) {
-            console.error("Edge function error:", error);
-            throw error;
-          }
-          
-          if (data && typeof data === 'object') {
-            setStatusDetails(data.details || data.tables || data);
-            
-            if (data.initialized === true) {
-              console.log("Database is initialized according to edge function");
-              setInitialized(true);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch (edgeFuncError) {
-          console.error("Error calling init-permissions edge function:", edgeFuncError);
-          // Continue to fallback methods
+        // Check if we've already confirmed initialization in localStorage
+        if (localStorage.getItem('db_initialized') === 'true') {
+          console.log("Using cached initialization status: true");
+          setInitialized(true);
+          setLoading(false);
+          return;
         }
         
-        // Fallback: Try direct database queries
+        // Try using the checkDatabaseInitialized function
         const isInitialized = await checkDatabaseInitialized();
-        console.log("Direct database check result:", isInitialized);
+        console.log("Database check result:", isInitialized);
         
         setInitialized(isInitialized);
         
@@ -76,6 +69,7 @@ export function InitializeDatabase({
             
             if (rolesData && rolesData.length > 0 && permissionsData && permissionsData.length > 0) {
               console.log("Tables exist but initialization status check failed. Assuming initialized.");
+              localStorage.setItem('db_initialized', 'true');
               setInitialized(true);
             }
           } catch (directCheckError) {
@@ -94,7 +88,7 @@ export function InitializeDatabase({
     const timeoutId = setTimeout(() => {
       if (loading) {
         setLoading(false);
-        setError('Database check timed out. Please initialize the database manually.');
+        setError('Database check timed out. Please initialize the database manually or bypass the check.');
       }
     }, 10000); // Increased timeout to 10 seconds
     
@@ -149,6 +143,7 @@ export function InitializeDatabase({
       
       console.log("Final initialization check:", data);
       
+      localStorage.setItem('db_initialized', 'true');
       setInitialized(true);
       setStatusDetails(data?.details || data?.tables);
     } catch (err: any) {
@@ -205,20 +200,30 @@ export function InitializeDatabase({
             </Alert>
           )}
           
-          <Button 
-            onClick={initializeDatabase} 
-            className="w-full" 
-            disabled={initializing}
-          >
-            {initializing ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Initializing Database...
-              </>
-            ) : (
-              "Initialize Database"
-            )}
-          </Button>
+          <div className="space-y-4">
+            <Button 
+              onClick={initializeDatabase} 
+              className="w-full" 
+              disabled={initializing}
+            >
+              {initializing ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Initializing Database...
+                </>
+              ) : (
+                "Initialize Database"
+              )}
+            </Button>
+            
+            <Button 
+              onClick={bypassCheck} 
+              variant="outline" 
+              className="w-full"
+            >
+              Bypass Check ({3 - bypassAttempts} clicks needed)
+            </Button>
+          </div>
           
           <p className="text-xs text-muted-foreground mt-2 text-center">
             If initialization fails, please contact your system administrator.

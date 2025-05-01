@@ -33,6 +33,7 @@ export function DatabaseInitializer() {
           
           if (data.initialized) {
             setStatus(`Database is properly initialized.`);
+            localStorage.setItem('db_initialized', 'true');
           } else {
             setStatus(`Database initialization incomplete. See details for more info.`);
           }
@@ -57,6 +58,7 @@ export function DatabaseInitializer() {
       if (rolesData && rolesData.length > 0) {
         setStatusDetails({ roles: rolesData });
         setStatus(`Database has ${rolesData.length} roles: ${rolesData.map(r => r.name).join(', ')}`);
+        localStorage.setItem('db_initialized', 'true');
       } else {
         setStatus("No roles found in database. Database needs initialization.");
       }
@@ -104,6 +106,7 @@ export function DatabaseInitializer() {
       }
       
       setStatus("Database initialized successfully!");
+      localStorage.setItem('db_initialized', 'true');
       toast.success("Database seeded successfully");
       
     } catch (error: any) {
@@ -113,6 +116,12 @@ export function DatabaseInitializer() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const forceBypass = () => {
+    localStorage.setItem('db_initialized', 'true');
+    setStatus("Force bypass activated. The application will now consider the database as initialized.");
+    toast.success("Database initialization check bypassed");
   };
 
   return (
@@ -153,13 +162,23 @@ export function DatabaseInitializer() {
           </Alert>
         )}
         
-        <Button 
-          onClick={checkStatus} 
-          variant="outline" 
-          className="w-full mb-2"
-        >
-          Check Current Status
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            onClick={checkStatus} 
+            variant="outline" 
+            className="w-full mb-2"
+          >
+            Check Current Status
+          </Button>
+          
+          <Button
+            onClick={forceBypass}
+            variant="outline"
+            className="w-full"
+          >
+            Force Bypass Initialization Check
+          </Button>
+        </div>
       </CardContent>
       <CardFooter>
         <Button 
