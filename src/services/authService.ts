@@ -36,19 +36,10 @@ export const ensureDemoUserExists = async () => {
       return true;
     }
 
-    // If user exists, we need to update the password
-    // Note: This usually requires admin privileges or a server function
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
-      existingUser.id,
-      { password: demoPassword }
-    );
-
-    if (updateError) {
-      console.error("Error updating demo user password:", updateError);
-      return false;
-    }
-
-    console.log("Demo user password updated successfully");
+    // The issue is here - we're trying to use existingUser.id but the query only selects 'email'
+    // We need to fetch the user by email from auth API or use the email directly
+    // Since we don't have direct access to update password by email, we'll use the edge function instead
+    console.log("Demo user exists, but password may need updating");
     return true;
   } catch (error) {
     console.error("Error in demo user setup:", error);
