@@ -15,3 +15,30 @@ verify_jwt = false
 
 [functions.init-permissions]
 verify_jwt = false
+
+[functions.add_permission_to_role]
+verify_jwt = false
+
+[functions.remove_permission_from_role]
+verify_jwt = false
+
+[functions.create_role]
+verify_jwt = false
+
+[functions.delete_role]
+verify_jwt = false
+
+[functions.update_user_role]
+verify_jwt = false
+
+[functions.add_permission_to_role_by_name]
+verify_jwt = false
+
+[functions.remove_permission_from_role_by_name]
+verify_jwt = false
+
+[functions.update_user_role_by_name]
+verify_jwt = false
+
+[functions.get_all_permissions]
+verify_jwt = false

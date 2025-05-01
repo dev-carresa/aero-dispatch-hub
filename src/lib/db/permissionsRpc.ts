@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 // This function creates the necessary RPC function in the database
 export const createPermissionsRpcFunction = async () => {
   try {
-    const { error } = await supabase.functions.invoke('admin_create_permission_functions');
+    const { error } = await supabase.functions.invoke('init-permissions', {
+      body: { action: 'create_functions' }
+    });
     
     if (error) {
       console.error('Error creating RPC functions:', error);
@@ -21,7 +23,9 @@ export const createPermissionsRpcFunction = async () => {
 // This function seeds the initial roles and permissions
 export const seedRolesAndPermissions = async () => {
   try {
-    const { error } = await supabase.functions.invoke('admin_seed_roles_and_permissions');
+    const { error } = await supabase.functions.invoke('init-permissions', {
+      body: { action: 'seed_data' }
+    });
     
     if (error) {
       console.error('Error seeding roles and permissions:', error);
@@ -38,33 +42,62 @@ export const seedRolesAndPermissions = async () => {
 // Function to check if database has been properly initialized
 export const checkDatabaseInitialized = async (): Promise<boolean> => {
   try {
-    // Use the edge function approach as our primary method
+    console.log("Checking database initialization...");
+    
+    // Try the new init-permissions check function first
     try {
-      const { data, error } = await supabase.functions.invoke('get_all_roles');
-      if (!error && Array.isArray(data) && data.length > 0) {
+      const { data, error } = await supabase.functions.invoke('init-permissions', {
+        body: { action: 'check_initialization' }
+      });
+      
+      if (!error && data && data.initialized) {
+        console.log("Database initialized according to init-permissions function");
         return true;
       }
     } catch (edgeFuncErr) {
-      console.log('Edge function get_all_roles not available', edgeFuncErr);
+      console.log('Edge function init-permissions check failed:', edgeFuncErr);
     }
     
-    // Try to query user profiles as a fallback
-    // We check if profiles exist since this table definitely exists in our schema
+    // Try the get_all_roles edge function as before
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+      const { data, error } = await supabase.functions.invoke('get_all_roles');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        console.log("Database initialized according to get_all_roles function");
+        return true;
+      }
+    } catch (edgeFuncErr) {
+      console.log('Edge function get_all_roles check failed:', edgeFuncErr);
+    }
+    
+    // Direct database queries as a fallback
+    try {
+      // Check for roles table data directly
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('roles')
         .select('id')
         .limit(1);
       
-      if (!profileError && profileData) {
-        // If we can query profiles, the database exists but roles system might not be initialized
-        return false;
+      if (!rolesError && rolesData && rolesData.length > 0) {
+        console.log("Database initialized based on direct roles table check");
+        return true;
       }
-    } catch (err) {
-      console.error('Failed to check profiles table:', err);
+      
+      // Check for permissions table data directly
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('permissions')
+        .select('id')
+        .limit(1);
+      
+      if (!permissionsError && permissionsData && permissionsData.length > 0) {
+        console.log("Database initialized based on direct permissions table check");
+        return true;
+      }
+    } catch (dbErr) {
+      console.error('Failed to check database tables directly:', dbErr);
     }
-
-    // If we get here, the database might not be accessible
+    
+    // If we get here, the database might not be properly initialized
+    console.log("Database initialization check result: false");
     return false;
   } catch (err) {
     console.error('Failed to check database initialization:', err);
