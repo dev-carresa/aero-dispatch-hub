@@ -5,7 +5,6 @@ import { Permission, rolePermissions } from "@/lib/permissions";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkDatabaseInitialized } from "@/lib/db/permissionsRpc";
 
 interface PermissionContextType {
   userRole: UserRole | null;
@@ -26,8 +25,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dbInitialized, setDbInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   // Helper functions to check specific roles
   const isAdmin = userRole === "Admin";
@@ -35,15 +33,6 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const isFleet = userRole === "Fleet";
   const isDispatcher = userRole === "Dispatcher";
   const isCustomer = userRole === "Customer";
-
-  // Check if database is initialized
-  useEffect(() => {
-    const checkDb = async () => {
-      const initialized = await checkDatabaseInitialized();
-      setDbInitialized(initialized);
-    };
-    checkDb();
-  }, []);
 
   // Fetch user role and permissions from the database
   useEffect(() => {
@@ -58,62 +47,41 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         
-        if (dbInitialized) {
-          // Use Edge function to get user's role name
-          const { data: roleData, error: roleError } = await supabase.functions
-            .invoke('get_user_role_name', {
-              body: { user_id: user.id }
-            });
-          
-          if (roleError) {
-            console.error('Error fetching user role:', roleError);
-            throw roleError;
+        // First get the user's role from profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          // Fallback to metadata
+          if (user.user_metadata?.role) {
+            setUserRole(user.user_metadata.role as UserRole);
+          } else {
+            // Default role as fallback
+            setUserRole("Customer");
           }
-          
-          // Set the role from Edge function call
-          setUserRole(roleData as UserRole);
-          
-          // Use Edge function to get permissions for the current user
-          const { data: permissionsData, error: permissionsError } = await supabase.functions
-            .invoke('get_user_permissions', {
-              body: { user_id: user.id }
-            });
-          
-          if (permissionsError) {
-            console.error('Error fetching user permissions:', permissionsError);
-            throw permissionsError;
-          }
-          
-          // Set permissions from the Edge function call
-          setUserPermissions((permissionsData || []) as Permission[]);
         } else {
-          // If DB is not initialized, fall back to meta data
-          // First get the user's role from profiles
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching user profile:', profileError);
-            throw profileError;
-          }
-
           // Set the role from profile data
           const role = profileData?.role as UserRole | null;
-          setUserRole(role);
-          
-          // Default permissions based on role for basic functionality
-          if (role === "Admin") {
-            setUserPermissions(rolePermissions.Admin);
-          } else if (role) {
-            // Add role-specific permissions from our local permissions definition
-            setUserPermissions(rolePermissions[role] || []);
-          } else {
-            setUserPermissions([]);
-          }
+          setUserRole(role || "Customer");
         }
+        
+        // Get permissions based on role
+        const currentRole = profileData?.role || user.user_metadata?.role || "Customer";
+        
+        // Default permissions based on role for basic functionality
+        if (currentRole === "Admin") {
+          setUserPermissions(rolePermissions.Admin);
+        } else if (currentRole) {
+          // Add role-specific permissions from our local permissions definition
+          setUserPermissions(rolePermissions[currentRole as UserRole] || []);
+        } else {
+          setUserPermissions(rolePermissions.Customer);
+        }
+        
       } catch (error) {
         console.error('Error in permission context:', error);
         // Fallback to metadata role if database fetch fails
@@ -121,15 +89,17 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
           const role = user.user_metadata.role as UserRole;
           setUserRole(role);
           setUserPermissions(rolePermissions[role] || []);
+        } else {
+          setUserRole("Customer");
+          setUserPermissions(rolePermissions.Customer || []);
         }
-        toast.error("Failed to load permissions. Some features may be limited.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserRoleAndPermissions();
-  }, [user, dbInitialized]);
+  }, [user]);
 
   // Check if the user has a specific permission
   const checkPermission = (permission: Permission): boolean => {
