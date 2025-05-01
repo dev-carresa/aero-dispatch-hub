@@ -3,3 +3,7 @@ project_id = "qqfnokbhdzmffywksmvl"
 
 [functions.setup-demo-user]
 verify_jwt = false
+
+[functions.admin-seed-permissions]
+verify_jwt = false
+

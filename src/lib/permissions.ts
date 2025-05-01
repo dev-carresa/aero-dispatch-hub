@@ -66,5 +66,16 @@ export const rolePermissions: Record<string, Permission[]> = {
   ],
   Customer: ['dashboard:view', 'bookings:view', 'bookings:create'],
   Driver: ['dashboard:view', 'bookings:view'],
-  Fleet: ['dashboard:view', 'bookings:view', 'vehicles:view', 'vehicles:edit']
+  Fleet: ['dashboard:view', 'bookings:view', 'vehicles:view', 'vehicles:edit'],
+  Dispatcher: ['dashboard:view', 'bookings:view', 'bookings:create', 'bookings:edit', 'bookings:assign_driver']
+};
+
+// Helper function to check if a user has a specific permission
+export const checkPermission = (userRole: string, permission: string): boolean => {
+  // Admin has all permissions
+  if (userRole === 'Admin') return true;
+  
+  // Check if the user's role has the specified permission
+  const userPermissions = rolePermissions[userRole] || [];
+  return userPermissions.includes(permission as Permission);
 };
