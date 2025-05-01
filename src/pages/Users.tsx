@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { User, UserRole } from "@/types/user";
+import { User, UserRole, UserStatus, DriverAvailability } from "@/types/user";
 import { UsersHeader } from "@/components/users/UsersHeader";
 import { UserFilters } from "@/components/users/UserFilters";
 import { UsersTable } from "@/components/users/UsersTable";
@@ -44,7 +44,7 @@ const Users = () => {
             lastName: profile.last_name,
             email: profile.email,
             role: profile.role as UserRole,
-            status: profile.status || 'active',
+            status: profile.status as UserStatus, // Cast string to UserStatus
             lastActive: profile.last_active || 'Never',
             imageUrl: profile.image_url || '',
             phone: profile.phone,
@@ -53,7 +53,7 @@ const Users = () => {
             fleetId: profile.fleet_id,
             countryCode: profile.country_code,
             vehicleType: profile.vehicle_type,
-            driverAvailability: profile.driver_availability || 'offline'
+            driverAvailability: profile.driver_availability as DriverAvailability || 'offline'
           }));
           setUsers(mappedUsers);
         }
@@ -135,11 +135,11 @@ const Users = () => {
 
   // Dropdown actions
   const handleViewProfile = (user: User) => {
-    navigate(`/users/${user.id}`);
+    navigate(`/users/${String(user.id)}`); // Convert ID to string
   };
 
   const handleEditUser = (user: User) => {
-    navigate(`/users/${user.id}`);
+    navigate(`/users/${String(user.id)}`); // Convert ID to string
   };
 
   const toggleUserStatus = async (user: User, newStatus?: string) => {
@@ -157,7 +157,7 @@ const Users = () => {
         setUsers(prevUsers =>
           prevUsers.map(u =>
             u.id === user.id
-              ? { ...u, driverAvailability: newStatus as any }
+              ? { ...u, driverAvailability: newStatus as DriverAvailability }
               : u
           )
         );
@@ -182,7 +182,7 @@ const Users = () => {
         setUsers(prevUsers =>
           prevUsers.map(u =>
             u.id === user.id
-              ? { ...u, status: newUserStatus }
+              ? { ...u, status: newUserStatus as UserStatus }
               : u
           )
         );
