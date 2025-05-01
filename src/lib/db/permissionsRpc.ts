@@ -38,10 +38,39 @@ export const seedRolesAndPermissions = async () => {
 // Function to check if database has been properly initialized
 export const checkDatabaseInitialized = async (): Promise<boolean> => {
   try {
-    // Try to call a function that will exist if the permissions system is set up
-    const { data, error } = await supabase.functions.invoke('get_all_roles');
-    if (error) return false;
-    return Array.isArray(data) && data.length > 0;
+    // First try to query the roles table directly
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .limit(1);
+    
+    // If we can query the roles table and get data, the DB is initialized
+    if (!roleError && roleData && roleData.length > 0) {
+      return true;
+    }
+    
+    // If table doesn't exist, try calling the get_all_roles function
+    try {
+      const { data, error } = await supabase.rpc('get_all_roles');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return true;
+      }
+    } catch (funcErr) {
+      console.log('Function get_all_roles not available', funcErr);
+    }
+
+    // Try edge function as a last resort
+    try {
+      const { data, error } = await supabase.functions.invoke('get_all_roles');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return true;
+      }
+    } catch (edgeFuncErr) {
+      console.log('Edge function get_all_roles not available', edgeFuncErr);
+    }
+
+    // If we get here, the database is not initialized
+    return false;
   } catch (err) {
     console.error('Failed to check database initialization:', err);
     return false;
