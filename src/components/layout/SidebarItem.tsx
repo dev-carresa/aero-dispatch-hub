@@ -10,7 +10,7 @@ interface SidebarItemProps {
   item: {
     name: string;
     href: string;
-    icon: LucideIcon;
+    icon: LucideIcon | (() => JSX.Element);
     permission?: Permission;
     permissions?: Permission[];
     children?: Array<{ 
@@ -18,12 +18,18 @@ interface SidebarItemProps {
       href: string; 
       permission?: Permission; 
     }>;
+    adminOnly?: boolean;
   };
 }
 
 export function SidebarItem({ item }: SidebarItemProps) {
   const { location, expanded, mobileOpen } = useSidebar();
-  const { hasPermission, hasAnyPermission } = usePermission();
+  const { hasPermission, hasAnyPermission, isAdmin } = usePermission();
+  
+  // Skip rendering if item is admin-only and user is not admin
+  if (item.adminOnly && !isAdmin) {
+    return null;
+  }
   
   // Check if the user has permission to see this item
   if (item.permission && !hasPermission(item.permission)) {
@@ -47,6 +53,14 @@ export function SidebarItem({ item }: SidebarItemProps) {
   // If there are no authorized children, don't render them
   const hasAuthorizedChildren = authorizedChildren && authorizedChildren.length > 0;
   
+  // Determine icon to display
+  const IconComponent = typeof item.icon === 'function' 
+    ? item.icon 
+    : () => <item.icon className={cn(
+        'h-5 w-5 flex-shrink-0',
+        isActive ? 'text-primary' : 'text-muted-foreground'
+      )} />;
+  
   return (
     <div>
       <Link
@@ -58,12 +72,12 @@ export function SidebarItem({ item }: SidebarItemProps) {
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         )}
       >
-        <item.icon
-          className={cn(
-            'mr-3 h-5 w-5 flex-shrink-0',
-            isActive ? 'text-primary' : 'text-muted-foreground'
-          )}
-        />
+        <span className={cn(
+          'mr-3 flex-shrink-0',
+          isActive ? 'text-primary' : 'text-muted-foreground'
+        )}>
+          <IconComponent />
+        </span>
         {(expanded || mobileOpen) && <span>{item.name}</span>}
       </Link>
       
