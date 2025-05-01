@@ -56,6 +56,7 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
     setAuthError("");
     
     try {
+      console.log("Attempting login with:", values.email);
       const { error } = await signIn(values.email, values.password);
       
       if (error) {
@@ -70,12 +71,13 @@ export function LoginForm({ onShowResetPassword, onAuthError }: LoginFormProps) 
         return;
       }
       
-      // Redirect to the page the user was trying to access, or to the home page
-      const from = location.state?.from || "/";
-      navigate(from, { replace: true });
+      // If we get here, login was successful
+      console.log("Login successful, preparing to navigate");
+      // Navigation will be handled by AuthPage's useEffect
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      console.error("Login error:", errorMessage);
       setAuthError(errorMessage);
       onAuthError(errorMessage);
       setIsSubmitting(false);

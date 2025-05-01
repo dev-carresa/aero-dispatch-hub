@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,10 +21,16 @@ export default function AuthPage() {
     setAuthError(error);
   };
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in - moved to useEffect to avoid React warnings
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from || "/";
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location.state]);
+
+  // Don't render anything if user is logged in and we're about to redirect
   if (user) {
-    const from = location.state?.from || "/";
-    navigate(from, { replace: true });
     return null;
   }
 
