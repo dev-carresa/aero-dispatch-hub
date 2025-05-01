@@ -1,3 +1,4 @@
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -13,7 +14,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log("ProtectedRoute - User state:", user ? "Logged in" : "Not logged in");
 
   // These paths should always be accessible without authentication
-  // They're now handled at App.tsx level, but we keep this as a safety net
   const publicPaths = ["/welcome", "/auth", "/auth/update-password", "/unauthorized"];
   
   // If current path is public, allow access without authentication
