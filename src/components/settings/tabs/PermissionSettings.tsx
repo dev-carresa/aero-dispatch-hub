@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +46,16 @@ import {
 } from "@/components/ui/tooltip";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  getAllRoles, 
+  getAllPermissions, 
+  createRole,
+  updateRole, 
+  deleteRole, 
+  addPermissionToRole, 
+  removePermissionFromRole, 
+  updateUserRole 
+} from "@/services/permissionService";
 
 // Define proper TypeScript interfaces for our data structures
 interface RoleData {
@@ -59,7 +68,7 @@ interface RoleData {
 }
 
 interface UserData {
-  id: number;
+  id: string;
   name: string;
   email: string;
   initials: string;
@@ -173,6 +182,7 @@ export function PermissionSettings() {
   const { hasPermission, isAdmin, roles: rolePermissions } = usePermission();
   const [roles, setRoles] = useState<RoleData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [permissions, setPermissions] = useState<{id: string, name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDescription, setNewRoleDescription] = useState("");
@@ -192,47 +202,31 @@ export function PermissionSettings() {
   useEffect(() => {
     fetchRolesFromDB();
     fetchUsers();
+    fetchPermissions();
   }, []);
+
+  // Fetch all permissions
+  const fetchPermissions = async () => {
+    try {
+      const { data, success } = await getAllPermissions();
+      if (success && data) {
+        setPermissions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      toast.error("Impossible de charger les permissions");
+    }
+  };
 
   // Fetch roles from the database or initialize from predefined permissions
   const fetchRolesFromDB = async () => {
     setIsLoading(true);
     try {
-      // First check if there are any custom roles in the database
-      const { data: dbRoles, error: dbError } = await supabase
-        .from('roles')
-        .select('*');
+      const { data: rolesData, success } = await getAllRoles();
       
-      if (dbError) {
-        throw dbError;
-      }
-      
-      // Fetch role-permission mappings
-      const { data: rolePermissionMappings, error: mappingError } = await supabase
-        .from('role_permissions')
-        .select('role_id, permission_id, permissions(name)');
-        
-      if (mappingError) {
-        throw mappingError;
-      }
-      
-      // If we have roles in the database, use those
-      if (dbRoles && dbRoles.length > 0) {
-        // Create a mapping of role permissions
-        const permissionsByRole: Record<string, string[]> = {};
-        
-        rolePermissionMappings?.forEach(mapping => {
-          if (!permissionsByRole[mapping.role_id]) {
-            permissionsByRole[mapping.role_id] = [];
-          }
-          
-          if (mapping.permissions && mapping.permissions.name) {
-            permissionsByRole[mapping.role_id].push(mapping.permissions.name);
-          }
-        });
-        
+      if (success && rolesData && rolesData.length > 0) {
         // Convert to the format needed by the UI
-        const formattedRoles: RoleData[] = dbRoles.map(role => {
+        const formattedRoles: RoleData[] = rolesData.map(role => {
           // Create an object with all permissions set to false by default
           const allPermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
           
@@ -243,13 +237,10 @@ export function PermissionSettings() {
           });
           
           // Set the permissions this role has to true
-          const rolePerms = permissionsByRole[role.id] || [];
+          const rolePerms = role.permissions || [];
           rolePerms.forEach(perm => {
             allPermissions[perm as Permission] = true;
           });
-          
-          // Count the users with this role
-          const userCount = 0; // We'll update this later when we fetch users
           
           // Return the role data structure
           return {
@@ -258,114 +249,18 @@ export function PermissionSettings() {
             description: role.description || `${role.name} role`,
             permissions: allPermissions,
             isBuiltIn: role.is_system || false,
-            userCount: userCount
+            userCount: 0 // Will be updated when we fetch users
           };
         });
         
         setRoles(formattedRoles);
-      } else {
-        // If no roles in database, use predefined roles
-        const initialRoles: RoleData[] = Object.entries(rolePermissions).map(([roleId, permissions]) => {
-          // Create an object with all permissions set to false by default
-          const allPermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
-          
-          // Initialize all possible permissions as false
-          const allPermissionKeys = Object.values(permissionCategories).flatMap(cat => cat.permissions);
-          allPermissionKeys.forEach(perm => {
-            allPermissions[perm as Permission] = false;
-          });
-          
-          // Set the permissions this role has to true
-          permissions.forEach(perm => {
-            allPermissions[perm] = true;
-          });
-          
-          // Return the role data structure
-          return {
-            id: roleId.toLowerCase(),
-            name: roleId,
-            permissions: allPermissions,
-            isBuiltIn: ["Admin", "Driver", "Fleet", "Dispatcher", "Customer"].includes(roleId),
-            description: `${roleId} role with predefined permissions`,
-            userCount: Math.floor(Math.random() * 10) // Mock user count for demo
-          };
-        });
-        
-        // Initialize the database with predefined roles
-        await seedPredefinedRolesToDB(initialRoles);
-        
-        setRoles(initialRoles);
       }
       
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching roles:", error);
       toast.error("Impossible de charger les rôles");
+    } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Seed predefined roles to the database if none exist
-  const seedPredefinedRolesToDB = async (initialRoles: RoleData[]) => {
-    try {
-      // For each predefined role
-      for (const role of initialRoles) {
-        // Create the role in the database
-        const { data: newRole, error: roleError } = await supabase
-          .from('roles')
-          .insert([{
-            id: role.id,
-            name: role.name,
-            description: role.description,
-            is_system: role.isBuiltIn
-          }])
-          .select();
-          
-        if (roleError) {
-          console.error("Error creating role:", roleError);
-          continue;
-        }
-        
-        // Now add permissions for this role
-        const permissionEntries = Object.entries(role.permissions)
-          .filter(([_, isEnabled]) => isEnabled) // Only include enabled permissions
-          .map(([permName, _]) => ({
-            role_id: role.id,
-            permission_name: permName
-          }));
-        
-        if (permissionEntries.length > 0) {
-          // Fetch permission IDs from names
-          for (const entry of permissionEntries) {
-            const { data: permission, error: permError } = await supabase
-              .from('permissions')
-              .select('id')
-              .eq('name', entry.permission_name)
-              .single();
-              
-            if (permError || !permission) {
-              console.error(`Permission not found: ${entry.permission_name}`);
-              continue;
-            }
-            
-            // Create role-permission mapping
-            const { error: mappingError } = await supabase
-              .from('role_permissions')
-              .insert([{
-                role_id: role.id,
-                permission_id: permission.id
-              }]);
-              
-            if (mappingError) {
-              console.error("Error creating role-permission mapping:", mappingError);
-            }
-          }
-        }
-      }
-      
-      toast.success("Initial roles and permissions configured");
-    } catch (error) {
-      console.error("Error seeding roles to database:", error);
     }
   };
 
@@ -394,7 +289,7 @@ export function PermissionSettings() {
         const color = colors[index % colors.length];
         
         return {
-          id: typeof profile.id === 'number' ? profile.id : parseInt(profile.id, 10),
+          id: profile.id,
           name: profile.name,
           email: profile.email,
           initials: initials.toUpperCase(),
@@ -407,7 +302,7 @@ export function PermissionSettings() {
       const updatedRoles = [...roles];
       for (const role of updatedRoles) {
         role.userCount = fetchedUsers.filter(user => 
-          user.role.toLowerCase() === role.id.toLowerCase()
+          user.role.toLowerCase() === role.name.toLowerCase()
         ).length;
       }
       
@@ -420,6 +315,13 @@ export function PermissionSettings() {
   };
 
   const handleRolePermissionChange = async (roleId: string, permissionKey: string, value: boolean) => {
+    // Find the permission ID
+    const permission = permissions.find(p => p.name === permissionKey);
+    if (!permission) {
+      toast.error(`Permission ${permissionKey} not found`);
+      return;
+    }
+    
     // Update state first for immediate UI feedback
     setRoles(roles.map(role => {
       if (role.id === roleId) {
@@ -435,47 +337,13 @@ export function PermissionSettings() {
     }));
     
     try {
-      // Fetch the permission ID from the database
-      const { data: permission, error: permError } = await supabase
-        .from('permissions')
-        .select('id')
-        .eq('name', permissionKey)
-        .single();
-        
-      if (permError) {
-        throw permError;
-      }
-      
-      // If value is true, add the permission to the role
+      // Update the database
       if (value) {
-        // Check if mapping already exists
-        const { data: existingMapping } = await supabase
-          .from('role_permissions')
-          .select()
-          .eq('role_id', roleId)
-          .eq('permission_id', permission.id);
-          
-        if (!existingMapping || existingMapping.length === 0) {
-          // Add the permission to the role
-          const { error: addError } = await supabase
-            .from('role_permissions')
-            .insert([{
-              role_id: roleId,
-              permission_id: permission.id
-            }]);
-            
-          if (addError) throw addError;
-        }
+        await addPermissionToRole(roleId, permission.id);
       } else {
-        // Remove the permission from the role
-        const { error: removeError } = await supabase
-          .from('role_permissions')
-          .delete()
-          .eq('role_id', roleId)
-          .eq('permission_id', permission.id);
-          
-        if (removeError) throw removeError;
+        await removePermissionFromRole(roleId, permission.id);
       }
+      toast.success(`Permission mise à jour avec succès`);
     } catch (error) {
       console.error('Error updating permission:', error);
       toast.error('Failed to update permission');
@@ -487,13 +355,13 @@ export function PermissionSettings() {
 
   const handleCategoryPermissionChange = async (roleId: string, category: string, value: boolean) => {
     // Get all permissions in the category
-    const permissions = permissionCategories[category].permissions;
+    const permissionKeys = permissionCategories[category].permissions;
     
     // Update state first for immediate UI feedback
     setRoles(roles.map(role => {
       if (role.id === roleId) {
         const updatedPermissions = { ...role.permissions };
-        permissions.forEach(perm => {
+        permissionKeys.forEach(perm => {
           updatedPermissions[perm as Permission] = value;
         });
         
@@ -508,7 +376,7 @@ export function PermissionSettings() {
     // Update database
     try {
       // Process each permission in the category
-      for (const permKey of permissions) {
+      for (const permKey of permissionKeys) {
         await handleRolePermissionChange(roleId, permKey, value);
       }
     } catch (error) {
@@ -520,13 +388,20 @@ export function PermissionSettings() {
     }
   };
 
-  const handleUserRoleChange = async (userId: number, newRole: string) => {
+  const handleUserRoleChange = async (userId: string, newRoleName: string) => {
+    // Find the role ID
+    const role = roles.find(r => r.name === newRoleName);
+    if (!role) {
+      toast.error(`Role ${newRoleName} not found`);
+      return;
+    }
+    
     // Update state first for immediate UI feedback
     setUsers(users.map(user => {
       if (user.id === userId) {
         return {
           ...user,
-          role: newRole
+          role: newRoleName
         };
       }
       return user;
@@ -534,12 +409,11 @@ export function PermissionSettings() {
     
     try {
       // Update user role in the database
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
-        
-      if (error) throw error;
+      await updateUserRole(userId, role.id);
+      toast.success(`Rôle de l'utilisateur mis à jour avec succès`);
+      
+      // Update the role user counts
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user role:', error);
       toast.error('Failed to update user role');
@@ -551,7 +425,10 @@ export function PermissionSettings() {
 
   const handleDeleteRole = async (roleId: string) => {
     // Check if role is in use
-    const roleInUse = users.some(user => user.role.toLowerCase() === roleId);
+    const roleInUse = users.some(user => {
+      const role = roles.find(r => r.id === roleId);
+      return role && user.role.toLowerCase() === role.name.toLowerCase();
+    });
     
     if (roleInUse) {
       toast.error("Impossible de supprimer un rôle attribué à des utilisateurs");
@@ -560,17 +437,16 @@ export function PermissionSettings() {
     
     try {
       // Delete role from the database
-      const { error } = await supabase
-        .from('roles')
-        .delete()
-        .eq('id', roleId);
-        
-      if (error) throw error;
+      const { success } = await deleteRole(roleId);
       
-      // Update local state
-      setRoles(roles.filter(role => role.id !== roleId));
-      setConfirmDeleteRoleId(null);
-      toast.success("Rôle supprimé avec succès");
+      if (success) {
+        // Update local state
+        setRoles(roles.filter(role => role.id !== roleId));
+        setConfirmDeleteRoleId(null);
+        toast.success("Rôle supprimé avec succès");
+      } else {
+        throw new Error("Failed to delete role");
+      }
     } catch (error) {
       console.error('Error deleting role:', error);
       toast.error('Failed to delete role');
@@ -583,15 +459,17 @@ export function PermissionSettings() {
       return;
     }
     
-    const roleId = newRoleName.toLowerCase().replace(/\s+/g, '_');
-    
-    // Check if role with this ID already exists
-    if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
-      return;
-    }
-    
     try {
+      // Create the role in the database
+      const { data: newRoleData, success } = await createRole(
+        newRoleName, 
+        newRoleDescription || `Custom role: ${newRoleName}`
+      );
+      
+      if (!success || !newRoleData) {
+        throw new Error("Failed to create role");
+      }
+      
       // Create empty permissions object
       const permissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
       
@@ -601,22 +479,9 @@ export function PermissionSettings() {
         permissions[perm as Permission] = false;
       });
       
-      // Create the role in the database
-      const { data: newRoleData, error } = await supabase
-        .from('roles')
-        .insert([{
-          id: roleId,
-          name: newRoleName,
-          description: newRoleDescription || `Custom role: ${newRoleName}`,
-          is_system: false
-        }])
-        .select();
-        
-      if (error) throw error;
-      
       // Add the new role to local state
       const newRole: RoleData = {
-        id: roleId,
+        id: newRoleData.id,
         name: newRoleName,
         description: newRoleDescription || `Custom role: ${newRoleName}`,
         permissions,
@@ -640,19 +505,19 @@ export function PermissionSettings() {
     
     try {
       // Update the role in the database
-      const { error } = await supabase
-        .from('roles')
-        .update({
-          name: editingRole.name,
-          description: editingRole.description
-        })
-        .eq('id', editingRole.id);
-        
-      if (error) throw error;
+      const { success } = await updateRole(editingRole.id, {
+        name: editingRole.name,
+        description: editingRole.description
+      });
+      
+      if (!success) {
+        throw new Error("Failed to update role");
+      }
       
       // Update local state
       setRoles(roles.map(role => role.id === editingRole.id ? editingRole : role));
       setEditingRole(null);
+      setIsRoleOpDialogOpen(false);
       toast.success(`Rôle "${editingRole.name}" mis à jour avec succès`);
     } catch (error) {
       console.error('Error updating role:', error);
@@ -663,27 +528,16 @@ export function PermissionSettings() {
   const handleCopyRole = async () => {
     if (!selectedRole || !copiedRoleName.trim()) return;
 
-    const roleId = copiedRoleName.toLowerCase().replace(/\s+/g, '_');
-    
-    // Check if role with this ID already exists
-    if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
-      return;
-    }
-    
     try {
       // Create the role in the database
-      const { data: newRoleData, error } = await supabase
-        .from('roles')
-        .insert([{
-          id: roleId,
-          name: copiedRoleName,
-          description: `Copy of ${selectedRole.name}`,
-          is_system: false
-        }])
-        .select();
-        
-      if (error) throw error;
+      const { data: newRoleData, success } = await createRole(
+        copiedRoleName,
+        `Copy of ${selectedRole.name}`
+      );
+      
+      if (!success || !newRoleData) {
+        throw new Error("Failed to create role");
+      }
       
       // Copy permissions from the selected role
       const enabledPermissions = Object.entries(selectedRole.permissions)
@@ -691,28 +545,17 @@ export function PermissionSettings() {
         .map(([permName, _]) => permName);
         
       for (const permName of enabledPermissions) {
-        // Get the permission ID
-        const { data: permission, error: permError } = await supabase
-          .from('permissions')
-          .select('id')
-          .eq('name', permName)
-          .single();
-          
-        if (permError) continue;
-        
-        // Create the role-permission mapping
-        await supabase
-          .from('role_permissions')
-          .insert([{
-            role_id: roleId,
-            permission_id: permission.id
-          }]);
+        // Find permission ID
+        const permission = permissions.find(p => p.name === permName);
+        if (permission) {
+          await addPermissionToRole(newRoleData.id, permission.id);
+        }
       }
       
       // Create a new role based on the selected role
       const newRole: RoleData = {
         ...selectedRole,
-        id: roleId,
+        id: newRoleData.id,
         name: copiedRoleName,
         isBuiltIn: false,
         description: `Copy of ${selectedRole.name}`,
@@ -724,6 +567,9 @@ export function PermissionSettings() {
       setSelectedRole(null);
       setIsRoleOpDialogOpen(false);
       toast.success(`Rôle "${copiedRoleName}" créé avec succès`);
+      
+      // Refresh to get the updated data
+      fetchRolesFromDB();
     } catch (error) {
       console.error('Error copying role:', error);
       toast.error('Failed to copy role');
