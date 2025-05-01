@@ -22,7 +22,7 @@ import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./context/auth/AuthContext";
-import { PermissionProvider } from "./context/PermissionContext";
+import { PermissionProvider } from "./context/permissions";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Vehicle pages

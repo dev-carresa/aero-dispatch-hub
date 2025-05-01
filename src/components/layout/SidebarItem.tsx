@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useSidebar } from './SidebarContext';
-import { usePermission } from '@/context/PermissionContext';
+import { usePermission } from '@/context/permissions';
 import { LucideIcon } from 'lucide-react';
 import { Permission } from '@/lib/permissions';
 

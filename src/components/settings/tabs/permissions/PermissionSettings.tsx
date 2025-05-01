@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,7 @@ import { Shield, User } from "lucide-react";
 import { useRolesManager } from "./hooks/useRolesManager";
 import { RolesTab } from "./components/RolesTab";
 import { UsersTab } from "./components/UsersTab";
-import { usePermission } from "@/context/PermissionContext";
+import { usePermission } from "@/context/permissions";
 
 export function PermissionSettings() {
   const { loadingPermissions } = usePermission();
