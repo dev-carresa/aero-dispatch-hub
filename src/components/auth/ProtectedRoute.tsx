@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { ExclamationTriangleIcon, RefreshCwIcon } from 'lucide-react';
+import { AlertTriangle, RefreshCwIcon } from 'lucide-react';
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, loading, authError, forceResetLoading } = useAuth();
@@ -73,7 +73,7 @@ export const ProtectedRoute: React.FC = () => {
           {criticalTimeout ? (
             <>
               <Alert variant="destructive" className="mt-4">
-                <ExclamationTriangleIcon className="h-4 w-4" />
+                <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Authentication Problem</AlertTitle>
                 <AlertDescription className="mb-4">
                   Authentication is taking too long. This might be due to a server issue or permission problems.
