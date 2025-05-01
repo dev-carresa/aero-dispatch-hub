@@ -24,6 +24,13 @@ export const RoleProtectedRoute = ({
   console.log("RoleProtectedRoute - Current path:", location.pathname);
   console.log("RoleProtectedRoute - User state:", user ? "Logged in" : "Not logged in");
 
+  // Public paths should never go through RoleProtectedRoute
+  const publicPaths = ["/welcome", "/auth", "/auth/update-password", "/unauthorized"];
+  if (publicPaths.some(path => location.pathname === path || location.pathname.startsWith(`${path}/`))) {
+    console.log("RoleProtectedRoute - This is a public path that shouldn't be role-protected");
+    return children ? <>{children}</> : <Outlet />;
+  }
+
   // If no user is logged in, redirect to login
   if (!user) {
     console.log("RoleProtectedRoute - User not logged in, redirecting to:", "/auth");

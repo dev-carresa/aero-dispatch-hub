@@ -16,7 +16,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   // These paths should always be accessible without authentication
   const publicPaths = ["/welcome", "/auth", "/auth/update-password", "/unauthorized"];
   
-  if (publicPaths.includes(location.pathname)) {
+  // If current path is public, allow access without authentication
+  if (publicPaths.some(path => location.pathname === path || location.pathname.startsWith(`${path}/`))) {
     console.log("ProtectedRoute - This is a public path, no auth required");
     return children ? <>{children}</> : <Outlet />;
   }

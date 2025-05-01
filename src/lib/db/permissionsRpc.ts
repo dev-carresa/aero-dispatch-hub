@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // This function creates the necessary RPC function in the database
@@ -41,39 +42,50 @@ export const seedRolesAndPermissions = async () => {
 // Function to check if database has been properly initialized
 export const checkDatabaseInitialized = async (): Promise<boolean> => {
   try {
-    // Try to call the initialization check endpoint
-    const { data, error } = await supabase.functions.invoke('init-permissions', {
-      body: { action: 'check_initialization' }
-    });
-    
-    if (error) {
-      console.error('Error checking database initialization:', error);
-      return false;
-    }
-    
-    // Check if the database is properly initialized
-    if (data && data.initialized) {
-      localStorage.setItem('db_initialized', 'true');
-      return true;
-    }
-    
-    // If we have localStorage cache, trust it for now
+    // Check if we have localStorage cache first for quick access
     if (localStorage.getItem('db_initialized') === 'true') {
       return true;
     }
     
-    // Otherwise, try a direct check of the tables
+    // Try to call the initialization check endpoint
+    try {
+      const { data, error } = await supabase.functions.invoke('init-permissions', {
+        body: { action: 'check_initialization' }
+      });
+      
+      if (error) {
+        console.error('Error checking database initialization:', error);
+        return false;
+      }
+      
+      // Check if the database is properly initialized
+      if (data && data.initialized) {
+        localStorage.setItem('db_initialized', 'true');
+        return true;
+      }
+    } catch (functionError) {
+      console.error('Error with functions call:', functionError);
+      // Fall through to direct table check
+    }
+    
+    // Try a direct check of the tables as fallback
     try {
       const { data: rolesData, error: rolesError } = await supabase
         .from('roles')
         .select('id, name')
         .limit(1);
         
-      if (rolesError || !rolesData || rolesData.length === 0) {
+      if (rolesError) {
+        console.error('Error checking roles table:', rolesError);
         return false;
       }
       
-      return true;
+      if (rolesData && rolesData.length > 0) {
+        localStorage.setItem('db_initialized', 'true');
+        return true;
+      }
+      
+      return false;
     } catch (err) {
       console.error('Error in direct table check:', err);
       return false;

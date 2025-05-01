@@ -20,11 +20,15 @@ export default function Unauthorized() {
         <h1 className="mb-2 text-3xl font-bold">Access Denied</h1>
         
         <p className="mb-4 text-gray-600">
-          You don't have permission to access this page. {user ? "Please contact an administrator if you believe this is an error." : "Please log in first to access this page."}
+          {user 
+            ? "You don't have permission to access this page. Please contact an administrator if you believe this is an error." 
+            : "You need to log in to access this page."}
         </p>
         
         <p className="mb-8 text-sm text-gray-500 italic">
-          {user ? "To access all features, you need an account with the appropriate permissions." : "Note: You need to log in first before accessing protected pages."}
+          {user 
+            ? "To access all features, you need an account with the appropriate permissions." 
+            : "Please log in before accessing protected pages."}
         </p>
         
         <div className="flex flex-col gap-3">

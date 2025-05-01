@@ -89,9 +89,9 @@ const App = () => (
                   <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                   <Route path="/unauthorized" element={<Unauthorized />} />
                   
-                  {/* Protected routes requiring authentication */}
+                  {/* All other routes are protected and require authentication */}
                   <Route element={<ProtectedRoute />}>
-                    {/* Dashboard */}
+                    {/* Root route - requires dashboard:view permission */}
                     <Route path="/" element={
                       <RoleProtectedRoute requiredPermission="dashboard:view">
                         <Layout><Dashboard /></Layout>
