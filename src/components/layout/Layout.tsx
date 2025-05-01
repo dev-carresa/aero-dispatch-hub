@@ -2,9 +2,7 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { 
-  SidebarProvider as ShadcnSidebarProvider
-} from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,7 +10,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <ShadcnSidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
@@ -24,6 +22,6 @@ export function Layout({ children }: LayoutProps) {
           </main>
         </div>
       </div>
-    </ShadcnSidebarProvider>
+    </SidebarProvider>
   );
 }

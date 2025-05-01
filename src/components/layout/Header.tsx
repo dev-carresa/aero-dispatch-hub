@@ -1,6 +1,5 @@
 
-import { useSidebar } from '@/components/ui/sidebar';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSidebar, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/AuthContext';
 import {
@@ -15,7 +14,6 @@ import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export function Header() {
-  const { open } = useSidebar();
   const { user, signOut, forceSignOut } = useAuth();
   
   return (
