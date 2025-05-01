@@ -1,3 +1,4 @@
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { usePermission } from "@/context/PermissionContext";
@@ -23,9 +24,7 @@ export const RoleProtectedRoute = ({
   console.log("RoleProtectedRoute - Current path:", location.pathname);
   console.log("RoleProtectedRoute - User state:", user ? "Logged in" : "Not logged in");
 
-  // Public paths should never go through RoleProtectedRoute
-  // This check should never be triggered as public routes are defined outside RoleProtectedRoute in App.tsx
-  // But keeping it as a safety check
+  // Public paths should be handled before this component
   const publicPaths = ["/welcome", "/auth", "/auth/update-password", "/unauthorized"];
   if (publicPaths.some(path => location.pathname === path || location.pathname.startsWith(`${path}/`))) {
     console.log("RoleProtectedRoute - This is a public path that shouldn't be role-protected");

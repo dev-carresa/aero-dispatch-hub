@@ -8,6 +8,8 @@ export default function Unauthorized() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  console.log("Unauthorized page - User state:", user ? "Logged in" : "Not logged in");
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md text-center">
