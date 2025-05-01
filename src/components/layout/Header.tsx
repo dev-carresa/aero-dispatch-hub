@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   User, 
@@ -23,24 +23,27 @@ import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
-  // Helper function to get initials from the user name
+  // Helper function to get initials from a name
   const getInitials = () => {
-    if (!user) return "?";
+    if (!user || !user.name) return "US";
     
-    if (user.user_metadata?.name) {
-      return user.user_metadata.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase();
+    const nameParts = user.name.split(" ");
+    if (nameParts.length === 1) return nameParts[0].substring(0, 2).toUpperCase();
+    
+    return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+  };
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Logout button clicked");
+    try {
+      await signOut();
+      // Note: We don't need to navigate here as the signOut function now handles redirection
+    } catch (error) {
+      console.error("Failed to logout:", error);
     }
-    
-    if (user.email) {
-      return user.email.substring(0, 2).toUpperCase();
-    }
-    
-    return "?";
   };
 
   return (
@@ -113,10 +116,10 @@ export function Header() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.user_metadata?.name || user?.email || "User"}
+                    {user?.name || "Demo User"}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
+                    {user?.email || "user@example.com"}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -136,7 +139,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="flex items-center gap-2 text-red-500 cursor-pointer"
-                onClick={() => signOut()}
+                onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>

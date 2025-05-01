@@ -1,75 +1,54 @@
 
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { UserRole } from '@/types/user';
-import { Permission, hasRolePermission, hasRoleAnyPermission } from '@/lib/permissions';
+import React, { createContext, useContext } from 'react';
+import { useAuth } from './AuthContext';
+import { Permission, rolePermissions } from '@/lib/permissions';
 
-// Define the context type
 interface PermissionContextType {
-  userRole: UserRole | null;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
   isAdmin: boolean;
-  hasPermission: (permission: Permission) => boolean;
-  hasAnyPermission: (permissions: Permission[]) => boolean;
-  setUserRole: (role: UserRole | null) => void;
+  roles: Record<string, Permission[]>;
 }
 
-// Create the context with default values
 const PermissionContext = createContext<PermissionContextType>({
-  userRole: null,
-  isAdmin: false,
   hasPermission: () => false,
   hasAnyPermission: () => false,
-  setUserRole: () => {},
+  isAdmin: false,
+  roles: rolePermissions
 });
 
-// Define the provider props
-interface PermissionProviderProps {
-  children: ReactNode;
-  initialRole?: UserRole | null;
-}
+export const usePermission = () => {
+  return useContext(PermissionContext);
+};
 
-// Create the PermissionProvider component
-export const PermissionProvider = ({ children, initialRole = null }: PermissionProviderProps) => {
-  const [userRole, setUserRole] = useState<UserRole | null>(initialRole);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    setIsAdmin(userRole === 'Admin');
-  }, [userRole]);
-
-  const hasPermission = (permission: Permission): boolean => {
-    // If the user is an admin, they have all permissions
-    if (isAdmin) return true;
-    
-    // If there's no role, return false
-    if (!userRole) return false;
-    
-    // Check if the role has the specified permission
-    return hasRolePermission(userRole, permission);
+export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || 'Customer';
+  const isAdmin = userRole === 'Admin';
+  
+  // Get permissions for the current user role
+  const userPermissions = rolePermissions[userRole] || [];
+  
+  const hasPermission = (permission: string): boolean => {
+    if (isAdmin) return true; // Admin has all permissions
+    return userPermissions.includes(permission as Permission);
   };
-
-  const hasAnyPermission = (permissions: Permission[]): boolean => {
-    // If the user is an admin, they have all permissions
-    if (isAdmin) return true;
-    
-    // If there's no role, return false
-    if (!userRole) return false;
-    
-    // Check if the role has any of the specified permissions
-    return hasRoleAnyPermission(userRole, permissions);
+  
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (isAdmin) return true; // Admin has all permissions
+    return permissions.some(permission => userPermissions.includes(permission as Permission));
   };
 
   return (
-    <PermissionContext.Provider value={{ 
-      userRole, 
-      isAdmin, 
-      hasPermission, 
-      hasAnyPermission, 
-      setUserRole 
-    }}>
+    <PermissionContext.Provider
+      value={{
+        hasPermission,
+        hasAnyPermission,
+        isAdmin,
+        roles: rolePermissions
+      }}
+    >
       {children}
     </PermissionContext.Provider>
   );
 };
-
-// Create a hook to use the permission context
-export const usePermission = () => useContext(PermissionContext);

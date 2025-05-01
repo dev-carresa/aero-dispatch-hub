@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, UserRole, UserStatus } from "@/types/user";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProfileHeader } from "@/components/users/profile/ProfileHeader";
 import { ProfileSidebar } from "@/components/users/profile/ProfileSidebar";
@@ -19,35 +18,44 @@ export default function ProfilePage() {
     const fetchUserProfile = async () => {
       setIsLoading(true);
       try {
+        // Use auth user data or fallback to mock data
         if (authUser) {
-          // Fetch the user profile from the profiles table
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-            
-          if (profileError) throw profileError;
+          const userData: User = {
+            id: authUser.id,
+            name: authUser.name,
+            firstName: authUser.name.split(' ')[0],
+            lastName: authUser.name.split(' ').slice(1).join(' '),
+            email: authUser.email,
+            role: authUser.role as UserRole,
+            status: "active" as UserStatus,
+            lastActive: "Just now",
+            imageUrl: "",
+            phone: "+1 (555) 000-0000",
+            nationality: "American",
+            dateOfBirth: "1990-01-01",
+            countryCode: "US"
+          };
           
-          // Map the profile data to our User type
-          setUser({
-            id: profileData.id,
-            name: profileData.name || `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            email: profileData.email || authUser.email || '',
-            role: (profileData.role as UserRole) || 'Customer',
-            status: (profileData.status as UserStatus) || 'active',
-            lastActive: profileData.last_active || "Just now",
-            imageUrl: profileData.image_url || "",
-            phone: profileData.phone || "",
-            nationality: profileData.nationality || "",
-            dateOfBirth: profileData.date_of_birth || "",
-            countryCode: profileData.country_code || "US"
-          });
+          setUser(userData);
         } else {
-          // If no authenticated user, navigate to login (shouldn't happen due to ProtectedRoute)
-          navigate('/auth');
+          // Mock data for the profile if no auth user
+          const mockUser = {
+            id: "1",
+            name: "Demo User",
+            firstName: "Demo",
+            lastName: "User",
+            email: "user@example.com",
+            role: "Customer" as UserRole,
+            status: "active" as UserStatus,
+            lastActive: "Just now",
+            imageUrl: "",
+            phone: "+1 (555) 000-0000",
+            nationality: "American",
+            dateOfBirth: "1990-01-01",
+            countryCode: "US"
+          };
+          
+          setUser(mockUser);
         }
       } catch (error) {
         toast.error("Failed to load user profile");
@@ -58,7 +66,7 @@ export default function ProfilePage() {
     };
 
     fetchUserProfile();
-  }, [authUser, navigate]);
+  }, [navigate, authUser]);
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
