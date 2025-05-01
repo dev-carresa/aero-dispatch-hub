@@ -26,18 +26,28 @@ export const usePermission = () => {
 };
 
 export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   const [roles, setRoles] = useState<Record<string, Permission[]>>(rolePermissions);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loadingPermissions, setLoadingPermissions] = useState(true);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // Fetch user permissions when user changes
   useEffect(() => {
+    // Don't start loading permissions if auth is still loading or user is not authenticated
+    if (authLoading) return;
+    
     const fetchUserPermissions = async () => {
-      if (!user?.id) return;
+      // Only start loading permissions when authenticated and we have a user
+      if (!isAuthenticated || !user?.id) {
+        setLoadingPermissions(false);
+        return;
+      }
       
       setLoadingPermissions(true);
+      setPermissionError(null);
+      
       try {
         // Fetch user permissions from database
         const { data: permissions, error } = await supabase
@@ -45,6 +55,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         if (error) {
           console.error('Error fetching user permissions:', error);
+          setPermissionError('Failed to load user permissions');
           return;
         }
         
@@ -56,15 +67,29 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setIsAdmin(user.role === 'Admin');
       } catch (error) {
         console.error('Error in permission fetch:', error);
+        setPermissionError('An unexpected error occurred while loading permissions');
       } finally {
+        // Always clear loading state, even on error
         setLoadingPermissions(false);
       }
     };
 
-    // Fetch all roles and their permissions
+    // Fetch permissions with a slight delay to prioritize UI rendering
+    const timeoutId = setTimeout(() => {
+      fetchUserPermissions();
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [user, isAuthenticated, authLoading]);
+
+  // Fetch roles and their permissions separately to avoid blocking the UI
+  useEffect(() => {
+    // Only fetch roles if authenticated
+    if (!isAuthenticated) return;
+    
     const fetchRoles = async () => {
-      if (!isAuthenticated) return;
-      
       try {
         // Get all roles
         const { data: rolesData, error: rolesError } = await supabase
@@ -105,13 +130,15 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     };
 
-    if (isAuthenticated) {
-      fetchUserPermissions();
+    // Give priority to user permissions loading before fetching roles
+    const timeoutId = setTimeout(() => {
       fetchRoles();
-    } else {
-      setLoadingPermissions(false);
-    }
-  }, [user, isAuthenticated]);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isAuthenticated]);
 
   const hasPermission = (permission: string): boolean => {
     if (isAdmin) return true; // Admin has all permissions
@@ -122,6 +149,12 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (isAdmin) return true; // Admin has all permissions
     return permissions.some(permission => userPermissions.includes(permission as Permission));
   };
+
+  // Don't block UI rendering if there's an error loading permissions
+  if (permissionError) {
+    console.warn('Permission loading error:', permissionError);
+    // Continue with limited permissions instead of blocking the UI
+  }
 
   return (
     <PermissionContext.Provider
