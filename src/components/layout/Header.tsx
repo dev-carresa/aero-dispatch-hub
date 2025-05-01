@@ -1,6 +1,6 @@
 
-import { useSidebar } from './SidebarContext';
-import { MobileToggle } from './SidebarToggle';
+import { useSidebar } from '@/components/ui/sidebar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/AuthContext';
 import {
@@ -15,12 +15,12 @@ import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export function Header() {
-  const { expanded } = useSidebar();
+  const { open } = useSidebar();
   const { user, signOut, forceSignOut } = useAuth();
   
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
-      <MobileToggle />
+      <SidebarTrigger className="md:hidden" />
       
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
