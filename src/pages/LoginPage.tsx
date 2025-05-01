@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signOut, isAuthenticated } = useAuth();
+  const { signIn, isAuthenticated, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,8 +20,7 @@ export default function LoginPage() {
 
   // Redirect to dashboard if already authenticated
   if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
   
   const handleLogin = async (e: React.FormEvent) => {
@@ -30,20 +29,11 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      // For now, we're using the mock user in AuthContext
-      // In a real app, this would call supabase.auth.signInWithPassword
-      if (email === "user@example.com" && password === "password") {
-        // Authentication will be handled by AuthContext
-        toast.success("Successfully logged in!");
-        navigate("/dashboard");
-      } else {
-        setError("Invalid email or password");
-        toast.error("Invalid email or password");
-      }
-    } catch (error) {
+      await signIn(email, password);
+      navigate("/dashboard");
+    } catch (error: any) {
       console.error("Login error:", error);
-      setError("An error occurred during login");
-      toast.error("Login failed. Please try again.");
+      setError(error?.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }
@@ -115,15 +105,13 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+              <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
+                {isLoading || authLoading ? "Signing in..." : "Sign in"}
               </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <a href="#" className="text-primary hover:underline">
-                  Sign up
-                </a>
-              </p>
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Demo credentials:</p>
+                <p className="font-medium text-primary">admin@example.com / password</p>
+              </div>
             </CardFooter>
           </form>
         </Card>

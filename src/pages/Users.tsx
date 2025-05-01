@@ -3,23 +3,70 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { User, UserRole } from "@/types/user";
-import { initialUsers } from "@/data/sampleUsers";
 import { UsersHeader } from "@/components/users/UsersHeader";
 import { UserFilters } from "@/components/users/UserFilters";
 import { UsersTable } from "@/components/users/UsersTable";
 import { UserStatusDialog } from "@/components/users/UserStatusDialog";
+import { supabase } from "@/integrations/supabase/client"; 
 
 const Users = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const roleParam = searchParams.get("role") || "all";
 
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState(roleParam);
   const [statusFilter, setStatusFilter] = useState("all");
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState("all");
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+
+  // Fetch users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*');
+
+        if (error) {
+          throw error;
+        }
+
+        // Map Supabase data to User type
+        if (data) {
+          const mappedUsers: User[] = data.map(profile => ({
+            id: profile.id,
+            name: profile.name || (profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : 'No Name'),
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            email: profile.email,
+            role: profile.role as UserRole,
+            status: profile.status || 'active',
+            lastActive: profile.last_active || 'Never',
+            imageUrl: profile.image_url || '',
+            phone: profile.phone,
+            nationality: profile.nationality,
+            dateOfBirth: profile.date_of_birth,
+            fleetId: profile.fleet_id,
+            countryCode: profile.country_code,
+            vehicleType: profile.vehicle_type,
+            driverAvailability: profile.driver_availability || 'offline'
+          }));
+          setUsers(mappedUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to fetch users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   // Update URL when role filter changes
   useEffect(() => {
@@ -95,29 +142,57 @@ const Users = () => {
     navigate(`/users/${user.id}`);
   };
 
-  const toggleUserStatus = (user: User, newStatus?: string) => {
+  const toggleUserStatus = async (user: User, newStatus?: string) => {
     if (user.role === "Driver" && newStatus) {
-      // Update driver availability
-      setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === user.id
-            ? { ...u, driverAvailability: newStatus as any }
-            : u
-        )
-      );
-      toast.success(`Driver ${user.name}'s availability updated to ${newStatus.replace('_', ' ')}`);
+      try {
+        // Update driver availability in Supabase
+        const { error } = await supabase
+          .from('profiles')
+          .update({ driver_availability: newStatus })
+          .eq('id', user.id);
+          
+        if (error) throw error;
+        
+        // Update local state
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.id === user.id
+              ? { ...u, driverAvailability: newStatus as any }
+              : u
+          )
+        );
+        toast.success(`Driver ${user.name}'s availability updated to ${newStatus.replace('_', ' ')}`);
+      } catch (error) {
+        console.error('Error updating driver status:', error);
+        toast.error('Failed to update driver status');
+      }
     } else {
-      // Toggle active/inactive status for non-drivers
-      setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === user.id
-            ? { ...u, status: u.status === "active" ? "inactive" : "active" }
-            : u
-        )
-      );
-      
-      const newStatus = user.status === "active" ? "deactivated" : "activated";
-      toast.success(`User ${user.name} ${newStatus} successfully`);
+      try {
+        // Toggle active/inactive status for non-drivers
+        const newUserStatus = user.status === "active" ? "inactive" : "active";
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({ status: newUserStatus })
+          .eq('id', user.id);
+          
+        if (error) throw error;
+        
+        // Update local state
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.id === user.id
+              ? { ...u, status: newUserStatus }
+              : u
+          )
+        );
+        
+        const actionText = user.status === "active" ? "deactivated" : "activated";
+        toast.success(`User ${user.name} ${actionText} successfully`);
+      } catch (error) {
+        console.error('Error updating user status:', error);
+        toast.error('Failed to update user status');
+      }
     }
     setUserToDeactivate(null);
   };
@@ -172,13 +247,19 @@ const Users = () => {
         handleVehicleTypeFilterChange={handleVehicleTypeFilterChange}
       />
 
-      <UsersTable 
-        filteredUsers={filteredUsers}
-        handleViewProfile={handleViewProfile}
-        handleEditUser={handleEditUser}
-        setUserToDeactivate={setUserToDeactivate}
-        currentFilter={roleFilter}
-      />
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin h-10 w-10 border-2 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <UsersTable 
+          filteredUsers={filteredUsers}
+          handleViewProfile={handleViewProfile}
+          handleEditUser={handleEditUser}
+          setUserToDeactivate={setUserToDeactivate}
+          currentFilter={roleFilter}
+        />
+      )}
 
       <UserStatusDialog 
         userToDeactivate={userToDeactivate}
