@@ -7,11 +7,9 @@ import { toast } from "sonner";
 import { ProfileHeader } from "@/components/users/profile/ProfileHeader";
 import { ProfileSidebar } from "@/components/users/profile/ProfileSidebar";
 import { ProfileTabsSection } from "@/components/users/profile/ProfileTabsSection";
-import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -19,36 +17,24 @@ export default function ProfilePage() {
     const fetchUserProfile = async () => {
       setIsLoading(true);
       try {
-        if (authUser) {
-          // Fetch the user profile from the profiles table
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-            
-          if (profileError) throw profileError;
-          
-          // Map the profile data to our User type
-          setUser({
-            id: profileData.id,
-            name: profileData.name || `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            email: profileData.email || authUser.email || '',
-            role: (profileData.role as UserRole) || 'Customer',
-            status: (profileData.status as UserStatus) || 'active',
-            lastActive: profileData.last_active || "Just now",
-            imageUrl: profileData.image_url || "",
-            phone: profileData.phone || "",
-            nationality: profileData.nationality || "",
-            dateOfBirth: profileData.date_of_birth || "",
-            countryCode: profileData.country_code || "US"
-          });
-        } else {
-          // If no authenticated user, navigate to login (shouldn't happen due to ProtectedRoute)
-          navigate('/auth');
-        }
+        // Mock data for the profile
+        const mockUser = {
+          id: "1",
+          name: "Demo User",
+          firstName: "Demo",
+          lastName: "User",
+          email: "user@example.com",
+          role: "Customer" as UserRole,
+          status: "active" as UserStatus,
+          lastActive: "Just now",
+          imageUrl: "",
+          phone: "+1 (555) 000-0000",
+          nationality: "American",
+          dateOfBirth: "1990-01-01",
+          countryCode: "US"
+        };
+        
+        setUser(mockUser);
       } catch (error) {
         toast.error("Failed to load user profile");
         console.error(error);
@@ -58,7 +44,7 @@ export default function ProfilePage() {
     };
 
     fetchUserProfile();
-  }, [authUser, navigate]);
+  }, [navigate]);
 
   const handleEditProfile = () => {
     navigate('/profile/edit');

@@ -1,30 +1,17 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const {
-    user,
-    loading
-  } = useAuth();
-
-  useEffect(() => {
-    if (!loading && user) {
-      // If already logged in, redirect to dashboard
-      navigate("/");
-    }
-  }, [user, loading, navigate]);
 
   return <div className="flex flex-col min-h-screen bg-white">
       {/* Navigation */}
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="font-bold text-xl text-primary">TransportHub</div>
         <div>
-          <Button onClick={() => navigate("/auth")}>
-            Login
+          <Button onClick={() => navigate("/")}>
+            Enter App
           </Button>
         </div>
       </header>
@@ -41,7 +28,7 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/auth")}>
+          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/")}>
             Get Started
           </Button>
           <Button size="lg" variant="outline" className="w-full sm:w-auto">

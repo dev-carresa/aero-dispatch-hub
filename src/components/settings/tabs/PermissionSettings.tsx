@@ -8,7 +8,6 @@ import { usePermission } from "@/context/PermissionContext";
 import { Permission, rolePermissions } from "@/lib/permissions";
 import { Input } from "@/components/ui/input";
 import { UserRole } from "@/types/user";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +37,7 @@ interface UserData {
 }
 
 // Group permissions by category for better organization
-const permissionCategories = {
+const permissionCategories: Record<string, string[]> = {
   "Dashboard": ["dashboard:view"],
   "Bookings": ["bookings:view", "bookings:create", "bookings:edit", "bookings:delete", "bookings:assign_driver"],
   "Users": ["users:view", "users:create", "users:edit", "users:delete"],
@@ -213,20 +212,7 @@ export function PermissionSettings() {
     toast.success(`Role "${newRoleName}" created successfully`);
   };
 
-  // Only admins with permissions:settings permission can access this page
-  if (!hasPermission("settings:permissions") && !isAdmin) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Permission Settings</CardTitle>
-          <CardDescription>
-            You don't have permission to view or modify permissions.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
+  // We'll show the content regardless of permissions now
   if (isLoading) {
     return (
       <Card>

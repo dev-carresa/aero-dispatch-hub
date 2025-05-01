@@ -22,25 +22,11 @@ import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   
-  // Helper function to get initials from the user name
+  // Helper function to get initials from a name
   const getInitials = () => {
-    if (!user) return "?";
-    
-    if (user.user_metadata?.name) {
-      return user.user_metadata.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase();
-    }
-    
-    if (user.email) {
-      return user.email.substring(0, 2).toUpperCase();
-    }
-    
-    return "?";
+    return "US";  // Default initials for User
   };
 
   return (
@@ -113,10 +99,10 @@ export function Header() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.user_metadata?.name || user?.email || "User"}
+                    Demo User
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
+                    user@example.com
                   </p>
                 </div>
               </DropdownMenuLabel>
