@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Permission, rolePermissions } from "@/lib/permissions";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface PermissionContextType {
   userRole: UserRole | null;
@@ -36,17 +35,26 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch user role and permissions from the database
   useEffect(() => {
+    if (!user) {
+      setUserRole(null);
+      setUserPermissions([]);
+      return;
+    }
+    
+    // Fast path: Set initial role from metadata to avoid loading state
+    if (user.user_metadata?.role) {
+      const initialRole = user.user_metadata.role as UserRole;
+      setUserRole(initialRole);
+      setUserPermissions(rolePermissions[initialRole] || []);
+    } else {
+      // Default role as fallback
+      setUserRole("Customer");
+      setUserPermissions(rolePermissions.Customer || []);
+    }
+    
+    // Then fetch from database in background
     const fetchUserRoleAndPermissions = async () => {
-      if (!user) {
-        setUserRole(null);
-        setUserPermissions([]);
-        setLoading(false);
-        return;
-      }
-      
       try {
-        setLoading(true);
-        
         // First get the user's role from profiles
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -54,47 +62,14 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
           .eq('id', user.id)
           .single();
 
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          // Fallback to metadata
-          if (user.user_metadata?.role) {
-            setUserRole(user.user_metadata.role as UserRole);
-          } else {
-            // Default role as fallback
-            setUserRole("Customer");
-          }
-        } else {
+        if (!profileError && profileData?.role) {
           // Set the role from profile data
-          const role = profileData?.role as UserRole | null;
-          setUserRole(role || "Customer");
-        }
-        
-        // Get permissions based on role
-        const currentRole = profileData?.role || user.user_metadata?.role || "Customer";
-        
-        // Default permissions based on role for basic functionality
-        if (currentRole === "Admin") {
-          setUserPermissions(rolePermissions.Admin);
-        } else if (currentRole) {
-          // Add role-specific permissions from our local permissions definition
-          setUserPermissions(rolePermissions[currentRole as UserRole] || []);
-        } else {
-          setUserPermissions(rolePermissions.Customer);
-        }
-        
-      } catch (error) {
-        console.error('Error in permission context:', error);
-        // Fallback to metadata role if database fetch fails
-        if (user.user_metadata?.role) {
-          const role = user.user_metadata.role as UserRole;
+          const role = profileData.role as UserRole;
           setUserRole(role);
           setUserPermissions(rolePermissions[role] || []);
-        } else {
-          setUserRole("Customer");
-          setUserPermissions(rolePermissions.Customer || []);
         }
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Error in permission context:', error);
       }
     };
 
@@ -103,7 +78,6 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
 
   // Check if the user has a specific permission
   const checkPermission = (permission: Permission): boolean => {
-    if (loading) return false;
     if (!userRole) return false;
     
     // Admin always has all permissions
@@ -115,7 +89,6 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
 
   // Check if the user has any of the specified permissions
   const checkAnyPermission = (permissions: Permission[]): boolean => {
-    if (loading) return false;
     if (!userRole) return false;
     
     // Admin always has all permissions
@@ -136,7 +109,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         isFleet,
         isDispatcher,
         isCustomer,
-        loading,
+        loading: false, // Always return false for loading
         userPermissions
       }}
     >

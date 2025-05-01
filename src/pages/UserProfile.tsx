@@ -11,28 +11,20 @@ const UserProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // In a real app, this would be an API call
-    const fetchUser = () => {
-      setIsLoading(true);
-      try {
-        const foundUser = initialUsers.find(u => u.id === Number(id));
-        if (foundUser) {
-          setUser(foundUser);
-        } else {
-          toast.error("User not found");
-          navigate("/users");
-        }
-      } catch (error) {
-        toast.error("Failed to load user profile");
-      } finally {
-        setIsLoading(false);
+    try {
+      const foundUser = initialUsers.find(u => u.id === Number(id));
+      if (foundUser) {
+        setUser(foundUser);
+      } else {
+        toast.error("User not found");
+        navigate("/users");
       }
-    };
-
-    fetchUser();
+    } catch (error) {
+      toast.error("Failed to load user profile");
+    }
   }, [id, navigate]);
 
   const handleUserUpdate = (updatedUser: User) => {
@@ -40,23 +32,13 @@ const UserProfile = () => {
     toast.success("User profile updated successfully");
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading user profile...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // If no user is found, don't render anything
   if (!user) {
     return null;
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <UserProfileHeader user={user} />
       <UserProfileTabs user={user} onUserUpdate={handleUserUpdate} />
     </div>
