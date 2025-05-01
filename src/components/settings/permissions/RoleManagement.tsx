@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,10 +14,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { SimpleRole, permissionCategories, formatPermissionName } from "./types";
+import { SimpleRole, permissionCategories } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { RoleEditor } from "./RoleEditor";
 
 interface RoleManagementProps {
   roles: SimpleRole[];
@@ -31,41 +31,6 @@ export function RoleManagement({ roles, setRoles, dbMode, dbError }: RoleManagem
   const [newRoleName, setNewRoleName] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
-
-  const handleRolePermissionChange = async (roleId: string, permissionKey: string, value: boolean) => {
-    try {
-      if (dbMode) {
-        if (value) {
-          // Add permission to role using edge function
-          await supabase.functions.invoke('add_permission_to_role_by_name', { 
-            body: { p_role_id: roleId, p_permission_name: permissionKey }
-          });
-        } else {
-          // Remove permission from role using edge function
-          await supabase.functions.invoke('remove_permission_from_role_by_name', { 
-            body: { p_role_id: roleId, p_permission_name: permissionKey }
-          });
-        }
-      }
-      
-      // Update UI state
-      setRoles(roles.map(role => {
-        if (role.id === roleId) {
-          return {
-            ...role,
-            permissions: {
-              ...role.permissions,
-              [permissionKey]: value
-            }
-          };
-        }
-        return role;
-      }));
-    } catch (error) {
-      console.error("Error updating role permission:", error);
-      toast.error("Failed to update permission. Please try again.");
-    }
-  };
 
   const deleteRole = async (roleId: string) => {
     try {
@@ -150,6 +115,20 @@ export function RoleManagement({ roles, setRoles, dbMode, dbError }: RoleManagem
     }
   };
 
+  // Get the role being edited if there is one
+  const editingRole = editingRoleId ? roles.find(role => role.id === editingRoleId) : null;
+
+  if (editingRole) {
+    return (
+      <RoleEditor 
+        role={editingRole} 
+        setRoles={setRoles} 
+        dbMode={dbMode}
+        onBackClick={() => setEditingRoleId(null)} 
+      />
+    );
+  }
+
   return (
     <Card className="hover-scale shadow-sm card-gradient">
       <CardHeader>
@@ -189,31 +168,9 @@ export function RoleManagement({ roles, setRoles, dbMode, dbError }: RoleManagem
                   </Button>
                 </div>
               </div>
-              
-              <div className="space-y-6">
-                {Object.entries(permissionCategories).map(([category, permissions]) => (
-                  <div key={category}>
-                    <h4 className="font-medium mb-2">{category}</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {permissions.map((permKey) => (
-                        <div key={permKey} className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            id={`${role.id}-${permKey}`}
-                            checked={role.permissions[permKey] || false}
-                            disabled={role.isBuiltIn && dbMode}
-                            onChange={(e) => handleRolePermissionChange(role.id, permKey, e.target.checked)}
-                            className="h-4 w-4" 
-                          />
-                          <Label htmlFor={`${role.id}-${permKey}`}>
-                            {formatPermissionName(permKey)}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                    <Separator className="my-4" />
-                  </div>
-                ))}
+              <div className="text-sm text-muted-foreground">
+                {Object.values(permissionCategories).flat().reduce((count, perm) => 
+                  count + (role.permissions[perm] ? 1 : 0), 0)} permissions enabled
               </div>
             </div>
           ))}
