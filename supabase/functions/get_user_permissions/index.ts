@@ -13,6 +13,13 @@ serve(async (req: Request) => {
       return new Response("ok", { headers: corsHeaders });
     }
 
+    // Parse the request body
+    const { user_id } = await req.json();
+    
+    if (!user_id) {
+      throw new Error("user_id is required");
+    }
+
     const url = Deno.env.get("SUPABASE_URL") as string;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
     const supabase = createClient(url, serviceKey, {
@@ -22,25 +29,13 @@ serve(async (req: Request) => {
       },
     });
 
-    // Get request body
-    const { user_id } = await req.json();
-
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: "Missing user_id parameter" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    // Call the RPC function
-    const { data, error } = await supabase.rpc("get_user_permissions", {
-      user_id
-    });
-
+    // Call the RPC function to get user permissions
+    const { data, error } = await supabase.rpc("get_user_permissions", { user_id });
+    
     if (error) throw error;
 
-    // Extract permission names from the result
-    const permissions = (data || []).map((item: any) => item.permission_name);
+    // Extract just the permission names from the result
+    const permissions = data.map((row: any) => row.permission_name);
 
     return new Response(JSON.stringify(permissions), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

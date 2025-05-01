@@ -1,1 +1,17 @@
+
 project_id = "qqfnokbhdzmffywksmvl"
+
+[functions.get_all_roles]
+verify_jwt = false
+
+[functions.get_user_permissions]
+verify_jwt = false
+
+[functions.get_user_role_name]
+verify_jwt = false
+
+[functions.get_role_permissions]
+verify_jwt = false
+
+[functions.init-permissions]
+verify_jwt = false

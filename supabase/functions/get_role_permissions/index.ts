@@ -23,11 +23,30 @@ serve(async (req: Request) => {
     });
 
     // Call the RPC function
-    const { data, error } = await supabase.rpc("get_role_permissions");
+    const { data: rawData, error } = await supabase.rpc("get_role_permissions");
     
     if (error) throw error;
 
-    return new Response(JSON.stringify(data), {
+    // Transform the data to group permissions by role_id
+    const rolePermissionsMap = new Map();
+    
+    for (const item of rawData) {
+      const roleId = item.role_id;
+      const permissionName = item.permission_name;
+      
+      if (!rolePermissionsMap.has(roleId)) {
+        rolePermissionsMap.set(roleId, {
+          role_id: roleId,
+          permissions: []
+        });
+      }
+      
+      rolePermissionsMap.get(roleId).permissions.push(permissionName);
+    }
+    
+    const result = Array.from(rolePermissionsMap.values());
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
