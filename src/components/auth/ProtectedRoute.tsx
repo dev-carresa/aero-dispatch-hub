@@ -13,6 +13,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log("ProtectedRoute - Current path:", location.pathname);
   console.log("ProtectedRoute - User state:", user ? "Logged in" : "Not logged in");
 
+  // These paths should always be accessible without authentication
+  const publicPaths = ["/welcome", "/auth", "/auth/update-password", "/unauthorized"];
+  
+  if (publicPaths.includes(location.pathname)) {
+    console.log("ProtectedRoute - This is a public path, no auth required");
+    return children ? <>{children}</> : <Outlet />;
+  }
+
   if (!user) {
     // For homepage requests, redirect to welcome page
     if (location.pathname === '/') {

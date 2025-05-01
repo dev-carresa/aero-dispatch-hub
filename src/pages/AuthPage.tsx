@@ -29,6 +29,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (user) {
       console.log("User already logged in, redirecting...");
+      // Get the intended destination from location state, or default to dashboard
       const from = location.state?.from || "/";
       console.log("Redirecting to:", from);
       navigate(from, { replace: true });

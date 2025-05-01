@@ -15,10 +15,10 @@ export const RoleProtectedRoute = ({
   children, 
   requiredPermission,
   requiredPermissions,
-  redirectPath = "/auth" 
+  redirectPath = "/unauthorized" 
 }: RoleProtectedRouteProps) => {
   const { user } = useAuth();
-  const { hasPermission, hasAnyPermission } = usePermission();
+  const { hasPermission, hasAnyPermission, isAdmin } = usePermission();
   const location = useLocation();
 
   console.log("RoleProtectedRoute - Current path:", location.pathname);
@@ -26,14 +26,20 @@ export const RoleProtectedRoute = ({
 
   // If no user is logged in, redirect to login
   if (!user) {
-    console.log("RoleProtectedRoute - User not logged in, redirecting to:", redirectPath);
+    console.log("RoleProtectedRoute - User not logged in, redirecting to:", "/auth");
     return (
       <Navigate
-        to={redirectPath}
+        to="/auth"
         state={{ from: location.pathname }}
         replace
       />
     );
+  }
+
+  // Admin bypass - Admins can access everything
+  if (isAdmin) {
+    console.log("RoleProtectedRoute - User is admin, granting access");
+    return children ? <>{children}</> : <Outlet />;
   }
 
   // Check for single permission
