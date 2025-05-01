@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext } from 'react';
+import { useAuth } from './AuthContext';
+import { Permission, rolePermissions } from '@/lib/permissions';
 
 interface PermissionContextType {
   hasPermission: (permission: string) => boolean;
@@ -8,8 +10,8 @@ interface PermissionContextType {
 }
 
 const PermissionContext = createContext<PermissionContextType>({
-  hasPermission: () => true,
-  hasAnyPermission: () => true,
+  hasPermission: () => false,
+  hasAnyPermission: () => false,
   isAdmin: false
 });
 
@@ -18,12 +20,29 @@ export const usePermission = () => {
 };
 
 export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || 'Customer';
+  const isAdmin = userRole === 'Admin';
+  
+  // Get permissions for the current user role
+  const userPermissions = rolePermissions[userRole] || [];
+  
+  const hasPermission = (permission: string): boolean => {
+    if (isAdmin) return true; // Admin has all permissions
+    return userPermissions.includes(permission as Permission);
+  };
+  
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (isAdmin) return true; // Admin has all permissions
+    return permissions.some(permission => userPermissions.includes(permission as Permission));
+  };
+
   return (
-    <PermissionContext.Provider 
+    <PermissionContext.Provider
       value={{
-        hasPermission: () => true,
-        hasAnyPermission: () => true,
-        isAdmin: false
+        hasPermission,
+        hasAnyPermission,
+        isAdmin
       }}
     >
       {children}

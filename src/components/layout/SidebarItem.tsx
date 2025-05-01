@@ -25,14 +25,22 @@ export function SidebarItem({ item }: SidebarItemProps) {
   const { location, expanded, mobileOpen } = useSidebar();
   const { hasPermission, hasAnyPermission } = usePermission();
   
-  // Access check is now always true
+  // Check if user has permission to view this item
+  const hasAccess = 
+    !item.permission || hasPermission(item.permission) ||
+    (item.permissions && item.permissions.length > 0 && hasAnyPermission(item.permissions));
+  
+  // If user doesn't have access, don't render the item
+  if (!hasAccess) return null;
   
   const isActive = 
     location.pathname === item.href || 
     (item.href !== '/' && location.pathname.startsWith(item.href));
   
-  // All children are now authorized
-  const authorizedChildren = item.children;
+  // Filter children based on permissions
+  const authorizedChildren = item.children?.filter(
+    subItem => !subItem.permission || hasPermission(subItem.permission)
+  );
   
   const hasAuthorizedChildren = authorizedChildren && authorizedChildren.length > 0;
   

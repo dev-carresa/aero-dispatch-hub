@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +68,8 @@ export function PermissionSettings() {
       const allPermissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
       
       // Initialize all possible permissions as false
-      Object.values(permissionCategories).flat().forEach(perm => {
+      const allPermissionKeys = Object.values(permissionCategories).flat();
+      allPermissionKeys.forEach(perm => {
         allPermissions[perm as Permission] = false;
       });
       
@@ -194,7 +194,8 @@ export function PermissionSettings() {
     const permissions: Record<Permission, boolean> = {} as Record<Permission, boolean>;
     
     // Initialize all permissions as false
-    Object.values(permissionCategories).flat().forEach(perm => {
+    const allPermissionKeys = Object.values(permissionCategories).flat();
+    allPermissionKeys.forEach(perm => {
       permissions[perm as Permission] = false;
     });
     
