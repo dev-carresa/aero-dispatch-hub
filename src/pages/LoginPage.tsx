@@ -6,17 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { signIn, isAuthenticated, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [setupLoading, setSetupLoading] = useState(false);
 
   // Redirect to dashboard if already authenticated
   if (isAuthenticated) {
@@ -33,9 +35,39 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
-      setError(error?.message || "Invalid email or password");
+      
+      // Provide more specific error messages
+      if (error?.code === "invalid_credentials") {
+        setError("Invalid email or password. Make sure the demo credentials are set up correctly.");
+      } else {
+        setError(error?.message || "Failed to sign in. Please try again.");
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const setupDemoUser = async () => {
+    setSetupLoading(true);
+    setError("");
+    
+    try {
+      // Call our edge function to set up the demo user
+      const { data, error } = await supabase.functions.invoke('setup-demo-user');
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success("Demo user set up successfully! You can now log in with the demo credentials.");
+      setEmail("admin@example.com");
+      setPassword("password");
+    } catch (error) {
+      console.error("Setup error:", error);
+      toast.error("Failed to set up demo user. Please contact the administrator.");
+      setError("Failed to set up demo user. See console for details.");
+    } finally {
+      setSetupLoading(false);
     }
   };
 
@@ -108,9 +140,21 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
                 {isLoading || authLoading ? "Signing in..." : "Sign in"}
               </Button>
-              <div className="text-center text-sm text-muted-foreground">
-                <p>Demo credentials:</p>
+              
+              <div className="text-center text-sm">
+                <p className="text-muted-foreground">Demo credentials:</p>
                 <p className="font-medium text-primary">admin@example.com / password</p>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={setupDemoUser} 
+                  disabled={setupLoading}
+                  className="mt-2 text-xs"
+                >
+                  <RefreshCw className={`h-3 w-3 mr-2 ${setupLoading ? 'animate-spin' : ''}`} />
+                  {setupLoading ? "Setting up..." : "Set up demo user"}
+                </Button>
               </div>
             </CardFooter>
           </form>
