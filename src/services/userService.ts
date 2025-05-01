@@ -50,10 +50,13 @@ export const updateDriverAvailability = async (
   newStatus: string
 ): Promise<void> => {
   try {
+    // Convert userId to string if it's a number
+    const id = typeof userId === 'number' ? userId.toString() : userId;
+    
     const { error } = await supabase
       .from('profiles')
       .update({ driver_availability: newStatus })
-      .eq('id', userId);
+      .eq('id', id);
       
     if (error) throw error;
   } catch (error) {
@@ -70,10 +73,13 @@ export const toggleUserActiveStatus = async (
   const newUserStatus = currentStatus === "active" ? "inactive" : "active";
   
   try {
+    // Convert userId to string if it's a number
+    const id = typeof userId === 'number' ? userId.toString() : userId;
+    
     const { error } = await supabase
       .from('profiles')
       .update({ status: newUserStatus })
-      .eq('id', userId);
+      .eq('id', id);
       
     if (error) throw error;
   } catch (error) {
