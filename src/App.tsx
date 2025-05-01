@@ -82,7 +82,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Public routes - always accessible without any initialization check */}
+                {/* Public routes - always accessible without any initialization check or authentication */}
                 <Route path="/welcome" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />

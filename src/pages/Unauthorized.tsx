@@ -48,6 +48,7 @@ export default function Unauthorized() {
             <>
               <Button 
                 onClick={() => navigate("/auth")}
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 Log In
               </Button>
