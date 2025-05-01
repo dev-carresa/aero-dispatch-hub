@@ -65,12 +65,22 @@ import NewApiUser from "./pages/NewApiUser";
 import EditApiUser from "./pages/EditApiUser";
 import ApiUserDetails from "./pages/ApiUserDetails";
 
+// Create a more resilient query client with better error handling and retry logic
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Only retry network errors and 5xx server errors, but not more than twice
+        if (failureCount < 2) {
+          const err = error as Error;
+          return !err.message.includes('404') && !err.message.includes('401');
+        }
+        return false;
+      },
       refetchOnWindowFocus: false,
-      staleTime: 30000,
+      staleTime: 60000, // Increase stale time to 60 seconds
+      gcTime: 300000, // Keep unused data in cache for 5 minutes
+      refetchOnReconnect: 'always',
     },
   },
 });

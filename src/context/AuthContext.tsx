@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from '@supabase/supabase-js';
@@ -40,7 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [initializationComplete, setInitializationComplete] = useState(false);
+  
+  // Use a ref to track if initialization is complete to prevent multiple renders
+  const initialized = useRef(false);
+  
+  // Use a ref to track mounted state to prevent updates after unmount
+  const isMounted = useRef(true);
+  
+  // Add a timeout ref to prevent infinite loading
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Convert Supabase User to AuthUser with role
   const mapUserData = async (supabaseUser: User | null): Promise<AuthUser | null> => {
@@ -76,80 +84,111 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Clean up function to clear timeouts
+  const cleanupTimeouts = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  // Set a maximum time for initialization to prevent infinite loading
+  useEffect(() => {
+    // Set a maximum timeout for initialization (10 seconds)
+    timeoutRef.current = setTimeout(() => {
+      if (loading && isMounted.current) {
+        console.warn("Auth initialization timed out - forcing completion");
+        setLoading(false);
+      }
+    }, 10000);
+
+    return cleanupTimeouts;
+  }, []);
+
   // Initialize auth state
   useEffect(() => {
-    // Track whether component is mounted to prevent state updates after unmount
-    let isMounted = true;
+    // Clean up function to run on unmount
+    return () => {
+      isMounted.current = false;
+      cleanupTimeouts();
+    };
+  }, []);
+
+  // Separate effect for auth initialization
+  useEffect(() => {
+    // Skip if already initialized to prevent double initialization
+    if (initialized.current) return;
+    
+    initialized.current = true;
+    console.log("Starting auth initialization");
     
     const initializeAuth = async () => {
       try {
-        // First, check for existing session
+        // Set up auth state listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, currentSession) => {
+            console.log("Auth state changed:", event);
+            
+            if (!isMounted.current) return;
+            
+            // Update session state
+            setSession(currentSession);
+            setIsAuthenticated(!!currentSession);
+            
+            // Update user data if session exists
+            if (currentSession?.user) {
+              try {
+                const mappedUser = await mapUserData(currentSession.user);
+                if (isMounted.current) {
+                  setUser(mappedUser);
+                }
+              } catch (error) {
+                console.error("Error updating user data:", error);
+              }
+            } else {
+              setUser(null);
+            }
+            
+            // Always ensure loading is cleared
+            setLoading(false);
+          }
+        );
+
+        // Check for existing session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
-        if (isMounted) {
+        if (isMounted.current) {
           setSession(currentSession);
           setIsAuthenticated(!!currentSession);
           
           // Fetch user profile data if session exists
           if (currentSession?.user) {
             const mappedUser = await mapUserData(currentSession.user);
-            if (isMounted) {
+            if (isMounted.current) {
               setUser(mappedUser);
             }
+          } else {
+            setUser(null);
           }
+          
+          // Initialization complete
+          setLoading(false);
+          console.log("Auth initialization complete:", !!currentSession ? "Authenticated" : "Not authenticated");
         }
+
+        // Cleanup subscription on unmount
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error("Error initializing auth:", error);
-      } finally {
-        // Always set these flags when initialization is done, even if there was an error
-        if (isMounted) {
-          setInitializationComplete(true);
+        if (isMounted.current) {
           setLoading(false);
         }
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
-        
-        if (!isMounted) return;
-        
-        // Update session state
-        setSession(currentSession);
-        setIsAuthenticated(!!currentSession);
-        
-        // Update user data if session exists
-        if (currentSession?.user) {
-          setLoading(true);
-          try {
-            const mappedUser = await mapUserData(currentSession.user);
-            if (isMounted) {
-              setUser(mappedUser);
-            }
-          } catch (error) {
-            console.error("Error updating user data:", error);
-          } finally {
-            if (isMounted) {
-              setLoading(false);
-            }
-          }
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // Initialize auth state
     initializeAuth();
-
-    // Cleanup
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -208,13 +247,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Use a dedicated loading component to render during initialization
-  if (!initializationComplete) {
+  // Show a simpler loading state during initialization
+  if (loading && !user && !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <Spinner size="lg" />
-          <p className="text-muted-foreground">Initializing application...</p>
+          <Spinner size="md" />
+          <p className="text-muted-foreground">Loading authentication...</p>
         </div>
       </div>
     );

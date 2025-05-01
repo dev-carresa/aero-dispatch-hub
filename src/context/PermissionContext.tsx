@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { Permission, rolePermissions } from '@/lib/permissions';
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,46 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  
+  // Track mounted state to prevent updates after unmount
+  const isMounted = useRef(true);
+  
+  // Track timeout for permission loading
+  const permissionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      
+      if (permissionTimeoutRef.current) {
+        clearTimeout(permissionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Set a timeout to prevent infinite permission loading
+  useEffect(() => {
+    if (loadingPermissions) {
+      // Set 5 second timeout for permission loading
+      permissionTimeoutRef.current = setTimeout(() => {
+        if (isMounted.current && loadingPermissions) {
+          console.warn("Permission loading timed out - continuing with limited permissions");
+          setLoadingPermissions(false);
+          setPermissionError("Permission loading timed out");
+        }
+      }, 5000);
+    } else if (permissionTimeoutRef.current) {
+      clearTimeout(permissionTimeoutRef.current);
+      permissionTimeoutRef.current = null;
+    }
+    
+    return () => {
+      if (permissionTimeoutRef.current) {
+        clearTimeout(permissionTimeoutRef.current);
+      }
+    };
+  }, [loadingPermissions]);
 
   // Fetch user permissions when user changes
   useEffect(() => {
@@ -41,7 +81,9 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const fetchUserPermissions = async () => {
       // Only start loading permissions when authenticated and we have a user
       if (!isAuthenticated || !user?.id) {
-        setLoadingPermissions(false);
+        if (loadingPermissions && isMounted.current) {
+          setLoadingPermissions(false);
+        }
         return;
       }
       
@@ -49,6 +91,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setPermissionError(null);
       
       try {
+        console.log("Fetching user permissions for user:", user.id);
         // Fetch user permissions from database
         const { data: permissions, error } = await supabase
           .rpc('get_user_permissions', { user_id: user.id });
@@ -61,30 +104,32 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         // Format permissions into array of permission strings
         const permArray = permissions?.map(p => p.permission_name) || [];
-        setUserPermissions(permArray as Permission[]);
         
-        // Check if user is admin based on role
-        setIsAdmin(user.role === 'Admin');
+        if (isMounted.current) {
+          console.log("User permissions loaded:", permArray.length);
+          setUserPermissions(permArray as Permission[]);
+          
+          // Check if user is admin based on role
+          setIsAdmin(user.role === 'Admin');
+        }
       } catch (error) {
         console.error('Error in permission fetch:', error);
         setPermissionError('An unexpected error occurred while loading permissions');
       } finally {
         // Always clear loading state, even on error
-        setLoadingPermissions(false);
+        if (isMounted.current) {
+          setLoadingPermissions(false);
+        }
       }
     };
 
-    // Fetch permissions with a slight delay to prioritize UI rendering
-    const timeoutId = setTimeout(() => {
+    // Fetch permissions immediately if user is available
+    if (user?.id) {
       fetchUserPermissions();
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    }
   }, [user, isAuthenticated, authLoading]);
 
-  // Fetch roles and their permissions separately to avoid blocking the UI
+  // Fetch roles and their permissions - this is less critical, so load separately
   useEffect(() => {
     // Only fetch roles if authenticated
     if (!isAuthenticated) return;
@@ -122,7 +167,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
         
         // If we got data back, update the roles state
-        if (Object.keys(newRoles).length > 0) {
+        if (Object.keys(newRoles).length > 0 && isMounted.current) {
           setRoles(newRoles);
         }
       } catch (error) {
@@ -130,14 +175,12 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     };
 
-    // Give priority to user permissions loading before fetching roles
-    const timeoutId = setTimeout(() => {
-      fetchRoles();
-    }, 300);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    // Fetch roles with a slight delay to prioritize other operations
+    setTimeout(() => {
+      if (isMounted.current) {
+        fetchRoles();
+      }
+    }, 500);
   }, [isAuthenticated]);
 
   const hasPermission = (permission: string): boolean => {
