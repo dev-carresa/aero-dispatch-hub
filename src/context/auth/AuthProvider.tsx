@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     forceResetLoading
   } = useAuthState();
 
-  const { signIn, signOut } = useAuthMethods({
+  const { signIn, signOut, forceSignOut } = useAuthMethods({
     setUser,
     setSession,
     setIsAuthenticated,
@@ -63,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading, 
       signIn, 
       signOut, 
+      forceSignOut,
       isAuthenticated, 
       session,
       authError,

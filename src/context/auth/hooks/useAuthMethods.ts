@@ -70,9 +70,45 @@ export function useAuthMethods({
       setLoading(false);
     }
   };
+  
+  // New method for force sign out - will always clear local state
+  const forceSignOut = () => {
+    console.log("Force signing out...");
+    try {
+      // First try the normal signOut method with supabase
+      supabase.auth.signOut()
+        .catch(error => {
+          console.warn("Force sign out: API call failed, continuing with local cleanup", error);
+        })
+        .finally(() => {
+          // Always clear local state even if API call fails
+          setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          
+          // Clear local storage to remove any tokens
+          localStorage.removeItem('supabase.auth.token');
+          localStorage.removeItem('supabase.auth.expires_at');
+          localStorage.removeItem('supabase.auth.refresh_token');
+          
+          toast.success("Successfully logged out");
+          console.log("Force sign out successful");
+          
+          // Redirect to login page
+          window.location.href = '/';
+        });
+    } catch (error) {
+      // This catch should never trigger because we have a .catch on the Promise
+      console.error("Force sign out critical error:", error);
+      
+      // As a last resort, just redirect to login
+      window.location.href = '/';
+    }
+  };
 
   return {
     signIn,
-    signOut
+    signOut,
+    forceSignOut
   };
 }

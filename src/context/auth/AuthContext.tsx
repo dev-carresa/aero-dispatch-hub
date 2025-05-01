@@ -8,6 +8,7 @@ export const AuthContext = createContext<AuthContextType>({
   loading: false,
   signIn: async () => {},
   signOut: async () => {},
+  forceSignOut: () => {},
   isAuthenticated: false,
   session: null,
   authError: null
