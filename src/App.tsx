@@ -83,14 +83,15 @@ const App = () => (
               <Routes>
                 {/* Public routes - accessible to everyone without any auth check */}
                 <Route path="/welcome" element={<LandingPage />} />
-                <Route path="/login" element={<AuthPage />} />
+                <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />
                 
                 {/* Protected routes requiring authentication */}
                 <Route element={<ProtectedRoute />}>
                   {/* Dashboard */}
-                  <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />
+                 
                   
                   {/* Bookings */}
                   <Route path="/bookings" element={<RoleProtectedRoute requiredPermission="bookings:view"><Layout><BookingsIndex /></Layout></RoleProtectedRoute>} />
