@@ -87,7 +87,7 @@ const App = () => (
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
-                {/* Protected routes - require authentication */}
+                {/* Protected routes requiring authentication */}
                 <Route element={<ProtectedRoute />}>
                   {/* Dashboard */}
                   <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />
