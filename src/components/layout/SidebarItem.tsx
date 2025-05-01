@@ -10,7 +10,7 @@ interface SidebarItemProps {
   item: {
     name: string;
     href: string;
-    icon: LucideIcon | (() => JSX.Element);
+    icon: LucideIcon;
     permission?: Permission;
     permissions?: Permission[];
     children?: Array<{ 
@@ -18,28 +18,20 @@ interface SidebarItemProps {
       href: string; 
       permission?: Permission; 
     }>;
-    adminOnly?: boolean;
   };
 }
 
 export function SidebarItem({ item }: SidebarItemProps) {
   const { location, expanded, mobileOpen } = useSidebar();
-  const { hasPermission, hasAnyPermission, isAdmin } = usePermission();
+  const { hasPermission, hasAnyPermission } = usePermission();
   
-  // First check: If admin-only and user is not admin, don't render
-  if (item.adminOnly === true && !isAdmin) {
+  // Check if the user has permission to see this item
+  if (item.permission && !hasPermission(item.permission)) {
     return null;
   }
   
-  // Second check: Permission requirement - if a specific permission is required and user doesn't have it
-  // Note: Admin users bypass this check as they have all permissions
-  if (item.permission && !isAdmin && !hasPermission(item.permission)) {
-    return null;
-  }
-  
-  // Third check: Multiple permissions - if any permission from a list is required and user has none
-  // Note: Admin users bypass this check as they have all permissions
-  if (item.permissions && !isAdmin && !hasAnyPermission(item.permissions)) {
+  // Check if the user has any of the permissions required
+  if (item.permissions && !hasAnyPermission(item.permissions)) {
     return null;
   }
   
@@ -48,21 +40,12 @@ export function SidebarItem({ item }: SidebarItemProps) {
     (item.href !== '/' && location.pathname.startsWith(item.href));
   
   // Filter children based on permissions
-  // Note: Admin users always see all children
   const authorizedChildren = item.children?.filter((subItem) => {
-    return isAdmin || !subItem.permission || hasPermission(subItem.permission);
+    return !subItem.permission || hasPermission(subItem.permission);
   });
   
   // If there are no authorized children, don't render them
   const hasAuthorizedChildren = authorizedChildren && authorizedChildren.length > 0;
-  
-  // Determine icon to display
-  const IconComponent = typeof item.icon === 'function' 
-    ? item.icon 
-    : () => <item.icon className={cn(
-        'h-5 w-5 flex-shrink-0',
-        isActive ? 'text-primary' : 'text-muted-foreground'
-      )} />;
   
   return (
     <div>
@@ -75,12 +58,12 @@ export function SidebarItem({ item }: SidebarItemProps) {
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         )}
       >
-        <span className={cn(
-          'mr-3 flex-shrink-0',
-          isActive ? 'text-primary' : 'text-muted-foreground'
-        )}>
-          <IconComponent />
-        </span>
+        <item.icon
+          className={cn(
+            'mr-3 h-5 w-5 flex-shrink-0',
+            isActive ? 'text-primary' : 'text-muted-foreground'
+          )}
+        />
         {(expanded || mobileOpen) && <span>{item.name}</span>}
       </Link>
       

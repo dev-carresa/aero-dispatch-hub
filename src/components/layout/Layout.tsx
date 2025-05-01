@@ -11,9 +11,18 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { userRole } = useAuth();
+  const { isAdmin, isDriver, isFleet, isDispatcher, isCustomer } = useRolePermission();
+  
+  // Custom layout class based on user role
+  let roleBg = '';
+  if (isAdmin) roleBg = 'bg-gray-50';
+  else if (isDriver) roleBg = 'bg-blue-50';
+  else if (isFleet) roleBg = 'bg-green-50';
+  else if (isDispatcher) roleBg = 'bg-purple-50';
+  else if (isCustomer) roleBg = 'bg-amber-50';
   
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className={`flex h-screen overflow-hidden ${roleBg}`}>
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />

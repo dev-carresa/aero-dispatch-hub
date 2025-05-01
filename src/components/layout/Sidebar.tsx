@@ -2,18 +2,13 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, useSidebar } from './SidebarContext';
-import { coreNavigation, navigation } from './sidebarNavigation';
+import { navigation } from './sidebarNavigation';
 import { SidebarItem } from './SidebarItem';
 import { SidebarLogo } from './SidebarLogo';
 import { MobileToggle, MobileClose, DesktopToggle } from './SidebarToggle';
-import { usePermission } from '@/context/PermissionContext';
 
 function SidebarContent() {
   const { expanded, mobileOpen, toggleMobileSidebar } = useSidebar();
-  const { isAdmin } = usePermission();
-  
-  // Use core navigation or full navigation based on admin status
-  const navItems = isAdmin ? navigation : coreNavigation;
   
   return (
     <>
@@ -47,7 +42,7 @@ function SidebarContent() {
         </div>
         <div className="flex-1 overflow-auto py-2">
           <nav className="space-y-1 px-2">
-            {navItems.map((item) => (
+            {navigation.map((item) => (
               <SidebarItem key={item.name} item={item} />
             ))}
           </nav>

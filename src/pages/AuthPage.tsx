@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,33 +16,18 @@ export default function AuthPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   
-  console.log("AuthPage - Rendering, user state:", user ? "logged in" : "not logged in");
-  console.log("AuthPage - Current location:", location.pathname);
-  console.log("AuthPage - Location state:", location.state);
-  
   // Handle auth errors from child components
   const handleAuthError = (error: string) => {
     setAuthError(error);
   };
 
-  // Redirect if user is already logged in - moved to useEffect to avoid React warnings
-  useEffect(() => {
-    if (user) {
-      console.log("User already logged in, redirecting...");
-      // Get the intended destination from location state, or default to dashboard
-      const from = location.state?.from || "/";
-      console.log("Redirecting to:", from);
-      navigate(from, { replace: true });
-    }
-  }, [user, navigate, location.state]);
-
-  // Don't render anything if user is logged in and we're about to redirect
+  // Redirect if user is already logged in
   if (user) {
-    console.log("AuthPage - User is logged in, returning null");
+    const from = location.state?.from || "/";
+    navigate(from, { replace: true });
     return null;
   }
 
-  console.log("AuthPage - Rendering auth form, showResetPassword:", showResetPassword);
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">

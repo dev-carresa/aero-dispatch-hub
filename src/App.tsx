@@ -28,7 +28,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { PermissionProvider } from "./context/PermissionContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
-import { InitializeDatabase } from "./components/auth/InitializeDatabase";
 
 // Vehicle pages
 import Vehicles from "./pages/Vehicles";
@@ -82,20 +81,16 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Public routes - always accessible without any initialization check or authentication */}
+                {/* Public routes */}
                 <Route path="/welcome" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
-                {/* Protected routes - require authentication and database initialization */}
-                <Route element={<InitializeDatabase><ProtectedRoute /></InitializeDatabase>}>
-                  {/* Root route - requires dashboard:view permission */}
-                  <Route path="/" element={
-                    <RoleProtectedRoute requiredPermission="dashboard:view">
-                      <Layout><Dashboard /></Layout>
-                    </RoleProtectedRoute>
-                  } />
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  {/* Dashboard */}
+                  <Route path="/" element={<RoleProtectedRoute requiredPermission="dashboard:view"><Layout><Dashboard /></Layout></RoleProtectedRoute>} />
                   
                   {/* Bookings */}
                   <Route path="/bookings" element={<RoleProtectedRoute requiredPermission="bookings:view"><Layout><BookingsIndex /></Layout></RoleProtectedRoute>} />

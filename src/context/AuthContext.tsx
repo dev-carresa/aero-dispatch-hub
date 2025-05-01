@@ -30,59 +30,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
-  // Load user role from profile
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return null;
-      }
-      
-      return data?.role as UserRole | null;
-    } catch (err) {
-      console.error("Error in fetchUserRole:", err);
-      return null;
-    }
-  };
-
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_, session) => {
+      (_, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Try to get role from profile first
-          const profileRole = await fetchUserRole(session.user.id);
-          setUserRole(profileRole || session?.user?.user_metadata?.role as UserRole || null);
-        } else {
-          setUserRole(null);
-        }
-        
+        setUserRole(session?.user?.user_metadata?.role as UserRole || null);
         setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Try to get role from profile first
-        const profileRole = await fetchUserRole(session.user.id);
-        setUserRole(profileRole || session?.user?.user_metadata?.role as UserRole || null);
-      } else {
-        setUserRole(null);
-      }
-      
+      setUserRole(session?.user?.user_metadata?.role as UserRole || null);
       setLoading(false);
     });
 
@@ -98,10 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Set user role from profile or metadata
+      // Set user role from metadata
       if (data.user) {
-        const profileRole = await fetchUserRole(data.user.id);
-        setUserRole(profileRole || data.user.user_metadata?.role as UserRole || null);
+        setUserRole(data.user.user_metadata?.role as UserRole || null);
       }
       
       return { data: data.session, error: null };
@@ -130,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Set user role from metadata initially (profile will be created by trigger)
+      // Set user role
       if (data.user) {
         setUserRole(data.user.user_metadata?.role as UserRole || null);
       }

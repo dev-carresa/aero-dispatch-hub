@@ -538,27 +538,6 @@ export type Database = {
           },
         ]
       }
-      permissions: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           country_code: string | null
@@ -576,7 +555,6 @@ export type Database = {
           nationality: string | null
           phone: string | null
           role: string
-          role_id: string | null
           status: string
           updated_at: string
           vehicle_type: string | null
@@ -597,7 +575,6 @@ export type Database = {
           nationality?: string | null
           phone?: string | null
           role: string
-          role_id?: string | null
           status: string
           updated_at?: string
           vehicle_type?: string | null
@@ -618,20 +595,11 @@ export type Database = {
           nationality?: string | null
           phone?: string | null
           role?: string
-          role_id?: string | null
           status?: string
           updated_at?: string
           vehicle_type?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       quality_reviews: {
         Row: {
@@ -713,66 +681,6 @@ export type Database = {
           total_bookings?: number | null
           total_income?: number | null
           type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      role_permissions: {
-        Row: {
-          created_at: string
-          permission_id: string
-          role_id: string
-        }
-        Insert: {
-          created_at?: string
-          permission_id: string
-          role_id: string
-        }
-        Update: {
-          created_at?: string
-          permission_id?: string
-          role_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "role_permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      roles: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_system: boolean | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_system?: boolean | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_system?: boolean | null
-          name?: string
           updated_at?: string
         }
         Relationships: []
@@ -993,69 +901,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_permission_to_role: {
-        Args: { p_role_id: string; p_permission_id: string }
-        Returns: undefined
-      }
-      add_permission_to_role_by_name: {
-        Args: { p_role_id: string; p_permission_name: string }
-        Returns: undefined
-      }
-      admin_create_permission_functions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      admin_seed_roles_and_permissions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      create_role: {
-        Args: { p_name: string; p_description: string }
-        Returns: string
-      }
-      delete_role: {
-        Args: { p_role_id: string }
-        Returns: undefined
-      }
-      get_all_permissions: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          name: string
-          description: string
-          created_at: string
-        }[]
-      }
-      get_all_roles: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          name: string
-          description: string
-          is_system: boolean
-          created_at: string
-          updated_at: string
-        }[]
-      }
       get_profile_role: {
         Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_role_permissions: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          role_id: string
-          permission_name: string
-        }[]
-      }
-      get_user_permissions: {
-        Args: { user_id: string }
-        Returns: {
-          permission_name: string
-        }[]
-      }
-      get_user_role_name: {
-        Args: { user_id: string }
         Returns: string
       }
       is_admin: {
@@ -1073,22 +920,6 @@ export type Database = {
       is_fleet: {
         Args: Record<PropertyKey, never>
         Returns: boolean
-      }
-      remove_permission_from_role: {
-        Args: { p_role_id: string; p_permission_id: string }
-        Returns: undefined
-      }
-      remove_permission_from_role_by_name: {
-        Args: { p_role_id: string; p_permission_name: string }
-        Returns: undefined
-      }
-      update_user_role: {
-        Args: { p_user_id: string; p_role_id: string }
-        Returns: undefined
-      }
-      update_user_role_by_name: {
-        Args: { p_user_id: string; p_role_name: string }
-        Returns: undefined
       }
     }
     Enums: {
