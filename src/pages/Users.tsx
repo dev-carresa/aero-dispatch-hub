@@ -134,13 +134,14 @@ const Users = () => {
 
   // Dropdown actions
   const handleViewProfile = (user: User) => {
-    navigate(`/users/${String(user.id)}`); // Convert ID to string
+    navigate(`/users/${String(user.id)}`); // Ensure user.id is a string
   };
 
   const handleEditUser = (user: User) => {
-    navigate(`/users/${String(user.id)}`); // Convert ID to string
+    navigate(`/users/${String(user.id)}`); // Ensure user.id is a string
   };
 
+  // Toggle user status
   const toggleUserStatus = async (user: User, newStatus?: string) => {
     if (user.role === "Driver" && newStatus) {
       try {
