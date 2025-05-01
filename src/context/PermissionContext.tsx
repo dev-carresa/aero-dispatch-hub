@@ -7,12 +7,14 @@ interface PermissionContextType {
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   isAdmin: boolean;
+  roles: Record<string, Permission[]>;
 }
 
 const PermissionContext = createContext<PermissionContextType>({
   hasPermission: () => false,
   hasAnyPermission: () => false,
-  isAdmin: false
+  isAdmin: false,
+  roles: rolePermissions
 });
 
 export const usePermission = () => {
@@ -42,7 +44,8 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       value={{
         hasPermission,
         hasAnyPermission,
-        isAdmin
+        isAdmin,
+        roles: rolePermissions
       }}
     >
       {children}
