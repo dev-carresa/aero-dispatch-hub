@@ -11,6 +11,8 @@ export const useAuthListeners = (
 ) => {
   // Use a ref to track initialization state to prevent duplicate processing
   const isInitializing = useRef(true);
+  // Track auth state changes to prevent duplicate processing
+  const isProcessingAuthChange = useRef(false);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
@@ -19,32 +21,38 @@ export const useAuthListeners = (
     
     // Function to update auth state consistently
     const updateAuthState = async (session) => {
-      if (!mounted) return;
+      if (!mounted || isProcessingAuthChange.current) return;
       
-      if (!session) {
-        // Clear state if no session
-        setUser(null);
-        setSession(null);
-        setIsAuthenticated(false);
-        setLoading(false);
-        return;
-      }
+      isProcessingAuthChange.current = true;
       
-      // Otherwise set session and auth state
-      setSession(session);
-      setIsAuthenticated(true);
-      
-      // Map user data after auth state is updated
       try {
-        const userData = await mapUserData(session.user);
-        if (mounted) {
-          setUser(userData);
+        if (!session) {
+          // Clear state if no session
+          setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          console.log("No session found, cleared auth state");
+          return;
         }
-      } catch (err) {
-        console.error("Error processing user data:", err);
+        
+        // Otherwise set session and auth state
+        setSession(session);
+        setIsAuthenticated(true);
+        
+        // Map user data after auth state is updated
+        try {
+          const userData = await mapUserData(session.user);
+          if (mounted) {
+            setUser(userData);
+            console.log("User data mapped:", userData?.email);
+          }
+        } catch (err) {
+          console.error("Error processing user data:", err);
+        }
       } finally {
         if (mounted) {
           setLoading(false);
+          isProcessingAuthChange.current = false;
         }
       }
     };
@@ -62,6 +70,7 @@ export const useAuthListeners = (
             setSession(null);
             setIsAuthenticated(false);
             setLoading(false);
+            console.log("Signed out, cleared auth state");
           }
         } 
         else if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
@@ -92,6 +101,7 @@ export const useAuthListeners = (
           
           // Mark initialization as complete
           isInitializing.current = false;
+          console.log("Initial session check complete");
         } catch (err) {
           console.error("Unexpected error in session check:", err);
           if (mounted) {

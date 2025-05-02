@@ -14,7 +14,7 @@ export const ProtectedRoute: React.FC = () => {
     return <AuthenticationCheck><Outlet /></AuthenticationCheck>;
   }
 
-  // If not authenticated and not loading, redirect to login
+  // If not authenticated and not loading, redirect to login using React Router's Navigate
   if (!isAuthenticated) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }

@@ -1,10 +1,11 @@
 
+import { NavigateFunction } from 'react-router-dom';
 import { useUser } from './auth/useUser';
 import { useAuthListeners } from './auth/useAuthListeners'; 
 import { useAuthActions } from './auth/useAuthActions';
 import { useDebugLogging } from './auth/useDebugLogging';
 
-export const useAuthProvider = () => {
+export const useAuthProvider = (navigate?: NavigateFunction) => {
   // Get state variables and setters
   const {
     user,
@@ -38,7 +39,8 @@ export const useAuthProvider = () => {
     setSession,
     setIsAuthenticated,
     setLoading,
-    setAuthError
+    setAuthError,
+    navigate
   );
 
   // Set up debug logging

@@ -1,5 +1,6 @@
 
 import React, { createContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContextType } from '@/types/auth';
 import { useAuthProvider } from '@/hooks/useAuthProvider';
 
@@ -22,8 +23,11 @@ export const useAuth = () => {
 
 // Export the AuthProvider component to wrap the app
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Get the navigate function from React Router
+  const navigate = useNavigate();
+  
   // Use the custom hook to get all auth-related state and functions
-  const authState = useAuthProvider();
+  const authState = useAuthProvider(navigate);
 
   return (
     <AuthContext.Provider value={authState}>
