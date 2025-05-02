@@ -1,3 +1,4 @@
+
 import { useUser } from './auth/useUser';
 import { useAuthListeners } from './auth/useAuthListeners'; 
 import { useAuthActions } from './auth/useAuthActions';
@@ -48,7 +49,8 @@ export const useAuthProvider = () => {
     setSession,
     setIsAuthenticated,
     setLoading,
-    refreshToken
+    refreshToken,
+    setAuthError
   );
 
   // Function to reset session and update role_id to match role for admin

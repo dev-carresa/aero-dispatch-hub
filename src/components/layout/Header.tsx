@@ -40,7 +40,7 @@ export function Header() {
     e.preventDefault();
     console.log("Logout button clicked, current path:", location.pathname);
     try {
-      await signOut(location.pathname);
+      await signOut();
       // La navigation est gérée dans la fonction signOut
     } catch (error) {
       console.error("Failed to logout:", error);

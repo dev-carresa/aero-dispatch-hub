@@ -9,7 +9,8 @@ export const useAuthListeners = (
   setSession,
   setIsAuthenticated,
   setLoading,
-  refreshToken?
+  refreshToken?,
+  setAuthError?
 ) => {
   useEffect(() => {
     setLoading(true);
@@ -55,6 +56,9 @@ export const useAuthListeners = (
         
         if (error) {
           console.error("Error getting session:", error);
+          if (setAuthError) {
+            setAuthError(error.message);
+          }
           setLoading(false);
           return;
         }
@@ -68,6 +72,9 @@ export const useAuthListeners = (
         }
       } catch (error) {
         console.error("Unexpected error during session initialization:", error);
+        if (setAuthError && error instanceof Error) {
+          setAuthError(error.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -78,5 +85,5 @@ export const useAuthListeners = (
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setSession, setIsAuthenticated, setLoading, refreshToken]);
+  }, [setUser, setSession, setIsAuthenticated, setLoading, refreshToken, setAuthError]);
 };

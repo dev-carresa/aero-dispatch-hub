@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,8 @@ export const useSignOut = (
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const signOut = async (currentPath?: string): Promise<void> => {
+  // Updated to accept no parameters but use the current path from inside the function
+  const signOut = async (): Promise<void> => {
     // Vérifier si une authentification est déjà en cours avec la fonction getter
     const isAuthInProgress = getIsAuthActionInProgress();
     if (isAuthInProgress) {
