@@ -6,7 +6,6 @@ import { clearUserProfileCache } from './userProfileCache';
 import { clearUserSession } from '@/services/sessionStorageService';
 import { NavigateFunction } from 'react-router-dom';
 import { AUTH_CONSTANTS } from './utils/authUtils';
-import { UserRole } from '@/types/user';
 
 export const useSignOut = (
   setUser,
@@ -18,7 +17,7 @@ export const useSignOut = (
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Sign out function - améliorée pour prendre en compte le rôle de l'utilisateur
+  // Sign out function - améliorée pour éviter les problèmes
   const signOut = async (): Promise<void> => {
     // Prevent multiple simultaneous auth actions
     const isAuthInProgress = getIsAuthActionInProgress();
@@ -32,26 +31,11 @@ export const useSignOut = (
       getIsAuthActionInProgress(true);
       setIsLoggingOut(true);
       
-      // Stocker le rôle de l'utilisateur avant de nettoyer les données
-      // On doit mémoriser temporairement le rôle pour la redirection
-      let userRole: UserRole | null = null;
-      const currentSession = await supabase.auth.getSession();
-      if (currentSession?.data?.session?.user) {
-        // Récupérer l'utilisateur actuel pour déterminer son rôle
-        const { data: userData } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', currentSession.data.session.user.id)
-          .single();
-        
-        if (userData) {
-          userRole = userData.role as UserRole;
-          console.log("Rôle de l'utilisateur pour redirection:", userRole);
-        }
-      }
+      // Nettoyage du cache et du stockage local avant la déconnexion
+      clearUserProfileCache();
+      clearUserSession();
       
-      // CHANGEMENT CRITIQUE: D'abord appeler l'API Supabase pour la déconnexion
-      // *avant* de nettoyer les données locales
+      // Appel API Supabase pour la déconnexion
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -62,10 +46,6 @@ export const useSignOut = (
         throw error;
       }
       
-      // Ensuite seulement, nettoyage du cache et du stockage local
-      clearUserProfileCache();
-      clearUserSession();
-      
       // Réinitialiser les états
       setUser(null);
       setSession(null);
@@ -74,14 +54,9 @@ export const useSignOut = (
       toast.success("Déconnexion réussie");
       console.log("Déconnexion réussie");
       
-      // Utiliser React Router pour la navigation basée sur le rôle
+      // Utiliser React Router pour la navigation
       if (navigate) {
-        // Rediriger vers la page de connexion admin si l'utilisateur était un admin
-        if (userRole === 'Admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
+        navigate('/');
       }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
