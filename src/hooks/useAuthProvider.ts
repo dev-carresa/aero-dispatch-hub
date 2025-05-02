@@ -55,7 +55,7 @@ export const useAuthProvider = () => {
         
         if (!mounted) return;
         
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        if (event === 'SIGNED_OUT') {
           // Clear state immediately for responsive UI
           setUser(null);
           setSession(null);
