@@ -26,6 +26,7 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     setSession,
     setIsAuthenticated,
     setLoading,
+    null, // Adding null for refreshToken parameter that's required but not used
     setAuthError
   );
 

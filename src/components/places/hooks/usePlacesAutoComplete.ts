@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 
 interface PlacePrediction {
@@ -7,6 +8,7 @@ interface PlacePrediction {
     main_text: string;
     secondary_text: string;
   };
+  types?: string[];
 }
 
 interface UsePlacesAutocompleteProps {
@@ -84,7 +86,10 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
       if (inputValue.length > 2 && autocompleteService.current) {
         try {
           autocompleteService.current.getPlacePredictions(
-            { input: inputValue },
+            { 
+              input: inputValue,
+              types: ['establishment', 'geocode', 'address', 'transit_station', 'airport', 'lodging']
+            },
             (predictions, status) => {
               if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
                 setPredictions(predictions as PlacePrediction[]);

@@ -9,6 +9,7 @@ interface PlacePrediction {
     main_text: string;
     secondary_text: string;
   };
+  types?: string[];
 }
 
 interface PredictionsListProps {
