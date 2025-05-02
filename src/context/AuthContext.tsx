@@ -3,7 +3,6 @@ import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface AuthUser {
   id: string;
@@ -42,7 +41,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const navigate = useNavigate();
   
   // Convert Supabase User to AuthUser with role
   const mapUserData = useCallback(async (supabaseUser: User | null): Promise<AuthUser | null> => {
@@ -171,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Sign in successful");
         // Session will be updated via onAuthStateChange
         toast.success("Connexion réussie");
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -207,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Sign out successful");
       
       // Navigate to login page
-      navigate('/', { replace: true });
+      window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Échec de la déconnexion");

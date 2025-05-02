@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   User, 
@@ -20,7 +20,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
 
 export function Header() {
   const { user, signOut, isLoggingOut } = useAuth();
@@ -40,7 +39,7 @@ export function Header() {
     console.log("Logout button clicked");
     try {
       await signOut();
-      // No need to navigate - AuthContext handles this
+      // Navigation is handled in AuthContext
     } catch (error) {
       console.error("Failed to logout:", error);
       // Toast message will be shown by AuthContext
