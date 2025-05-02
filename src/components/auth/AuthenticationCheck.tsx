@@ -12,6 +12,7 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { loading, isLoggingOut, authError } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Show timeout message if loading takes too long
   useEffect(() => {
@@ -38,6 +39,20 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [loading, isLoggingOut, authError]);
 
+  // Auto-retry logic (once) if loading times out
+  useEffect(() => {
+    if (loadingTimeout && retryCount === 0) {
+      const retryTimeoutId = setTimeout(() => {
+        setRetryCount(1);
+        // Clear potentially problematic tokens and retry
+        localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+        window.location.reload();
+      }, 1000);
+      
+      return () => clearTimeout(retryTimeoutId);
+    }
+  }, [loadingTimeout, retryCount]);
+
   if (!loading) {
     return <>{children}</>;
   }
@@ -47,12 +62,28 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
       <Spinner size="lg" className="mb-4" />
       <p className="text-muted-foreground mb-2">Vérification de l'authentification...</p>
       
-      {loadingTimeout && <LoadingTimeoutAlert />}
+      {loadingTimeout && <LoadingTimeoutAlert retryCount={retryCount} />}
     </div>
   );
 };
 
-const LoadingTimeoutAlert: React.FC = () => {
+interface LoadingTimeoutAlertProps {
+  retryCount: number;
+}
+
+const LoadingTimeoutAlert: React.FC<LoadingTimeoutAlertProps> = ({ retryCount }) => {
+  // Handle full reset of authentication
+  const handleFullReset = () => {
+    // Remove all Supabase-related items from localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.includes('sb-qqfnokbhdzmffywksmvl')) {
+        localStorage.removeItem(key);
+      }
+    }
+    window.location.href = '/';
+  };
+  
   return (
     <div className="mt-6 max-w-md">
       <Alert variant="destructive" className="mb-4">
@@ -60,7 +91,10 @@ const LoadingTimeoutAlert: React.FC = () => {
         <AlertTitle>Temps d'attente dépassé</AlertTitle>
         <AlertDescription>
           La vérification de l'authentification prend plus de temps que prévu. 
-          Cela peut être dû à des problèmes de réseau ou de connexion avec le serveur.
+          {retryCount > 0 ? 
+            " Une tentative de récupération automatique a échoué." : 
+            " Une récupération automatique sera tentée..."
+          }
         </AlertDescription>
       </Alert>
       
@@ -76,10 +110,7 @@ const LoadingTimeoutAlert: React.FC = () => {
         <Button 
           variant="default" 
           className="w-full" 
-          onClick={() => {
-            localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
-            window.location.href = '/';
-          }}
+          onClick={handleFullReset}
         >
           Retour à la page d'accueil
         </Button>

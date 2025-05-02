@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { mapUserData } from './useUser';
@@ -13,11 +14,14 @@ export const useAuthListeners = (
   const isInitializing = useRef(true);
   // Track auth state changes to prevent duplicate processing
   const isProcessingAuthChange = useRef(false);
+  // Track attempts to recover from errors
+  const recoveryAttemptMade = useRef(false);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
     console.log("Initializing auth provider");
     let mounted = true;
+    let timeoutId = null;
     
     // Function to update auth state consistently
     const updateAuthState = async (session) => {
@@ -62,6 +66,12 @@ export const useAuthListeners = (
       async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         
+        // Cancel timeout if there's already one
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
         // Only handle specific auth events to avoid duplicate processing
         if (event === 'SIGNED_OUT') {
           // For sign out, immediately clear state
@@ -91,13 +101,29 @@ export const useAuthListeners = (
           if (error) {
             console.error("Error getting session:", error);
             setAuthError(error.message);
+            
+            // Clean up potentially invalid tokens in localStorage
+            if (error.message.includes("Invalid Refresh Token") && !recoveryAttemptMade.current) {
+              recoveryAttemptMade.current = true;
+              cleanupInvalidTokens();
+              // Try refreshing after cleanup
+              window.location.reload();
+              return;
+            }
+            
             setIsAuthenticated(false);
             setLoading(false);
             return;
           }
           
           // Update auth state with initial session
-          await updateAuthState(initialSession);
+          if (initialSession) {
+            await updateAuthState(initialSession);
+          } else {
+            // No session found
+            setLoading(false);
+            console.log("No initial session found");
+          }
           
           // Mark initialization as complete
           isInitializing.current = false;
@@ -112,13 +138,34 @@ export const useAuthListeners = (
         }
       };
 
+      // Set a failsafe timeout to ensure loading state is not stuck indefinitely
+      timeoutId = setTimeout(() => {
+        if (mounted && isInitializing.current) {
+          console.log("Authentication check timed out, forcing loading state to false");
+          setLoading(false);
+          setAuthError("Vérification de l'authentification a expiré");
+          isInitializing.current = false;
+        }
+      }, 5000); // 5 second timeout safety net
+
       checkSession();
     }
+
+    // Helper function to clean up invalid tokens from localStorage
+    const cleanupInvalidTokens = () => {
+      try {
+        localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+        console.log("Cleaned up potentially invalid auth tokens");
+      } catch (err) {
+        console.error("Error cleaning up tokens:", err);
+      }
+    };
 
     // Cleanup function
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [setUser, setSession, setIsAuthenticated, setLoading, setAuthError]);
 };
