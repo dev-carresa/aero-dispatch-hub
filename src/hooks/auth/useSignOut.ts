@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { clearUserProfileCache } from './useUser';
+import { clearUserProfileCache } from './userProfileCache';
 import { clearUserSession } from '@/services/sessionStorageService';
 import { NavigateFunction } from 'react-router-dom';
 import { AUTH_CONSTANTS } from './utils/authUtils';
