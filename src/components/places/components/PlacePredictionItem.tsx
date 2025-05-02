@@ -1,5 +1,5 @@
 
-import { MapPin, Plane, Hotel, TrainFront } from 'lucide-react';
+import { MapPin, Plane, Hotel, TrainFront, Building, Store, Utensils } from 'lucide-react';
 import { PlaceType, detectPlaceType } from '../utils/placeTypeDetector';
 
 interface PlacePrediction {
@@ -47,6 +47,12 @@ function renderIcon(type: PlaceType) {
       return <Hotel className="h-4 w-4 mt-1 flex-shrink-0 text-amber-500" />;
     case 'train':
       return <TrainFront className="h-4 w-4 mt-1 flex-shrink-0 text-green-500" />;
+    case 'restaurant':
+      return <Utensils className="h-4 w-4 mt-1 flex-shrink-0 text-red-500" />;
+    case 'store':
+      return <Store className="h-4 w-4 mt-1 flex-shrink-0 text-purple-500" />;
+    case 'business':
+      return <Building className="h-4 w-4 mt-1 flex-shrink-0 text-indigo-500" />;
     default:
       return <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-muted-foreground" />;
   }

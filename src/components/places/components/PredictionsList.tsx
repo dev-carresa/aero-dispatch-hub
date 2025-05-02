@@ -44,8 +44,8 @@ export function PredictionsList({ predictions, onSelect, inputRef, setShowDropdo
   return (
     <div 
       ref={dropdownRef}
-      className="absolute z-50 mt-1 w-full bg-background border border-input rounded-md shadow-md max-h-[300px] overflow-auto"
-      style={{ minWidth: '250px', width: '100%', left: 0 }} // Ensure dropdown has correct positioning and width
+      className="absolute z-50 mt-1 w-full bg-background border border-input rounded-md shadow-lg max-h-[300px] overflow-auto"
+      style={{ minWidth: '300px', width: '100%', left: 0 }} 
     >
       <div className="py-1">
         {predictions.map((prediction) => (

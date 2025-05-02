@@ -12,21 +12,25 @@ interface LocationInputProps {
   className?: string;
   required?: boolean;
   disabled?: boolean;
+  label?: string;
+  icon?: React.ReactNode;
 }
 
 export function LocationInput({
   value,
   onChange,
   onPlaceSelect,
-  placeholder,
+  placeholder = "Enter location",
   className,
   required,
-  disabled
+  disabled,
+  label,
+  icon = <MapPin className="h-4 w-4" />
 }: LocationInputProps) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
-        <MapPin className="h-4 w-4" />
+        {icon}
       </div>
       
       <CustomPlacesAutocomplete
