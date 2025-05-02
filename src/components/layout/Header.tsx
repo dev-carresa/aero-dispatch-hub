@@ -1,5 +1,5 @@
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Bell, 
   User, 
@@ -23,12 +23,11 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 export function Header() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, signOut, isLoggingOut } = useAuth();
   
   // Helper function to get initials from a name
   const getInitials = () => {
-    if (!user || !user.name) return "US";
+    if (isLoggingOut || !user || !user.name) return "";
     
     const nameParts = user.name.split(" ");
     if (nameParts.length === 1) return nameParts[0].substring(0, 2).toUpperCase();
@@ -41,12 +40,10 @@ export function Header() {
     console.log("Logout button clicked");
     try {
       await signOut();
-      // Navigate to login page after successful logout
-      // This is now handled by the AuthContext
-      navigate('/');
+      // No need to navigate - AuthContext handles this
     } catch (error) {
       console.error("Failed to logout:", error);
-      toast.error("Failed to logout. Please try again.");
+      // Toast message will be shown by AuthContext
     }
   };
 
@@ -79,77 +76,81 @@ export function Header() {
 
           <ThemeToggle />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-[300px] overflow-y-auto">
-                <div className="p-3 hover:bg-muted/50 cursor-pointer">
-                  <p className="font-medium text-sm">New Booking Created</p>
-                  <p className="text-xs text-muted-foreground">JFK to Manhattan - REF: B12345</p>
-                  <p className="text-xs text-muted-foreground mt-1">2 minutes ago</p>
-                </div>
-                <div className="p-3 hover:bg-muted/50 cursor-pointer">
-                  <p className="font-medium text-sm">Driver Assigned</p>
-                  <p className="text-xs text-muted-foreground">John Smith assigned to B54321</p>
-                  <p className="text-xs text-muted-foreground mt-1">10 minutes ago</p>
-                </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/notifications">View all notifications</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-medium text-sm">
-                  {getInitials()}
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.name || "Demo User"}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email || "user@example.com"}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/profile" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/settings" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="flex items-center gap-2 text-red-500 cursor-pointer"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!isLoggingOut && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    <div className="p-3 hover:bg-muted/50 cursor-pointer">
+                      <p className="font-medium text-sm">New Booking Created</p>
+                      <p className="text-xs text-muted-foreground">JFK to Manhattan - REF: B12345</p>
+                      <p className="text-xs text-muted-foreground mt-1">2 minutes ago</p>
+                    </div>
+                    <div className="p-3 hover:bg-muted/50 cursor-pointer">
+                      <p className="font-medium text-sm">Driver Assigned</p>
+                      <p className="text-xs text-muted-foreground">John Smith assigned to B54321</p>
+                      <p className="text-xs text-muted-foreground mt-1">10 minutes ago</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/notifications">View all notifications</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-medium text-sm">
+                      {getInitials()}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user?.name || ""}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email || ""}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/profile" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/settings" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 text-red-500 cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
       </header>
     </div>

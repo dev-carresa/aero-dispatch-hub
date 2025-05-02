@@ -6,28 +6,31 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, isLoggingOut } = useAuth();
   const location = useLocation();
   
-  // Show a better loading indicator during authentication check
-  // Only show the loading state if we're actually checking authentication
+  // Don't show any authentication messages if we're in the process of logging out
+  const shouldShowAuthMessages = !isLoggingOut;
+  
+  // Show loading indicator during authentication check
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Spinner size="lg" className="mb-4" />
-        <p className="text-muted-foreground">Verifying authentication...</p>
+        <p className="text-muted-foreground">Vérification de l'authentification...</p>
       </div>
     );
   }
 
   // Only show the error toast when we're certain user is not authenticated
   // and only once (when the component mounts)
+  // and not during logout process
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      toast.error("You must be logged in to access this page");
+    if (!loading && !isAuthenticated && shouldShowAuthMessages) {
+      toast.error("Vous devez être connecté pour accéder à cette page");
       console.log("Not authenticated, redirecting to login page");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, shouldShowAuthMessages]);
 
   // If authenticated, render the child routes
   // If not authenticated, redirect to the login page

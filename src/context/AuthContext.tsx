@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
+  isLoggingOut: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -28,7 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   signIn: async () => {},
   signOut: async () => {},
   isAuthenticated: false,
-  session: null
+  session: null,
+  isLoggingOut: false
 });
 
 export const useAuth = () => {
@@ -40,6 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigate = useNavigate();
   
   // Convert Supabase User to AuthUser with role
   const mapUserData = useCallback(async (supabaseUser: User | null): Promise<AuthUser | null> => {
@@ -76,28 +79,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Auth timeout reached, setting loading to false');
       setLoading(false);
     }, 5000); // 5 second timeout to prevent infinite loading
-
-    console.log('Setting up auth state listener');
     
     // First, set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         
-        // Immediately update session state
-        setSession(currentSession);
-        setIsAuthenticated(!!currentSession);
-        
-        if (currentSession?.user) {
-          try {
-            const mappedUser = await mapUserData(currentSession.user);
-            setUser(mappedUser);
-            console.log("User mapped successfully:", mappedUser?.email);
-          } catch (err) {
-            console.error("Error mapping user in auth state change:", err);
-          }
-        } else {
+        // Update auth state based on event
+        if (event === 'SIGNED_OUT') {
           setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          setIsLoggingOut(false);
+        } else {
+          // Immediately update session state
+          setSession(currentSession);
+          setIsAuthenticated(!!currentSession);
+          
+          if (currentSession?.user) {
+            try {
+              const mappedUser = await mapUserData(currentSession.user);
+              setUser(mappedUser);
+              console.log("User mapped successfully:", mappedUser?.email);
+            } catch (err) {
+              console.error("Error mapping user in auth state change:", err);
+            }
+          }
         }
       }
     );
@@ -148,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Sign in attempt for:", email);
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -162,45 +170,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         console.log("Sign in successful");
         // Session will be updated via onAuthStateChange
-        // No need to manually update states here
-        toast.success("Successfully logged in!");
+        toast.success("Connexion réussie");
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     console.log("Signing out...");
     try {
-      // We're still showing loading state during sign out
+      // Set logging out state to prevent flashing of default values
+      setIsLoggingOut(true);
       setLoading(true);
       
+      // First clear local state for immediate UI response
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      // Then call Supabase API to sign out
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
-        toast.error(`Sign out failed: ${error.message}`);
+        toast.error(`Échec de la déconnexion: ${error.message}`);
         throw error;
       }
       
-      // Clear user state - we do this here for immediate UI response
-      // Even if we let onAuthStateChange handle this later, it's better UX
-      // to do it immediately
-      setUser(null);
+      // Clear all auth state
       setSession(null);
-      setIsAuthenticated(false);
       
-      toast.success("Successfully logged out");
+      toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       
-      // We don't force page reload anymore
-      // onAuthStateChange will handle the rest
+      // Navigate to login page
+      navigate('/', { replace: true });
     } catch (error) {
       console.error("Sign out error:", error);
-      toast.error("Sign out failed");
+      toast.error("Échec de la déconnexion");
     } finally {
       setLoading(false);
+      // We keep isLoggingOut true until next auth state change
     }
   };
 
@@ -210,12 +223,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated,
       loading,
       userExists: !!user,
-      sessionExists: !!session
+      sessionExists: !!session,
+      isLoggingOut
     });
-  }, [isAuthenticated, loading, user, session]);
+  }, [isAuthenticated, loading, user, session, isLoggingOut]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAuthenticated, session }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      signIn, 
+      signOut, 
+      isAuthenticated, 
+      session,
+      isLoggingOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );
