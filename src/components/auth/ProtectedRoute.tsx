@@ -51,14 +51,14 @@ export const ProtectedRoute: React.FC = () => {
     verifyToken();
   }, [isAuthenticated, loading, session]);
   
-  // Set a timeout for loading to show a different UI after 5 seconds
+  // Set a timeout for loading to show a different UI after 3 seconds (reduced from 5)
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
     if (loading) {
       timeoutId = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 5000);
+      }, 3000); // Reduced timeout for better UX
     } else {
       setLoadingTimeout(false);
     }
@@ -120,7 +120,11 @@ export const ProtectedRoute: React.FC = () => {
               <Button 
                 variant="default" 
                 className="w-full" 
-                onClick={() => window.location.href = '/'}
+                onClick={() => {
+                  // Clear any stale auth data before redirecting
+                  localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+                  window.location.href = '/';
+                }}
               >
                 Retour à la page d'accueil
               </Button>

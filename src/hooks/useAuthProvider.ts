@@ -67,12 +67,12 @@ export const useAuthProvider = () => {
     }
   }, []);
 
-  // Check for existing session on load with improved timeout handling
+  // Check for existing session and set up auth listener
   useEffect(() => {
     let isMounted = true;
-    const AUTH_TIMEOUT = 3000; // Reduced from 5000ms to 3000ms for faster feedback
+    const AUTH_TIMEOUT = 2000; // Reduced timeout for faster feedback
     
-    const authTimeout = setTimeout(() => {
+    let authTimeout = setTimeout(() => {
       console.log('Auth timeout reached, setting loading to false');
       if (isMounted) {
         setLoading(false);
@@ -84,12 +84,15 @@ export const useAuthProvider = () => {
       }
     }, AUTH_TIMEOUT);
     
-    // First, set up auth state listener
+    // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         
         if (!isMounted) return;
+        
+        // Clear timeout since we got a response
+        clearTimeout(authTimeout);
         
         // Update auth state based on event
         if (event === 'SIGNED_OUT') {
@@ -97,7 +100,6 @@ export const useAuthProvider = () => {
           setSession(null);
           setIsAuthenticated(false);
           setIsLoggingOut(false);
-          clearTimeout(authTimeout);
           setLoading(false);
           // Clear any stored credentials to prevent ghost sessions
           localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
@@ -115,7 +117,6 @@ export const useAuthProvider = () => {
                 if (isMounted) {
                   setUser(mappedUser);
                   console.log("User mapped successfully:", mappedUser?.email);
-                  clearTimeout(authTimeout);
                   setLoading(false);
                 }
               } catch (err) {
@@ -134,7 +135,6 @@ export const useAuthProvider = () => {
             setUser(null);
             setSession(null);
             setLoading(false);
-            clearTimeout(authTimeout);
           }
         }
       }
@@ -148,12 +148,14 @@ export const useAuthProvider = () => {
         
         if (!isMounted) return;
         
+        // Clear timeout since we got a response
+        clearTimeout(authTimeout);
+        
         if (error) {
           console.error("Error getting session:", error);
           setAuthError(`Session error: ${error.message}`);
           setIsAuthenticated(false);
           setLoading(false);
-          clearTimeout(authTimeout);
           return;
         }
         
@@ -179,7 +181,6 @@ export const useAuthProvider = () => {
           setSession(null);
           setUser(null);
           setLoading(false);
-          clearTimeout(authTimeout);
           return;
         }
         
@@ -192,17 +193,14 @@ export const useAuthProvider = () => {
             if (isMounted) {
               setUser(mappedUser);
               console.log("User mapped successfully on init:", mappedUser?.email);
+              setLoading(false);
             }
           } catch (err) {
             console.error("Error mapping user on init:", err);
             if (isMounted) {
               setAuthError('Error retrieving user profile');
               setIsAuthenticated(false);
-            }
-          } finally {
-            if (isMounted) {
               setLoading(false);
-              clearTimeout(authTimeout);
             }
           }
         } else {
@@ -211,7 +209,6 @@ export const useAuthProvider = () => {
           setUser(null);
           setSession(null);
           setLoading(false);
-          clearTimeout(authTimeout);
         }
       } catch (err) {
         console.error("Unexpected error in session check:", err);
@@ -219,7 +216,6 @@ export const useAuthProvider = () => {
           setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
           setIsAuthenticated(false);
           setLoading(false);
-          clearTimeout(authTimeout);
         }
       }
     };
@@ -244,6 +240,10 @@ export const useAuthProvider = () => {
       setLoading(true);
       setAuthError(null);
       
+      // First clear any existing sessions to avoid potential conflicts
+      await supabase.auth.signOut();
+      
+      // Then attempt to sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -253,6 +253,7 @@ export const useAuthProvider = () => {
         console.error("Sign in error:", error.message);
         toast.error(error.message);
         setAuthError(`Login failed: ${error.message}`);
+        setLoading(false);
         throw error;
       }
 
@@ -260,15 +261,24 @@ export const useAuthProvider = () => {
         console.log("Sign in successful");
         toast.success("Connexion réussie");
         
+        // Set auth state directly for immediate UI response
+        setSession(data.session);
+        setIsAuthenticated(true);
+        
+        try {
+          const mappedUser = await mapUserData(data.user);
+          setUser(mappedUser);
+        } catch (err) {
+          console.error("Error mapping user after sign in:", err);
+        }
+        
         // We'll use location.href for navigation to ensure a full page reload
-        // This helps when there might be stale state causing issues
         window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
