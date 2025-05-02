@@ -47,6 +47,10 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
       if (onChange) {
         onChange('');
       }
+      // Focus the input after clearing
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }, [onChange]);
 
     // Handle focus event with useCallback
@@ -59,7 +63,7 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
     // Handle place selection wrapper
     const onSelectPlace = useCallback((prediction: any) => {
       handlePlaceSelect(prediction);
-      // Prevent field focus loss after selection
+      // Ensure field maintains focus after selection
       if (inputRef.current) {
         inputRef.current.focus();
       }

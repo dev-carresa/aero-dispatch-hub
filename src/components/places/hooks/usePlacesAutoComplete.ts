@@ -21,11 +21,12 @@ const googleMapsState = {
   isScriptLoading: false,
   isScriptLoaded: false,
   hasInitialized: false,
-  errorOccurred: false
+  errorOccurred: false,
+  scriptLoadTimeout: null as number | null
 };
 
 export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAutocompleteProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
@@ -33,8 +34,22 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
 
   // Initialize Google Maps API
   const initializeGoogleMaps = useCallback(() => {
-    // Return early if already loaded
-    if (window.google?.maps?.places?.AutocompleteService || googleMapsState.isScriptLoading) {
+    // Check if Google Maps API is already available
+    if (window.google?.maps?.places?.AutocompleteService) {
+      googleMapsState.isScriptLoaded = true;
+      googleMapsState.hasInitialized = true;
+      setIsLoading(false);
+      
+      try {
+        autocompleteService.current = new window.google.maps.places.AutocompleteService();
+      } catch (error) {
+        console.error("Error initializing existing AutocompleteService:", error);
+      }
+      return;
+    }
+    
+    // Return early if already loading
+    if (googleMapsState.isScriptLoading) {
       return;
     }
 
@@ -53,6 +68,12 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         googleMapsState.hasInitialized = true;
         setIsLoading(false);
         
+        // Clear the script loading timeout
+        if (googleMapsState.scriptLoadTimeout) {
+          window.clearTimeout(googleMapsState.scriptLoadTimeout);
+          googleMapsState.scriptLoadTimeout = null;
+        }
+        
         // Try to initialize autocomplete service right after script loads
         if (window.google?.maps?.places) {
           try {
@@ -69,7 +90,23 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         googleMapsState.isScriptLoading = false;
         googleMapsState.errorOccurred = true;
         setIsLoading(false);
+        
+        // Clear the script loading timeout
+        if (googleMapsState.scriptLoadTimeout) {
+          window.clearTimeout(googleMapsState.scriptLoadTimeout);
+          googleMapsState.scriptLoadTimeout = null;
+        }
       };
+      
+      // Set a timeout to avoid infinite loading state
+      googleMapsState.scriptLoadTimeout = window.setTimeout(() => {
+        if (googleMapsState.isScriptLoading && !googleMapsState.isScriptLoaded) {
+          console.error("Google Maps script loading timeout");
+          googleMapsState.isScriptLoading = false;
+          googleMapsState.errorOccurred = true;
+          setIsLoading(false);
+        }
+      }, 10000); // 10 seconds timeout
       
       document.head.appendChild(script);
     };
@@ -83,7 +120,6 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
     if (window.google?.maps?.places) {
       googleMapsState.isScriptLoaded = true;
       googleMapsState.hasInitialized = true;
-      setIsLoading(false);
       
       try {
         autocompleteService.current = new window.google.maps.places.AutocompleteService();
@@ -94,16 +130,14 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
       // Need to load the script
       initializeGoogleMaps();
     }
-
-    // Add a timeout to stop showing loading state after 5 seconds
-    // to prevent infinite loading if Google Maps fails silently
-    const loadingTimeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
     
     return () => {
-      if (loadingTimeout) clearTimeout(loadingTimeout);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Clean up the script loading timeout
+      if (googleMapsState.scriptLoadTimeout) {
+        window.clearTimeout(googleMapsState.scriptLoadTimeout);
+        googleMapsState.scriptLoadTimeout = null;
+      }
     };
   }, [initializeGoogleMaps]);
 
@@ -114,9 +148,31 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
     }
 
     // Only search if we have an input and the service is available
-    if (inputValue.length > 2 && autocompleteService.current) {
+    if (inputValue.length > 2) {
+      setIsLoading(true);
+      
       // Debounce the API calls
       timeoutRef.current = window.setTimeout(() => {
+        // Check if the service is available
+        if (!autocompleteService.current) {
+          if (window.google?.maps?.places) {
+            try {
+              autocompleteService.current = new window.google.maps.places.AutocompleteService();
+            } catch (error) {
+              console.error("Error initializing AutocompleteService on demand:", error);
+              setIsLoading(false);
+              return;
+            }
+          } else {
+            // Service not available, try to initialize Google Maps
+            if (!googleMapsState.isScriptLoading && !googleMapsState.isScriptLoaded) {
+              initializeGoogleMaps();
+            }
+            setIsLoading(false);
+            return;
+          }
+        }
+        
         try {
           autocompleteService.current?.getPlacePredictions(
             { 
@@ -145,6 +201,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
     } else {
       setPredictions([]);
       setShowDropdown(false);
+      setIsLoading(false);
     }
     
     return () => {
@@ -152,7 +209,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [inputValue]);
+  }, [inputValue, initializeGoogleMaps]);
 
   // Handle place selection
   const handlePlaceSelect = (prediction: PlacePrediction) => {

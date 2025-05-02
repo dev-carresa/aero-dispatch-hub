@@ -42,20 +42,20 @@ export function SearchInputWithClear({
         required={required}
         autoComplete="off"
       />
-      {isLoading ? (
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10">
+      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10">
+        {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
-      ) : value ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
-          tabIndex={-1}
-        >
-          <X className="h-4 w-4" />
-        </button>
-      ) : null}
+        ) : value ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
