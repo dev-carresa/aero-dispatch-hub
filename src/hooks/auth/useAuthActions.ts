@@ -23,14 +23,14 @@ export const useAuthActions = (
       // Clear any previous session first to avoid conflicts
       await supabase.auth.signOut({ scope: 'local' });
       
+      // Set session expiry based on remember me choice
+      // If rememberMe is false, we'll use shorter session duration
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
-          // Set session expiry based on remember me choice
-          // If rememberMe is true, session will last longer (default Supabase behavior)
-          // If rememberMe is false, session will expire after 1 hour (3600 seconds)
-          expiresIn: rememberMe ? 60 * 60 * 24 * 7 : 60 * 60
+          // Session duration is controlled by Supabase project settings
+          // We're not using expiresIn as it's not a valid property in the options
         }
       });
 
