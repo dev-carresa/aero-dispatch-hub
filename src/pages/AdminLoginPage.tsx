@@ -20,8 +20,8 @@ export default function AdminLoginPage() {
     if (isAuthenticated && user) {
       // Check if the authenticated user is an admin
       if (user.role === 'Admin') {
-        console.log("Admin authentifié, redirection vers le tableau de bord");
-        navigate('/dashboard');
+        console.log("Admin authentifié, redirection vers le tableau de bord admin");
+        navigate('/admin/dashboard');
       } else {
         // If not admin, show error and redirect to regular login
         toast.error("Vous n'avez pas les droits d'accès administrateur");

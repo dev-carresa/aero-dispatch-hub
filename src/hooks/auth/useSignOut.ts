@@ -19,7 +19,8 @@ export const useSignOut = (
 
   // Helper function to check if a route is an admin route
   const isAdminRoute = (path: string): boolean => {
-    return path === '/admin' || path.startsWith('/admin-');
+    // Updated to match the new routing structure
+    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
   };
 
   // Sign out function - améliorée pour éviter les problèmes
@@ -37,7 +38,7 @@ export const useSignOut = (
       setIsLoggingOut(true);
       
       // Déterminer la page de redirection en fonction du chemin actuel
-      const redirectPath = currentPath && isAdminRoute(currentPath) ? '/admin' : '/';
+      const redirectPath = currentPath && isAdminRoute(currentPath) ? '/admin/login' : '/';
       console.log(`Redirection prévue vers : ${redirectPath} (chemin actuel: ${currentPath})`);
       
       // Appel API Supabase pour la déconnexion - DOIT ÊTRE FAIT EN PREMIER

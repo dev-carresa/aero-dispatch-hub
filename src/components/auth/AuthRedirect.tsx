@@ -13,8 +13,8 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
 
   // Helper function to check if a route is an admin route
   const isAdminRoute = (path: string): boolean => {
-    // Consider both /admin and /admin-* paths as admin routes
-    return path === '/admin' || path.startsWith('/admin-');
+    // Updated to match the new routing structure
+    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
   };
 
   // Show toast when user is not authenticated
@@ -27,7 +27,7 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
     
     // Reset the toast flag when location or auth state changes
     return () => {
-      if (location.pathname !== '/dashboard') {
+      if (location.pathname !== '/dashboard' && location.pathname !== '/admin/dashboard') {
         toastShown.current = false;
       }
     };
@@ -44,6 +44,6 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
   return (isAuthenticated && user) ? (
     <>{children}</> 
   ) : (
-    <Navigate to={currentRouteIsAdmin ? "/admin" : "/"} state={{ from: location }} replace />
+    <Navigate to={currentRouteIsAdmin ? "/admin/login" : "/"} state={{ from: location }} replace />
   );
 };

@@ -15,8 +15,8 @@ export const ProtectedRoute: React.FC = () => {
   
   // Helper function to check if a route is an admin route
   const isAdminRoute = (path: string): boolean => {
-    // Consider both /admin and /admin-* paths as admin routes
-    return path === '/admin' || path.startsWith('/admin-');
+    // Updated to match the new routing structure
+    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
   };
   
   // Fast check for token existence and validity
@@ -36,7 +36,7 @@ export const ProtectedRoute: React.FC = () => {
       
       // Immediate redirection if no token or invalid token
       const redirectTimer = setTimeout(() => {
-        navigate(currentPathIsAdmin ? '/admin' : '/', { state: { from: location }, replace: true });
+        navigate(currentPathIsAdmin ? '/admin/login' : '/', { state: { from: location }, replace: true });
       }, 100); // Slight delay to allow for React state updates
       
       return () => clearTimeout(redirectTimer);
@@ -53,7 +53,7 @@ export const ProtectedRoute: React.FC = () => {
     // Determine which login page to redirect to based on the route
     const currentPathIsAdmin = isAdminRoute(location.pathname);
     console.log(`ProtectedRoute: Not authenticated, redirecting to ${currentPathIsAdmin ? 'admin' : 'standard'} login`);
-    return <Navigate to={currentPathIsAdmin ? "/admin" : "/"} state={{ from: location }} replace />;
+    return <Navigate to={currentPathIsAdmin ? "/admin/login" : "/"} state={{ from: location }} replace />;
   }
 
   // If authenticated, render the protected content

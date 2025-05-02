@@ -111,7 +111,7 @@ export const useSignIn = (
             if (navigate) {
               setTimeout(() => {
                 if (userData.role === 'Admin') {
-                  navigate('/dashboard');
+                  navigate('/admin/dashboard');
                 } else {
                   navigate('/dashboard');
                 }

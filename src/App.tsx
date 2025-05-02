@@ -81,7 +81,8 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LoginPage />} />
-              <Route path="/admin" element={<AdminLoginPage />} />
+              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               
@@ -89,6 +90,7 @@ const App = () => (
               <Route element={<ProtectedRoute />}>
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+                <Route path="/admin/dashboard" element={<Layout><Dashboard /></Layout>} />
                 
                 {/* Bookings */}
                 <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
