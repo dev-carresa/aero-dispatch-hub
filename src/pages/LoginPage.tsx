@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Eye, EyeOff, Mail, Lock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,8 +21,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [setupLoading, setSetupLoading] = useState(false);
 
+  // Show spinner while checking authentication status
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Spinner size="md" className="mb-4" />
+        <p className="text-muted-foreground">Checking authentication status...</p>
+      </div>
+    );
+  }
+  
   // Redirect to dashboard if already authenticated
   if (isAuthenticated) {
+    console.log("User is authenticated, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -31,7 +43,9 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
+      console.log("Attempting login with:", email);
       await signIn(email, password);
+      console.log("Login successful, navigating to dashboard");
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
@@ -52,13 +66,16 @@ export default function LoginPage() {
     setError("");
     
     try {
+      console.log("Setting up demo user...");
       // Call our edge function to set up the demo user
       const { data, error } = await supabase.functions.invoke('setup-demo-user');
       
       if (error) {
+        console.error("Demo setup error:", error);
         throw error;
       }
       
+      console.log("Demo user setup response:", data);
       toast.success("Demo user set up successfully! You can now log in with the demo credentials.");
       setEmail("admin@example.com");
       setPassword("password");
@@ -137,8 +154,17 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
-                {isLoading || authLoading ? "Signing in..." : "Sign in"}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || authLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <Spinner size="sm" className="mr-2" />
+                    Signing in...
+                  </span>
+                ) : "Sign in"}
               </Button>
               
               <div className="text-center text-sm">
