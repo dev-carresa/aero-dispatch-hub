@@ -1,5 +1,5 @@
 
-import { MapPin, Airplane, Hotel, TrainFront } from 'lucide-react';
+import { MapPin, Airplay, Hotel, TrainFront } from 'lucide-react';
 import { PlaceType, detectPlaceType } from '../utils/placeTypeDetector';
 
 interface PlacePrediction {
@@ -42,7 +42,7 @@ export function PlacePredictionItem({ prediction, onSelect }: PlacePredictionIte
 function renderIcon(type: PlaceType) {
   switch (type) {
     case 'airport':
-      return <Airplane className="h-4 w-4 mt-1 flex-shrink-0 text-blue-500" />;
+      return <Airplay className="h-4 w-4 mt-1 flex-shrink-0 text-blue-500" />;
     case 'hotel':
       return <Hotel className="h-4 w-4 mt-1 flex-shrink-0 text-amber-500" />;
     case 'train':
