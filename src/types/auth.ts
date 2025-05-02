@@ -17,4 +17,5 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   session: Session | null;
   isLoggingOut: boolean;
+  authError: string | null;
 }

@@ -11,7 +11,8 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   isAuthenticated: false,
   session: null,
-  isLoggingOut: false
+  isLoggingOut: false,
+  authError: null
 });
 
 // Export the useAuth hook for components to use

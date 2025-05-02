@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ export const useAuthProvider = () => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Convert Supabase User to AuthUser with role
   const mapUserData = useCallback(async (supabaseUser: User | null): Promise<AuthUser | null> => {
@@ -41,25 +43,34 @@ export const useAuthProvider = () => {
     }
   }, []);
 
-  // Check for existing session on load with timeout
+  // Check for existing session on load with improved timeout handling
   useEffect(() => {
+    let isMounted = true;
+    const AUTH_TIMEOUT = 3000; // Reduced from 5000ms to 3000ms for faster feedback
+    
     const authTimeout = setTimeout(() => {
       console.log('Auth timeout reached, setting loading to false');
-      setLoading(false);
-    }, 5000); // 5 second timeout to prevent infinite loading
+      if (isMounted) {
+        setLoading(false);
+        setAuthError('Authentication verification timeout. Please try refreshing the page.');
+      }
+    }, AUTH_TIMEOUT);
     
     // First, set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         
+        if (!isMounted) return;
+        
         // Update auth state based on event
-        if (event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
           setUser(null);
           setSession(null);
           setIsAuthenticated(false);
           setIsLoggingOut(false);
-        } else {
+          clearTimeout(authTimeout);
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
           // Immediately update session state
           setSession(currentSession);
           setIsAuthenticated(!!currentSession);
@@ -67,10 +78,18 @@ export const useAuthProvider = () => {
           if (currentSession?.user) {
             try {
               const mappedUser = await mapUserData(currentSession.user);
-              setUser(mappedUser);
-              console.log("User mapped successfully:", mappedUser?.email);
+              if (isMounted) {
+                setUser(mappedUser);
+                console.log("User mapped successfully:", mappedUser?.email);
+                clearTimeout(authTimeout);
+                setLoading(false);
+              }
             } catch (err) {
               console.error("Error mapping user in auth state change:", err);
+              if (isMounted) {
+                setAuthError('Error retrieving user profile');
+                setLoading(false);
+              }
             }
           }
         }
@@ -83,38 +102,67 @@ export const useAuthProvider = () => {
         console.log("Checking for existing session");
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
+        if (!isMounted) return;
+        
         if (error) {
           console.error("Error getting session:", error);
+          setAuthError(`Session error: ${error.message}`);
           setLoading(false);
           clearTimeout(authTimeout);
           return;
         }
         
         console.log("Session check result:", currentSession ? "session exists" : "no session");
+        
+        if (!currentSession) {
+          // No session found, clear loading state
+          setIsAuthenticated(false);
+          setLoading(false);
+          clearTimeout(authTimeout);
+          return;
+        }
+        
         setSession(currentSession);
         setIsAuthenticated(!!currentSession);
         
         if (currentSession?.user) {
           try {
             const mappedUser = await mapUserData(currentSession.user);
-            setUser(mappedUser);
-            console.log("User mapped successfully on init:", mappedUser?.email);
+            if (isMounted) {
+              setUser(mappedUser);
+              console.log("User mapped successfully on init:", mappedUser?.email);
+            }
           } catch (err) {
             console.error("Error mapping user on init:", err);
+            if (isMounted) {
+              setAuthError('Error retrieving user profile');
+            }
+          } finally {
+            if (isMounted) {
+              setLoading(false);
+              clearTimeout(authTimeout);
+            }
           }
         }
       } catch (err) {
         console.error("Unexpected error in session check:", err);
-      } finally {
-        console.log("Finishing auth initialization, setting loading to false");
-        setLoading(false);
-        clearTimeout(authTimeout);
+        if (isMounted) {
+          setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
+          setLoading(false);
+          clearTimeout(authTimeout);
+        }
       }
     };
     
-    checkExistingSession();
+    // Start session check - use setTimeout to ensure auth state listener is set up first
+    setTimeout(() => {
+      if (isMounted) {
+        checkExistingSession();
+      }
+    }, 0);
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       clearTimeout(authTimeout);
     };
@@ -124,6 +172,8 @@ export const useAuthProvider = () => {
     try {
       console.log("Sign in attempt for:", email);
       setLoading(true);
+      setAuthError(null);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -132,13 +182,16 @@ export const useAuthProvider = () => {
       if (error) {
         console.error("Sign in error:", error.message);
         toast.error(error.message);
+        setAuthError(`Login failed: ${error.message}`);
         throw error;
       }
 
       if (data.user) {
         console.log("Sign in successful");
-        // Session will be updated via onAuthStateChange
         toast.success("Connexion réussie");
+        
+        // We'll use location.href for navigation to ensure a full page reload
+        // This helps when there might be stale state causing issues
         window.location.href = '/dashboard';
       }
     } catch (error) {
@@ -161,7 +214,10 @@ export const useAuthProvider = () => {
       setIsAuthenticated(false);
       
       // Then call Supabase API to sign out
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'local' // Only sign out from this device/tab
+      });
+      
       if (error) {
         console.error("Sign out error:", error);
         toast.error(`Échec de la déconnexion: ${error.message}`);
@@ -174,7 +230,7 @@ export const useAuthProvider = () => {
       toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       
-      // Navigate to login page
+      // Navigate to login page with full page refresh to clear any potentially problematic state
       window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
@@ -192,9 +248,10 @@ export const useAuthProvider = () => {
       loading,
       userExists: !!user,
       sessionExists: !!session,
-      isLoggingOut
+      isLoggingOut,
+      authError
     });
-  }, [isAuthenticated, loading, user, session, isLoggingOut]);
+  }, [isAuthenticated, loading, user, session, isLoggingOut, authError]);
 
   return {
     user,
@@ -203,6 +260,7 @@ export const useAuthProvider = () => {
     signOut,
     isAuthenticated,
     session,
-    isLoggingOut
+    isLoggingOut,
+    authError
   };
 };
