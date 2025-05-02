@@ -50,11 +50,8 @@ export const useSignOut = (
         }
       }
       
-      // Nettoyage du cache et du stockage local avant la déconnexion
-      clearUserProfileCache();
-      clearUserSession();
-      
-      // Appel API Supabase pour la déconnexion
+      // CHANGEMENT CRITIQUE: D'abord appeler l'API Supabase pour la déconnexion
+      // *avant* de nettoyer les données locales
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -64,6 +61,10 @@ export const useSignOut = (
         toast.error(`Échec de la déconnexion: ${error.message}`);
         throw error;
       }
+      
+      // Ensuite seulement, nettoyage du cache et du stockage local
+      clearUserProfileCache();
+      clearUserSession();
       
       // Réinitialiser les états
       setUser(null);
