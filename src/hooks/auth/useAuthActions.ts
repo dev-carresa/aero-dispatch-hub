@@ -12,33 +12,32 @@ export const useAuthActions = (
   setAuthError
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isAuthActionInProgress, setIsAuthActionInProgress] = useState(false);
 
   // Sign in function
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
+    // Prevent multiple simultaneous auth actions
+    if (isAuthActionInProgress) return;
+    
     try {
       console.log("Attempting sign in for:", email, "with remember me:", rememberMe);
+      setIsAuthActionInProgress(true);
       setLoading(true);
       setAuthError(null);
       
-      // Clear any previous session first to avoid conflicts
-      await supabase.auth.signOut({ scope: 'local' });
+      // Removed redundant signOut call that was causing double verification
       
-      // Set session expiry based on remember me choice
-      // If rememberMe is false, we'll use shorter session duration
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        options: {
-          // Session duration is controlled by Supabase project settings
-          // We're not using expiresIn as it's not a valid property in the options
-        }
+        password
+        // Options removed as they weren't correctly implemented
+        // Session duration is controlled by Supabase project settings
       });
 
       if (error) {
         console.error("Sign in error:", error.message);
         toast.error(error.message);
         setAuthError(`Login failed: ${error.message}`);
-        setLoading(false);
         throw error;
       }
 
@@ -46,43 +45,34 @@ export const useAuthActions = (
         console.log("Sign in successful");
         toast.success("Connexion réussie");
         
-        // Set session and auth state
-        setSession(data.session);
-        setIsAuthenticated(true);
-        
-        // Map user data
-        try {
-          const mappedUser = await mapUserData(data.user);
-          setUser(mappedUser);
-        } catch (err) {
-          console.error("Error mapping user after sign in:", err);
-        }
+        // We don't set state here as the auth listener will handle this
+        // Let the auth state listener handle updating the state to avoid duplication
         
         // Navigate to dashboard
         window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error("Sign in error:", error);
+    } finally {
       setLoading(false);
-      throw error;
+      setIsAuthActionInProgress(false);
     }
   };
 
   // Sign out function
   const signOut = async () => {
+    // Prevent multiple simultaneous auth actions
+    if (isAuthActionInProgress) return;
+    
     console.log("Signing out...");
     try {
+      setIsAuthActionInProgress(true);
       setIsLoggingOut(true);
       
-      // Clear local state immediately for responsive UI
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
+      // Don't manually clear state here, let the auth listener handle it
+      // to avoid double updates
       
-      // Explicitly clear local storage
-      localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
-      
-      // Call Supabase API to sign out
+      // Call Supabase API to sign out - this will trigger the auth listener
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -103,6 +93,7 @@ export const useAuthActions = (
       toast.error("Échec de la déconnexion");
     } finally {
       setIsLoggingOut(false);
+      setIsAuthActionInProgress(false);
       setLoading(false);
     }
   };
