@@ -216,6 +216,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
   const handlePlaceSelect = (prediction: PlacePrediction) => {
     // Call the onPlaceSelect callback with the address and placeId
     onPlaceSelect(prediction.description, prediction.place_id);
+    // Explicitly clear predictions and hide dropdown
     setPredictions([]);
     setShowDropdown(false);
   };

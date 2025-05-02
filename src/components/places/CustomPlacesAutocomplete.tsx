@@ -42,6 +42,8 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
         if (onChange) {
           onChange(address);
         }
+        // Immediately hide dropdown after selection
+        setShowDropdown(false);
       }
     });
 
@@ -77,11 +79,13 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
     // Handle place selection wrapper
     const onSelectPlace = useCallback((prediction: any) => {
       handlePlaceSelect(prediction);
+      // Ensure dropdown is closed
+      setShowDropdown(false);
       // Ensure field maintains focus after selection
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, [handlePlaceSelect]);
+    }, [handlePlaceSelect, setShowDropdown]);
 
     return (
       <div className="relative w-full">

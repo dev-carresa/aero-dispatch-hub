@@ -31,11 +31,25 @@ export function PredictionsList({ predictions, onSelect, inputRef, setShowDropdo
       }
     };
 
+    // Handle selection explicitly
+    const handlePlaceSelection = () => {
+      // Close dropdown after a small delay to ensure the click event is processed
+      setTimeout(() => {
+        setShowDropdown(false);
+      }, 100);
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [inputRef, setShowDropdown]);
+
+  const handleSelect = (prediction: PlacePrediction) => {
+    onSelect(prediction);
+    // Explicitly close dropdown here too
+    setShowDropdown(false);
+  };
 
   if (predictions.length === 0) {
     return null;
@@ -52,7 +66,7 @@ export function PredictionsList({ predictions, onSelect, inputRef, setShowDropdo
           <PlacePredictionItem 
             key={prediction.place_id} 
             prediction={prediction} 
-            onSelect={onSelect} 
+            onSelect={handleSelect} 
           />
         ))}
       </div>
