@@ -20,19 +20,11 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     setAuthError
   } = useUser();
 
-  // Set up auth listeners
-  useAuthListeners(
-    setUser,
-    setSession,
-    setIsAuthenticated,
-    setLoading,
-    setAuthError
-  );
-
   // Get auth actions
   const {
     signIn,
     signOut,
+    refreshToken,
     isLoggingOut
   } = useAuthActions(
     setUser,
@@ -41,6 +33,16 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     setLoading,
     setAuthError,
     navigate
+  );
+
+  // Set up auth listeners with refresh token function
+  useAuthListeners(
+    setUser,
+    setSession,
+    setIsAuthenticated,
+    setLoading,
+    setAuthError,
+    refreshToken
   );
 
   // Set up debug logging

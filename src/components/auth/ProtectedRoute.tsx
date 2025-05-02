@@ -4,17 +4,18 @@ import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AuthenticationCheck } from './AuthenticationCheck';
 import { AuthRedirect } from './AuthRedirect';
-import { hasStoredSession } from '@/hooks/auth/useUser';
+import { hasStoredSession, isSessionValid } from '@/services/sessionStorageService';
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Fast check for token existence
+  // Fast check for token existence and validity
   useEffect(() => {
-    // Quick check if token doesn't exist at all - redirect immediately
-    if (!hasStoredSession()) {
+    // Fast path: check if we n'avons pas de token ou si le token est invalide
+    if (!hasStoredSession() || !isSessionValid()) {
+      // Redirection immédiate si pas de token ou token invalide
       const redirectTimer = setTimeout(() => {
         navigate('/', { state: { from: location }, replace: true });
       }, 5); // 5ms timeout

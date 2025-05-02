@@ -4,6 +4,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { mapUserData, clearUserProfileCache } from './useUser';
 import { NavigateFunction } from 'react-router-dom';
+import { 
+  storeUserSession, 
+  clearUserSession, 
+  updateSessionExpiry 
+} from '@/services/sessionStorageService';
 
 export const useAuthActions = (
   setUser,
@@ -16,7 +21,34 @@ export const useAuthActions = (
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAuthActionInProgress, setIsAuthActionInProgress] = useState(false);
 
-  // Sign in function
+  // Rafraîchir silencieusement le token
+  const refreshToken = async () => {
+    try {
+      console.log("Rafraîchissement silencieux du token...");
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error("Erreur lors du rafraîchissement du token:", error);
+        return false;
+      }
+      
+      if (data?.session) {
+        // Mettre à jour les dates d'expiration dans le stockage local
+        const expiresIn = data.session.expires_in || 3600;
+        updateSessionExpiry(expiresIn);
+        
+        console.log("Token rafraîchi avec succès");
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Erreur inattendue lors du rafraîchissement du token:", error);
+      return false;
+    }
+  };
+
+  // Sign in function - modifié pour stocker plus d'informations
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     // Prevent multiple simultaneous auth actions
     if (isAuthActionInProgress) return;
@@ -39,15 +71,63 @@ export const useAuthActions = (
         throw error;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         console.log("Sign in successful");
-        toast.success("Connexion réussie");
         
-        // We don't set state here as the auth listener will handle this
-        
-        // Use React Router navigation instead of full page reload
-        if (navigate) {
-          navigate('/dashboard');
+        // Stockage des données utilisateur enrichies
+        try {
+          const userData = await mapUserData(data.user);
+          
+          if (userData) {
+            // Stocker les données utilisateur et la date d'expiration dans localStorage
+            storeUserSession(
+              userData.id,
+              userData.email,
+              userData.name,
+              userData.role,
+              data.session.expires_in || 3600
+            );
+            
+            // Définir les états
+            setUser(userData);
+            setSession(data.session);
+            setIsAuthenticated(true);
+            
+            toast.success("Connexion réussie");
+            
+            // Utiliser React Router pour la navigation
+            if (navigate) {
+              navigate('/dashboard');
+            }
+          }
+        } catch (profileError) {
+          console.error("Erreur lors du chargement du profil:", profileError);
+          
+          // En cas d'erreur de profil, utiliser les données de base
+          const basicUserInfo = {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: data.user.email?.split('@')[0] || 'User',
+            role: 'Customer'
+          };
+          
+          storeUserSession(
+            basicUserInfo.id,
+            basicUserInfo.email,
+            basicUserInfo.name,
+            basicUserInfo.role,
+            data.session.expires_in || 3600
+          );
+          
+          setUser(basicUserInfo);
+          setSession(data.session);
+          setIsAuthenticated(true);
+          
+          toast.success("Connexion réussie");
+          
+          if (navigate) {
+            navigate('/dashboard');
+          }
         }
       }
     } catch (error) {
@@ -58,7 +138,7 @@ export const useAuthActions = (
     }
   };
 
-  // Sign out function
+  // Sign out function - amélioré pour nettoyer toutes les données
   const signOut = async () => {
     // Prevent multiple simultaneous auth actions
     if (isAuthActionInProgress) return;
@@ -68,10 +148,11 @@ export const useAuthActions = (
       setIsAuthActionInProgress(true);
       setIsLoggingOut(true);
       
-      // Clear the user profile cache before signing out
+      // Nettoyage du cache et du stockage local avant la déconnexion
       clearUserProfileCache();
+      clearUserSession();
       
-      // Call Supabase API to sign out - this will trigger the auth listener
+      // Appel API Supabase pour la déconnexion
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -82,10 +163,15 @@ export const useAuthActions = (
         throw error;
       }
       
+      // Réinitialiser les états
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      
       toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       
-      // Use React Router navigation instead of full page reload
+      // Utiliser React Router pour la navigation
       if (navigate) {
         navigate('/');
       }
@@ -102,6 +188,7 @@ export const useAuthActions = (
   return {
     signIn,
     signOut,
+    refreshToken,
     isLoggingOut
   };
 };

@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { hasStoredSession } from '@/hooks/auth/useUser';
+import { hasStoredSession, isSessionValid, getStoredUserData } from '@/services/sessionStorageService';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({ 
@@ -17,19 +17,26 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
   const [showQuickLoading, setShowQuickLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Initially check if we have a token in local storage
+  // Vérification initiale optimisée
   useEffect(() => {
     const hasToken = hasStoredSession();
-    // If we have a token, show quick loading first to prevent flicker
-    setShowQuickLoading(hasToken);
+    const tokenIsValid = isSessionValid();
+    const userData = getStoredUserData();
     
-    // If no token is found, redirect to home page after 5ms
-    if (!hasToken) {
-      const redirectTimer = setTimeout(() => {
-        navigate('/');
-      }, 5); // Extremely fast 5ms check
+    // Fast path: si nous avons un token valide et des données utilisateur, afficher le contenu
+    if (hasToken && tokenIsValid && userData) {
+      setShowQuickLoading(true);
+    } else {
+      setShowQuickLoading(false);
       
-      return () => clearTimeout(redirectTimer);
+      // Si pas de token ou token invalide, rediriger vers la page d'accueil
+      if (!hasToken || !tokenIsValid) {
+        const redirectTimer = setTimeout(() => {
+          navigate('/');
+        }, 5); // 5ms timeout
+        
+        return () => clearTimeout(redirectTimer);
+      }
     }
   }, [navigate]);
   
@@ -58,10 +65,10 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [loading, isLoggingOut, authError]);
 
-  // If we think we're authenticated based on localStorage token,
-  // show a fast-path render to avoid flicker
-  if (showQuickLoading && hasStoredSession()) {
-    // After 100ms, start showing the loading spinner if we're still loading
+  // Si nous pensons être authentifiés en fonction du token localStorage,
+  // afficher un rendu rapide pour éviter les scintillements
+  if (showQuickLoading && hasStoredSession() && isSessionValid()) {
+    // Après 100 ms, commencer à afficher le spinner de chargement si nous chargeons toujours
     setTimeout(() => setShowQuickLoading(false), 100);
     return <>{children}</>; // Fast path - render children immediately
   }
@@ -106,6 +113,7 @@ const LoadingTimeoutAlert: React.FC = () => {
           className="w-full" 
           onClick={() => {
             localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+            localStorage.removeItem('user-session-data');
             window.location.href = '/';
           }}
         >

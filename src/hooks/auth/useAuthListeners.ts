@@ -1,48 +1,78 @@
 
 import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { mapUserData, hasStoredSession, clearUserProfileCache } from './useUser';
+import { mapUserData, clearUserProfileCache } from './useUser';
+import { 
+  hasStoredSession, 
+  isSessionValid, 
+  getStoredUserData,
+  shouldRefreshToken 
+} from '@/services/sessionStorageService';
 
 export const useAuthListeners = (
   setUser,
   setSession,
   setIsAuthenticated,
   setLoading,
-  setAuthError
+  setAuthError,
+  refreshToken
 ) => {
   // Use refs to track initialization state and prevent duplicate processing
   const isInitializing = useRef(true);
   const pendingAuthCheck = useRef<NodeJS.Timeout | null>(null);
   
-  // Set initial authentication state based on presence of token
+  // Set initial authentication state based on stored session
   useEffect(() => {
-    // Fast path: assume authenticated if token exists in localStorage
+    // Fast path: check if we have a valid session in localStorage
     const hasToken = hasStoredSession();
+    const isValid = isSessionValid();
     
-    if (hasToken) {
-      // If token exists, assume authenticated until proven otherwise
-      setIsAuthenticated(true);
-      console.log("Found auth token in localStorage, assuming authenticated");
-    } else {
-      // If no token, immediately set as not authenticated to trigger quick redirect
+    if (hasToken && isValid) {
+      // Charger les données utilisateur depuis le stockage local
+      const userData = getStoredUserData();
+      
+      if (userData) {
+        console.log("Données utilisateur valides trouvées en localStorage");
+        setUser({
+          id: userData.id,
+          email: userData.email || '',
+          name: userData.name || 'User',
+          role: userData.role || 'Customer'
+        });
+        setIsAuthenticated(true);
+      } else {
+        console.log("Token présent mais données utilisateur incomplètes");
+      }
+    } 
+    else if (!hasToken || !isValid) {
+      // Si pas de token ou token invalide, définir comme non authentifié
+      console.log("Pas de token ou token invalide en localStorage");
       setIsAuthenticated(false);
       setLoading(false);
-      console.log("No auth token in localStorage, fast-failing auth check");
       
-      // No need to continue with session check if token doesn't exist
+      // Pas besoin de continuer avec la vérification de session
       return;
     }
-  }, [setIsAuthenticated, setLoading]);
+    
+    // Vérifier si nous devons rafraîchir le token
+    if (hasToken && shouldRefreshToken()) {
+      console.log("Le token doit être rafraîchi");
+      // Utiliser un timeout pour éviter les problèmes de récursivité
+      setTimeout(() => {
+        refreshToken();
+      }, 0);
+    }
+  }, [setUser, setIsAuthenticated, setLoading, refreshToken]);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
-    console.log("Setting up auth listeners");
+    console.log("Mise en place des écouteurs d'authentification");
     let mounted = true;
     
     // First set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log("Auth state changed:", event);
+        console.log("Changement d'état d'authentification:", event);
         
         // Clear any pending auth checks
         if (pendingAuthCheck.current) {
@@ -59,27 +89,28 @@ export const useAuthListeners = (
           setIsAuthenticated(false);
           setLoading(false);
           clearUserProfileCache();
-          console.log("Signed out successfully");
+          console.log("Déconnecté avec succès");
           return;
         }
         
-        // For all other events, if we have a session, update auth state
+        // Pour tous les autres événements, si nous avons une session, mettre à jour l'état d'authentification
         if (currentSession) {
-          // First, update session and authentication state immediately
+          // Mettre à jour la session et l'état d'authentification immédiatement
           setSession(currentSession);
           setIsAuthenticated(true);
           
           try {
-            // Then get user data asynchronously
+            // Obtenir les données utilisateur de manière asynchrone
             const userData = await mapUserData(currentSession.user);
             if (mounted) {
               setUser(userData);
-              console.log("User authenticated:", userData?.email);
+              console.log("Utilisateur authentifié:", userData?.email);
+              setLoading(false);
             }
           } catch (err) {
-            console.error("Non-fatal error fetching user data:", err);
-            // Don't reset authentication state on profile fetch failure
-            // Just use basic user data from the session
+            console.error("Erreur non fatale lors de la récupération des données utilisateur:", err);
+            // Ne pas réinitialiser l'état d'authentification en cas d'échec de la récupération du profil
+            // Utiliser simplement les données utilisateur de base de la session
             if (mounted && currentSession?.user) {
               const basicUserData = {
                 id: currentSession.user.id,
@@ -88,14 +119,11 @@ export const useAuthListeners = (
                 role: 'Customer'
               };
               setUser(basicUserData);
-            }
-          } finally {
-            if (mounted) {
               setLoading(false);
             }
           }
         } else if (event !== 'TOKEN_REFRESHED') {
-          // No session and not just refreshing token
+          // Pas de session et pas simplement de rafraîchissement de token
           if (mounted) {
             setIsAuthenticated(false);
             setLoading(false);
@@ -104,20 +132,18 @@ export const useAuthListeners = (
       }
     );
 
-    // Check for existing session with a short timeout
-    // Skip this step if we know there's no token in localStorage
-    if (hasStoredSession()) {
+    // Vérification de session minimale - uniquement si nécessaire
+    if (hasStoredSession() && !isSessionValid()) {
+      console.log("Session stockée mais invalidée, vérification auprès de Supabase");
       const checkSession = async () => {
         try {
-          console.log("Checking existing session");
-          
-          // Get the session from Supabase
+          // Obtenir la session depuis Supabase
           const { data: { session: initialSession }, error } = await supabase.auth.getSession();
           
           if (!mounted) return;
           
           if (error) {
-            console.error("Error getting session:", error);
+            console.error("Erreur lors de la récupération de la session:", error);
             setAuthError(error.message);
             setIsAuthenticated(false);
             setLoading(false);
@@ -125,20 +151,17 @@ export const useAuthListeners = (
           }
           
           if (initialSession) {
-            // Update session and authentication state
+            // Mettre à jour la session et l'état d'authentification
             setSession(initialSession);
             setIsAuthenticated(true);
             
-            // Get user data
             try {
               const userData = await mapUserData(initialSession.user);
               if (mounted) {
                 setUser(userData);
-                console.log("Session found:", initialSession?.user.email);
+                console.log("Session trouvée:", initialSession?.user.email);
               }
             } catch (err) {
-              console.error("Non-fatal error processing user profile:", err);
-              // Use basic user data from session instead of failing
               if (mounted && initialSession?.user) {
                 const basicUserData = {
                   id: initialSession.user.id,
@@ -148,26 +171,33 @@ export const useAuthListeners = (
                 };
                 setUser(basicUserData);
               }
+            } finally {
+              if (mounted) {
+                setLoading(false);
+              }
             }
           } else {
-            console.log("No session found");
+            console.log("Aucune session trouvée");
             setIsAuthenticated(false);
+            setLoading(false);
           }
         } catch (err) {
-          console.error("Unexpected error checking session:", err);
-          setAuthError(`Authentication error: ${err instanceof Error ? err.message : String(err)}`);
+          console.error("Erreur inattendue lors de la vérification de la session:", err);
+          if (mounted) {
+            setAuthError(`Authentication error: ${err instanceof Error ? err.message : String(err)}`);
+            setLoading(false);
+          }
         } finally {
           if (mounted) {
-            setLoading(false);
             isInitializing.current = false;
           }
         }
       };
       
-      // Use a super short timeout to check the session, allowing auth listener to set up first
+      // Vérification avec un court délai pour éviter les blocages
       pendingAuthCheck.current = setTimeout(checkSession, 10);
     } else {
-      // No stored token, set loading to false immediately
+      // Pas de vérification nécessaire, terminer le chargement
       setLoading(false);
       isInitializing.current = false;
     }
@@ -180,5 +210,5 @@ export const useAuthListeners = (
       }
       subscription.unsubscribe();
     };
-  }, [setUser, setSession, setIsAuthenticated, setLoading, setAuthError]);
+  }, [setUser, setSession, setIsAuthenticated, setLoading, setAuthError, refreshToken]);
 };

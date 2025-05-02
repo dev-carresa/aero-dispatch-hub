@@ -4,6 +4,9 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from '@/types/auth';
 import { UserRole } from '@/types/user';
+import { 
+  hasStoredSession as checkStoredSession 
+} from '@/services/sessionStorageService';
 
 // Cache to store previously fetched user data to improve performance
 const userProfileCache = new Map<string, AuthUser>();
@@ -89,13 +92,7 @@ export const useUser = () => {
 
 // Helper function to check if local storage has auth token
 export const hasStoredSession = (): boolean => {
-  try {
-    const storageKey = 'sb-qqfnokbhdzmffywksmvl-auth-token';
-    const storedData = localStorage.getItem(storageKey);
-    return !!storedData && storedData.length > 10;
-  } catch (e) {
-    return false;
-  }
+  return checkStoredSession();
 };
 
 // Clear the user profile cache (useful when logging out)
