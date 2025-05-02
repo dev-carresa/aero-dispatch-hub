@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { mapUserData } from './useUser';
+import { mapUserData, clearUserProfileCache } from './useUser';
 import { NavigateFunction } from 'react-router-dom';
 
 export const useAuthActions = (
@@ -67,6 +67,9 @@ export const useAuthActions = (
     try {
       setIsAuthActionInProgress(true);
       setIsLoggingOut(true);
+      
+      // Clear the user profile cache before signing out
+      clearUserProfileCache();
       
       // Call Supabase API to sign out - this will trigger the auth listener
       const { error } = await supabase.auth.signOut({

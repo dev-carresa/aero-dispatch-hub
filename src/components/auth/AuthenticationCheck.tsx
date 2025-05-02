@@ -6,21 +6,30 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { hasStoredSession } from '@/hooks/auth/useUser';
 
 export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
   const { loading, isLoggingOut, authError } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [showQuickLoading, setShowQuickLoading] = useState(true);
   
-  // Show timeout message if loading takes too long - increased to 5000ms
+  // Initially check if we have a token in local storage
+  useEffect(() => {
+    const hasToken = hasStoredSession();
+    // If we have a token, show quick loading first to prevent flicker
+    setShowQuickLoading(hasToken);
+  }, []);
+  
+  // Show timeout message if loading takes too long
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
     if (loading) {
       timeoutId = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 5000); // Increased from 3000ms to 5000ms
+      }, 8000); // Increased timeout to 8 seconds
     } else {
       setLoadingTimeout(false);
     }
@@ -37,6 +46,14 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
       toast.error(authError);
     }
   }, [loading, isLoggingOut, authError]);
+
+  // If we think we're authenticated based on localStorage token,
+  // show a fast-path render to avoid flicker
+  if (showQuickLoading && hasStoredSession()) {
+    // After 100ms, start showing the loading spinner if we're still loading
+    setTimeout(() => setShowQuickLoading(false), 100);
+    return <>{children}</>; // Fast path - render children immediately
+  }
 
   if (!loading) {
     return <>{children}</>;

@@ -5,11 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from '@/types/auth';
 import { UserRole } from '@/types/user';
 
+// Cache to store previously fetched user data to improve performance
+const userProfileCache = new Map<string, AuthUser>();
+
 // Map Supabase User to AuthUser with role - optimized for performance
 export const mapUserData = async (supabaseUser: User): Promise<AuthUser | null> => {
   if (!supabaseUser) return null;
-
+  
   try {
+    // Check cache first to avoid unnecessary database calls
+    if (userProfileCache.has(supabaseUser.id)) {
+      return userProfileCache.get(supabaseUser.id) || null;
+    }
+
     // Prepare default values in case profile fetch fails
     let userData: AuthUser = {
       id: supabaseUser.id,
@@ -33,20 +41,28 @@ export const mapUserData = async (supabaseUser: User): Promise<AuthUser | null> 
         role: (data.role as UserRole) || userData.role
       };
     } else if (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Non-fatal error fetching user profile:', error);
       // Continue with default values instead of returning null
     }
 
+    // Update cache with the new or default user data
+    userProfileCache.set(supabaseUser.id, userData);
+    
     return userData;
   } catch (error) {
     console.error('Error mapping user data:', error);
     // Return basic user data instead of null to prevent authentication failures
-    return {
+    const basicUserData = {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
       name: supabaseUser.email?.split('@')[0] || 'User',
       role: 'Customer' as UserRole
     };
+    
+    // Even on error, update cache with basic data
+    userProfileCache.set(supabaseUser.id, basicUserData);
+    
+    return basicUserData;
   }
 };
 
@@ -69,4 +85,20 @@ export const useUser = () => {
     authError,
     setAuthError
   };
+};
+
+// Helper function to check if local storage has auth token
+export const hasStoredSession = (): boolean => {
+  try {
+    const storageKey = 'sb-qqfnokbhdzmffywksmvl-auth-token';
+    const storedData = localStorage.getItem(storageKey);
+    return !!storedData && storedData.length > 10;
+  } catch (e) {
+    return false;
+  }
+};
+
+// Clear the user profile cache (useful when logging out)
+export const clearUserProfileCache = (): void => {
+  userProfileCache.clear();
 };
