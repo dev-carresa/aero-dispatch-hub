@@ -79,6 +79,14 @@ export const useAuthActions = (
         throw error;
       }
       
+      // Remove all Supabase-related items from localStorage to ensure clean logout
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('sb-') || key.includes('supabase'))) {
+          localStorage.removeItem(key);
+        }
+      }
+      
       toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       

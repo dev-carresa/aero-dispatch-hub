@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { mapUserData } from './useUser';
@@ -16,6 +15,8 @@ export const useAuthListeners = (
   const isProcessingAuthChange = useRef(false);
   // Track attempts to recover from errors
   const recoveryAttemptMade = useRef(false);
+  // Add a new ref to track if we already have a valid session
+  const hasValidSession = useRef(false);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
@@ -27,9 +28,9 @@ export const useAuthListeners = (
     const updateAuthState = async (session) => {
       if (!mounted || isProcessingAuthChange.current) return;
       
-      isProcessingAuthChange.current = true;
-      
       try {
+        isProcessingAuthChange.current = true;
+        
         if (!session) {
           // Clear state if no session
           setUser(null);
@@ -39,25 +40,53 @@ export const useAuthListeners = (
           return;
         }
         
+        // Mark that we have a valid session
+        hasValidSession.current = true;
+        
         // Otherwise set session and auth state
         setSession(session);
         setIsAuthenticated(true);
         
-        // Map user data after auth state is updated
+        // Map user data after auth state is updated, but use setTimeout to avoid deadlocks
         try {
-          const userData = await mapUserData(session.user);
-          if (mounted) {
-            setUser(userData);
-            console.log("User data mapped:", userData?.email);
-          }
+          setTimeout(async () => {
+            try {
+              if (!mounted) return;
+              const userData = await mapUserData(session.user);
+              if (mounted) {
+                setUser(userData);
+                console.log("User data mapped:", userData?.email);
+              }
+            } catch (error) {
+              console.error("Error in delayed user data processing:", error);
+            }
+          }, 0);
         } catch (err) {
-          console.error("Error processing user data:", err);
+          console.error("Error setting up user data processing:", err);
         }
       } finally {
         if (mounted) {
           setLoading(false);
           isProcessingAuthChange.current = false;
         }
+      }
+    };
+
+    // Helper function to clean up invalid tokens from localStorage
+    const cleanupInvalidTokens = () => {
+      try {
+        console.log("Cleaning up potentially invalid auth tokens");
+        // Remove all Supabase-related items from localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          // Use a broader check to catch all Supabase-related items
+          if (key && (key.includes('sb-') || key.includes('supabase'))) {
+            localStorage.removeItem(key);
+            console.log("Removed auth token:", key);
+          }
+        }
+      } catch (err) {
+        console.error("Error cleaning up tokens:", err);
       }
     };
 
@@ -80,12 +109,16 @@ export const useAuthListeners = (
             setSession(null);
             setIsAuthenticated(false);
             setLoading(false);
+            hasValidSession.current = false;
             console.log("Signed out, cleared auth state");
           }
         } 
         else if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
-          // For these events, update auth state
-          await updateAuthState(currentSession);
+          // For these events, update auth state - use setTimeout to avoid potential deadlocks
+          setTimeout(async () => {
+            if (!mounted) return;
+            await updateAuthState(currentSession);
+          }, 0);
         }
       }
     );
@@ -102,13 +135,21 @@ export const useAuthListeners = (
             console.error("Error getting session:", error);
             setAuthError(error.message);
             
-            // Clean up potentially invalid tokens in localStorage
-            if (error.message.includes("Invalid Refresh Token") && !recoveryAttemptMade.current) {
-              recoveryAttemptMade.current = true;
-              cleanupInvalidTokens();
-              // Try refreshing after cleanup
-              window.location.reload();
-              return;
+            // Clean up potentially invalid tokens if token-related error
+            if (error.message.includes("Invalid") || error.message.includes("token") || error.message.includes("expired")) {
+              if (!recoveryAttemptMade.current) {
+                recoveryAttemptMade.current = true;
+                // Clean up all Supabase tokens and reload
+                cleanupInvalidTokens();
+                // Don't reload immediately - this avoids an infinite loop
+                setTimeout(() => {
+                  if (mounted && !hasValidSession.current) {
+                    console.log("Attempting recovery by page reload");
+                    window.location.reload();
+                  }
+                }, 100);
+                return;
+              }
             }
             
             setIsAuthenticated(false);
@@ -119,6 +160,7 @@ export const useAuthListeners = (
           // Update auth state with initial session
           if (initialSession) {
             await updateAuthState(initialSession);
+            hasValidSession.current = true;
           } else {
             // No session found
             setLoading(false);
@@ -150,16 +192,6 @@ export const useAuthListeners = (
 
       checkSession();
     }
-
-    // Helper function to clean up invalid tokens from localStorage
-    const cleanupInvalidTokens = () => {
-      try {
-        localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
-        console.log("Cleaned up potentially invalid auth tokens");
-      } catch (err) {
-        console.error("Error cleaning up tokens:", err);
-      }
-    };
 
     // Cleanup function
     return () => {

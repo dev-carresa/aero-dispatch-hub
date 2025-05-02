@@ -77,8 +77,10 @@ const LoadingTimeoutAlert: React.FC<LoadingTimeoutAlertProps> = ({ retryCount })
     // Remove all Supabase-related items from localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.includes('sb-qqfnokbhdzmffywksmvl')) {
+      // Use a broader check to catch all Supabase-related items
+      if (key && (key.includes('sb-') || key.includes('supabase'))) {
         localStorage.removeItem(key);
+        console.log("Removed auth key:", key);
       }
     }
     window.location.href = '/';

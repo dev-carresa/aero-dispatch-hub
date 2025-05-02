@@ -18,6 +18,11 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isAuthenticated, loading]);
 
+  // Don't redirect while still loading - this prevents flashing to login page
+  if (loading) {
+    return null;
+  }
+
   // If authenticated, render children, otherwise redirect to login
   return (isAuthenticated && user) ? (
     <>{children}</> 

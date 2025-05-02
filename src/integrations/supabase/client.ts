@@ -15,7 +15,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     storage: localStorage,
     detectSessionInUrl: true,
-    flowType: 'implicit'
+    flowType: 'pkce'  // Changed from 'implicit' to 'pkce' for better session handling
   },
   global: {
     headers: {
