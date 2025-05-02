@@ -14,9 +14,9 @@ export const useAuthActions = (
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Sign in function
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     try {
-      console.log("Attempting sign in for:", email);
+      console.log("Attempting sign in for:", email, "with remember me:", rememberMe);
       setLoading(true);
       setAuthError(null);
       
@@ -25,7 +25,13 @@ export const useAuthActions = (
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
+        options: {
+          // Set session expiry based on remember me choice
+          // If rememberMe is true, session will last longer (default Supabase behavior)
+          // If rememberMe is false, session will expire after 1 hour (3600 seconds)
+          expiresIn: rememberMe ? 60 * 60 * 24 * 7 : 60 * 60
+        }
       });
 
       if (error) {

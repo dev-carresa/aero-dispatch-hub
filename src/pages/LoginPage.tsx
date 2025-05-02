@@ -1,187 +1,151 @@
 
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock, RefreshCw } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ensureDemoUserExists } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const { signIn, isAuthenticated, loading: authLoading } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password");
+  const navigate = useNavigate();
+  const { signIn, loading, isAuthenticated } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [setupLoading, setSetupLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
-  // Show spinner while checking authentication status
-  if (authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Spinner size="md" className="mb-4" />
-        <p className="text-muted-foreground">Checking authentication status...</p>
-      </div>
-    );
-  }
-  
-  // Redirect to dashboard if already authenticated
+  // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
-    console.log("User is authenticated, redirecting to dashboard");
-    return <Navigate to="/dashboard" replace />;
+    navigate('/dashboard');
+    return null;
   }
-  
-  const handleLogin = async (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
     
     try {
-      console.log("Attempting login with:", email);
-      await signIn(email, password);
-    } catch (error: any) {
+      await signIn(email, password, rememberMe);
+    } catch (error) {
       console.error("Login error:", error);
-      
-      // Provide specific error messages
-      if (error?.code === "invalid_credentials") {
-        setError("Invalid email or password. Make sure the demo credentials are set up correctly.");
-      } else {
-        setError(error?.message || "Failed to sign in. Please try again.");
-      }
-      setIsLoading(false);
+      // Error is handled in the signIn function
     }
   };
-
-  const setupDemoUser = async () => {
-    setSetupLoading(true);
-    setError("");
-    
+  
+  const handleDemoLogin = async () => {
     try {
-      console.log("Setting up demo user...");
-      // Call our edge function to set up the demo user
-      const { data, error } = await supabase.functions.invoke('setup-demo-user');
+      // Create demo user if it doesn't exist
+      await ensureDemoUserExists();
       
-      if (error) {
-        console.error("Demo setup error:", error);
-        throw error;
-      }
-      
-      console.log("Demo user setup response:", data);
-      toast.success("Demo user set up successfully! You can now log in with the demo credentials.");
-      setEmail("admin@example.com");
-      setPassword("password");
+      // Login with demo credentials
+      await signIn("admin@example.com", "password", rememberMe);
     } catch (error) {
-      console.error("Setup error:", error);
-      toast.error("Failed to set up demo user. Please contact the administrator.");
-      setError("Failed to set up demo user. See console for details.");
-    } finally {
-      setSetupLoading(false);
+      console.error("Demo login error:", error);
+      toast.error("Une erreur est survenue lors de la connexion avec le compte de démonstration");
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md px-4">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-primary mb-2">TransportHub</h1>
-          <p className="text-gray-600 dark:text-gray-400">Sign in to your account</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
-            <CardDescription>Enter your email and password to sign in</CardDescription>
-          </CardHeader>
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    className="pl-9"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+    <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-gray-50">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Connexion</CardTitle>
+          <CardDescription>
+            Entrez vos identifiants pour accéder à votre compte
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Mot de passe
+                </label>
+                <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                  Mot de passe oublié?
+                </Link>
               </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <a href="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                  </a>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className="pl-9"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 text-muted-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading || authLoading}
-              >
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <Spinner size="sm" className="mr-2" />
-                    Signing in...
-                  </span>
-                ) : "Sign in"}
-              </Button>
-              
-              <div className="text-center text-sm">
-                <p className="text-muted-foreground">Demo credentials:</p>
-                <p className="font-medium text-primary">admin@example.com / password</p>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={setupDemoUser} 
-                  disabled={setupLoading}
-                  className="mt-2 text-xs"
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  <RefreshCw className={`h-3 w-3 mr-2 ${setupLoading ? 'animate-spin' : ''}`} />
-                  {setupLoading ? "Setting up..." : "Set up demo user"}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
-            </CardFooter>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="remember" 
+                checked={rememberMe} 
+                onCheckedChange={(checked) => setRememberMe(checked === true)} 
+              />
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Se souvenir de moi
+              </label>
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading}>
+              <LogIn className="mr-2 h-4 w-4" />
+              {loading ? "Connexion en cours..." : "Se connecter"}
+            </Button>
           </form>
-        </Card>
-      </div>
+          
+          <div className="mt-4 flex items-center justify-center">
+            <span className="text-xs text-muted-foreground px-2">Ou</span>
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDemoLogin}
+            className="w-full mt-4"
+            disabled={loading}
+          >
+            Démo (connexion rapide)
+          </Button>
+        </CardContent>
+        <CardFooter className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Pas encore de compte? Contactez votre administrateur
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

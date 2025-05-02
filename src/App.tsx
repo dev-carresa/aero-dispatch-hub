@@ -21,6 +21,8 @@ import { ThemeProvider } from "./components/theme/ThemeProvider";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { AuthProvider } from "./context/AuthContext";
 import { PermissionProvider } from "./context/PermissionContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -78,6 +80,8 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               
               {/* Application routes - protected */}
               <Route element={<ProtectedRoute />}>
