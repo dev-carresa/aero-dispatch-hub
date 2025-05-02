@@ -38,7 +38,7 @@ export function SearchInputWithClear({
         onFocus={onFocus}
         placeholder={placeholder}
         className={cn("pr-10", className)}
-        disabled={disabled || isLoading}
+        disabled={disabled}
         required={required}
         autoComplete="off"
       />

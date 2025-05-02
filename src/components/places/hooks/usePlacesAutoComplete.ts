@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface PlacePrediction {
   description: string;
@@ -16,76 +16,109 @@ interface UsePlacesAutocompleteProps {
   onPlaceSelect: (address: string, placeId?: string) => void;
 }
 
-// Keep track of script loading state globally
-let isScriptLoading = false;
-let isScriptLoaded = false;
+// Singleton pattern to track API loading state across all component instances
+const googleMapsState = {
+  isScriptLoading: false,
+  isScriptLoaded: false,
+  hasInitialized: false,
+  errorOccurred: false
+};
 
 export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAutocompleteProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
-  // Load Google Maps script only once
-  useEffect(() => {
-    if (!window.google && !isScriptLoading && !isScriptLoaded) {
-      const loadGoogleMapsScript = () => {
-        isScriptLoading = true;
-        setIsLoading(true);
-        
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA4fi6Kf6-HgLZkON89ASKUn-u2pdIEspE&libraries=places&callback=initializeAutocomplete`;
-        script.async = true;
-        script.defer = true;
-        
-        window.initializeAutocomplete = () => {
-          isScriptLoaded = true;
-          isScriptLoading = false;
-          setIsLoading(false);
-        };
+  // Initialize Google Maps API
+  const initializeGoogleMaps = useCallback(() => {
+    // Return early if already loaded
+    if (window.google?.maps?.places?.AutocompleteService || googleMapsState.isScriptLoading) {
+      return;
+    }
 
-        script.onerror = () => {
-          console.error("Google Maps script failed to load");
-          isScriptLoading = false;
-          setIsLoading(false);
-        };
+    const loadGoogleMapsScript = () => {
+      googleMapsState.isScriptLoading = true;
+      setIsLoading(true);
+      
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA4fi6Kf6-HgLZkON89ASKUn-u2pdIEspE&libraries=places&callback=initializeAutocomplete`;
+      script.async = true;
+      script.defer = true;
+      
+      window.initializeAutocomplete = () => {
+        googleMapsState.isScriptLoaded = true;
+        googleMapsState.isScriptLoading = false;
+        googleMapsState.hasInitialized = true;
+        setIsLoading(false);
         
-        document.head.appendChild(script);
-      };
-      
-      loadGoogleMapsScript();
-      
-      return () => {
-        // Don't remove the script on component unmount
-        // Just clean up the global callback
-        if (window.initializeAutocomplete) {
-          delete window.initializeAutocomplete;
+        // Try to initialize autocomplete service right after script loads
+        if (window.google?.maps?.places) {
+          try {
+            autocompleteService.current = new window.google.maps.places.AutocompleteService();
+          } catch (error) {
+            console.error("Error initializing AutocompleteService after script load:", error);
+          }
         }
       };
-    } else if (window.google) {
-      // If Google is already available, no need to load
-      isScriptLoaded = true;
-    }
+
+      // Add error handling for script loading
+      script.onerror = () => {
+        console.error("Google Maps script failed to load");
+        googleMapsState.isScriptLoading = false;
+        googleMapsState.errorOccurred = true;
+        setIsLoading(false);
+      };
+      
+      document.head.appendChild(script);
+    };
+    
+    loadGoogleMapsScript();
   }, []);
 
-  // Initialize autocomplete service
+  // Try to initialize as soon as component mounts
   useEffect(() => {
-    if (isScriptLoaded && window.google && !autocompleteService.current) {
+    // If Google Maps is already loaded
+    if (window.google?.maps?.places) {
+      googleMapsState.isScriptLoaded = true;
+      googleMapsState.hasInitialized = true;
+      setIsLoading(false);
+      
       try {
         autocompleteService.current = new window.google.maps.places.AutocompleteService();
       } catch (error) {
-        console.error("Error initializing AutocompleteService:", error);
+        console.error("Error initializing existing AutocompleteService:", error);
       }
+    } else if (!googleMapsState.isScriptLoading && !googleMapsState.isScriptLoaded) {
+      // Need to load the script
+      initializeGoogleMaps();
     }
-  }, [isScriptLoaded]);
+
+    // Add a timeout to stop showing loading state after 5 seconds
+    // to prevent infinite loading if Google Maps fails silently
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+    
+    return () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [initializeGoogleMaps]);
 
   // Fetch predictions when input changes
   useEffect(() => {
-    // Cancel any previous requests
-    const timeoutId = setTimeout(() => {
-      if (inputValue.length > 2 && autocompleteService.current) {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Only search if we have an input and the service is available
+    if (inputValue.length > 2 && autocompleteService.current) {
+      // Debounce the API calls
+      timeoutRef.current = window.setTimeout(() => {
         try {
-          autocompleteService.current.getPlacePredictions(
+          autocompleteService.current?.getPlacePredictions(
             { 
               input: inputValue,
               types: ['establishment', 'geocode', 'address', 'transit_station', 'airport', 'lodging']
@@ -98,20 +131,27 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
                 setPredictions([]);
                 setShowDropdown(false);
               }
+              // Ensure we're not stuck in loading state after attempts to get predictions
+              setIsLoading(false);
             }
           );
         } catch (error) {
           console.error("Error getting place predictions:", error);
           setPredictions([]);
           setShowDropdown(false);
+          setIsLoading(false);
         }
-      } else {
-        setPredictions([]);
-        setShowDropdown(false);
+      }, 300);
+    } else {
+      setPredictions([]);
+      setShowDropdown(false);
+    }
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-    }, 300); // Debounce the API calls
-
-    return () => clearTimeout(timeoutId);
+    };
   }, [inputValue]);
 
   // Handle place selection

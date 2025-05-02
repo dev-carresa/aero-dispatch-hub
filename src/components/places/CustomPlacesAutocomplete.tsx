@@ -61,7 +61,7 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
       handlePlaceSelect(prediction);
       // Prevent field focus loss after selection
       if (inputRef.current) {
-        inputRef.current.blur();
+        inputRef.current.focus();
       }
     }, [handlePlaceSelect]);
 
