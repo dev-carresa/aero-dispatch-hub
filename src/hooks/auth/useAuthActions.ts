@@ -49,8 +49,8 @@ export const useAuthActions = (
   );
 
   // Wrapper function to pass current path to signOut
-  const handleSignOut = async (): Promise<void> => {
-    await signOut(location.pathname);
+  const handleSignOut = async (currentPath?: string): Promise<void> => {
+    await signOut(currentPath || location.pathname);
   };
 
   return {

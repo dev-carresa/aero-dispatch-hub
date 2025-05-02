@@ -9,7 +9,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
   signIn: async () => null,
-  signOut: async () => {},
+  signOut: async (currentPath?: string) => {},
   isAuthenticated: false,
   session: null,
   isLoggingOut: false,
