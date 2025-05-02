@@ -68,14 +68,14 @@ export const useSignOut = (
       if (navigate) {
         navigate(redirectPath);
         
-        // Utiliser un fallback avec window.location.href pour garantir la redirection
-        // même si la navigation React échoue
-        setTimeout(() => {
-          if (isAdminRoute(currentPath)) {
+        // Ajouter une redirection forcée pour les pages admin après un court délai
+        if (isAdminRoute(currentPath)) {
+          console.log("Ajout d'une redirection forcée vers /admin/login après délai");
+          setTimeout(() => {
             console.log("Redirection forcée vers la page d'admin login");
-            window.location.href = redirectPath;
-          }
-        }, AUTH_CONSTANTS.NAVIGATION_DELAY + 200);
+            window.location.href = '/admin/login';
+          }, AUTH_CONSTANTS.NAVIGATION_DELAY + 100);
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
@@ -89,11 +89,8 @@ export const useSignOut = (
         // Ajouter une redirection de sécurité supplémentaire
         if (currentPath && isAdminRoute(currentPath)) {
           console.log("Redirection finale de sécurité vers /admin/login");
-          if (navigate) {
-            navigate('/admin/login');
-          } else {
-            window.location.href = '/admin/login';
-          }
+          // Redirection forcée en dernier recours
+          window.location.href = '/admin/login';
         }
       }, AUTH_CONSTANTS.AUTH_ACTION_RESET_DELAY);
     }
