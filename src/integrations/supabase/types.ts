@@ -42,6 +42,51 @@ export type Database = {
         }
         Relationships: []
       }
+      api_integrations: {
+        Row: {
+          api_title: string
+          category: string
+          created_at: string
+          enabled: boolean
+          error: string | null
+          id: string
+          key_name: string
+          key_value: string | null
+          last_tested: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_title: string
+          category: string
+          created_at?: string
+          enabled?: boolean
+          error?: string | null
+          id?: string
+          key_name: string
+          key_value?: string | null
+          last_tested?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_title?: string
+          category?: string
+          created_at?: string
+          enabled?: boolean
+          error?: string | null
+          id?: string
+          key_name?: string
+          key_value?: string | null
+          last_tested?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_users: {
         Row: {
           api_key: string
