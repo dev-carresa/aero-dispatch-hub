@@ -1,13 +1,27 @@
 
-import React from 'react';
-import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AuthenticationCheck } from './AuthenticationCheck';
 import { AuthRedirect } from './AuthRedirect';
+import { hasStoredSession } from '@/hooks/auth/useUser';
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Fast check for token existence
+  useEffect(() => {
+    // Quick check if token doesn't exist at all - redirect immediately
+    if (!hasStoredSession()) {
+      const redirectTimer = setTimeout(() => {
+        navigate('/', { state: { from: location }, replace: true });
+      }, 5); // 5ms timeout
+      
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [location, navigate]);
 
   // If still loading, show AuthenticationCheck which handles the loading state
   if (loading) {

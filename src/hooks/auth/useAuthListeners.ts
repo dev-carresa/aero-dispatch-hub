@@ -19,12 +19,20 @@ export const useAuthListeners = (
     // Fast path: assume authenticated if token exists in localStorage
     const hasToken = hasStoredSession();
     
-    // If token exists, assume authenticated until proven otherwise
     if (hasToken) {
+      // If token exists, assume authenticated until proven otherwise
       setIsAuthenticated(true);
       console.log("Found auth token in localStorage, assuming authenticated");
+    } else {
+      // If no token, immediately set as not authenticated to trigger quick redirect
+      setIsAuthenticated(false);
+      setLoading(false);
+      console.log("No auth token in localStorage, fast-failing auth check");
+      
+      // No need to continue with session check if token doesn't exist
+      return;
     }
-  }, [setIsAuthenticated]);
+  }, [setIsAuthenticated, setLoading]);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
@@ -96,66 +104,73 @@ export const useAuthListeners = (
       }
     );
 
-    // Then check for existing session
-    const checkSession = async () => {
-      try {
-        console.log("Checking existing session");
-        
-        // Get the session from Supabase
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        if (error) {
-          console.error("Error getting session:", error);
-          setAuthError(error.message);
-          setIsAuthenticated(false);
-          setLoading(false);
-          return;
-        }
-        
-        if (initialSession) {
-          // Update session and authentication state
-          setSession(initialSession);
-          setIsAuthenticated(true);
+    // Check for existing session with a short timeout
+    // Skip this step if we know there's no token in localStorage
+    if (hasStoredSession()) {
+      const checkSession = async () => {
+        try {
+          console.log("Checking existing session");
           
-          // Get user data
-          try {
-            const userData = await mapUserData(initialSession.user);
-            if (mounted) {
-              setUser(userData);
-              console.log("Session found:", initialSession?.user.email);
-            }
-          } catch (err) {
-            console.error("Non-fatal error processing user profile:", err);
-            // Use basic user data from session instead of failing
-            if (mounted && initialSession?.user) {
-              const basicUserData = {
-                id: initialSession.user.id,
-                email: initialSession.user.email || '',
-                name: initialSession.user.email?.split('@')[0] || 'User',
-                role: 'Customer'
-              };
-              setUser(basicUserData);
-            }
+          // Get the session from Supabase
+          const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+          
+          if (!mounted) return;
+          
+          if (error) {
+            console.error("Error getting session:", error);
+            setAuthError(error.message);
+            setIsAuthenticated(false);
+            setLoading(false);
+            return;
           }
-        } else {
-          console.log("No session found");
-          setIsAuthenticated(false);
+          
+          if (initialSession) {
+            // Update session and authentication state
+            setSession(initialSession);
+            setIsAuthenticated(true);
+            
+            // Get user data
+            try {
+              const userData = await mapUserData(initialSession.user);
+              if (mounted) {
+                setUser(userData);
+                console.log("Session found:", initialSession?.user.email);
+              }
+            } catch (err) {
+              console.error("Non-fatal error processing user profile:", err);
+              // Use basic user data from session instead of failing
+              if (mounted && initialSession?.user) {
+                const basicUserData = {
+                  id: initialSession.user.id,
+                  email: initialSession.user.email || '',
+                  name: initialSession.user.email?.split('@')[0] || 'User',
+                  role: 'Customer'
+                };
+                setUser(basicUserData);
+              }
+            }
+          } else {
+            console.log("No session found");
+            setIsAuthenticated(false);
+          }
+        } catch (err) {
+          console.error("Unexpected error checking session:", err);
+          setAuthError(`Authentication error: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+          if (mounted) {
+            setLoading(false);
+            isInitializing.current = false;
+          }
         }
-      } catch (err) {
-        console.error("Unexpected error checking session:", err);
-        setAuthError(`Authentication error: ${err instanceof Error ? err.message : String(err)}`);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          isInitializing.current = false;
-        }
-      }
-    };
-    
-    // Use a short timeout to check the session, allowing auth listener to set up first
-    pendingAuthCheck.current = setTimeout(checkSession, 10);
+      };
+      
+      // Use a super short timeout to check the session, allowing auth listener to set up first
+      pendingAuthCheck.current = setTimeout(checkSession, 10);
+    } else {
+      // No stored token, set loading to false immediately
+      setLoading(false);
+      isInitializing.current = false;
+    }
 
     // Cleanup function
     return () => {

@@ -7,6 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { hasStoredSession } from '@/hooks/auth/useUser';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({ 
   children 
@@ -14,13 +15,23 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
   const { loading, isLoggingOut, authError } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [showQuickLoading, setShowQuickLoading] = useState(true);
+  const navigate = useNavigate();
   
   // Initially check if we have a token in local storage
   useEffect(() => {
     const hasToken = hasStoredSession();
     // If we have a token, show quick loading first to prevent flicker
     setShowQuickLoading(hasToken);
-  }, []);
+    
+    // If no token is found, redirect to home page after 5ms
+    if (!hasToken) {
+      const redirectTimer = setTimeout(() => {
+        navigate('/');
+      }, 5); // Extremely fast 5ms check
+      
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [navigate]);
   
   // Show timeout message if loading takes too long
   useEffect(() => {
