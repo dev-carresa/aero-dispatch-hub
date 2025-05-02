@@ -8,7 +8,7 @@ import { useAuthProvider } from '@/hooks/useAuthProvider';
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
-  signIn: async () => {}, // Updated to return Promise to match the interface
+  signIn: async () => null, // Make sure this returns a Promise to match the interface
   signOut: async () => {},
   isAuthenticated: false,
   session: null,
