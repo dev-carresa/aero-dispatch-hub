@@ -174,11 +174,12 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         }
         
         try {
+          // IMPORTANT: Fixed - Use a single type for autocomplete to avoid the error
+          // According to Google API: geocode cannot be mixed with other types
           autocompleteService.current?.getPlacePredictions(
             { 
               input: inputValue,
-              // Fixed: Reduced to 5 types to comply with Google's limit
-              types: ['geocode', 'address', 'establishment', 'transit_station', 'airport']
+              types: ['address']  // Only use 'address' type to avoid mixing with geocode
             },
             (predictions, status) => {
               if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
