@@ -157,7 +157,7 @@ export const useAuthActions = (
             }
           }
           
-          return Promise.resolve(userData);
+          return userData; // Return userData to fulfill Promise
         } catch (profileError) {
           console.error("Erreur lors du chargement du profil:", profileError);
           
@@ -192,11 +192,11 @@ export const useAuthActions = (
             }, 100);
           }
           
-          return Promise.resolve(basicUserInfo);
+          return basicUserInfo; // Return basicUserInfo to fulfill Promise
         }
       }
       
-      return Promise.resolve(null);
+      return null; // Return null to fulfill Promise when no user/session
     } catch (error) {
       console.error("Sign in error:", error);
       return Promise.reject(error);
@@ -263,7 +263,9 @@ export const useAuthActions = (
   };
 
   // Version debounced de la fonction signIn pour éviter les appels multiples rapides
-  const debouncedSignIn = debounce(signIn, 300);
+  const debouncedSignIn = debounce(async (email, password, rememberMe) => {
+    return signIn(email, password, rememberMe);
+  }, 300);
 
   return {
     signIn: debouncedSignIn,

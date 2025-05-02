@@ -12,7 +12,7 @@ export interface AuthUser {
 export interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<any>; // Updated return type to match implementation
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -61,6 +60,7 @@ export default function LoginPage() {
     try {
       console.log("Tentative de connexion...");
       await signIn(email, password, rememberMe);
+      // Note: No need to manually navigate as the signIn function will handle it if successful
     } catch (error) {
       console.error("Erreur de connexion:", error);
       

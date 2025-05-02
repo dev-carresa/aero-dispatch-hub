@@ -58,7 +58,7 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
   return {
     user,
     loading,
-    signIn,
+    signIn, // Now returns a Promise<void> as expected by AuthContextType
     signOut,
     isAuthenticated,
     session,
