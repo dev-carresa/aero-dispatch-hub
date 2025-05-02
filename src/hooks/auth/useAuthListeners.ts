@@ -1,45 +1,83 @@
 
-import { useRef } from 'react';
-import { useSessionInit } from './useSessionInit';
-import { useAuthStateChange } from './useAuthStateChange';
-import { useSessionCheck } from './useSessionCheck';
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { mapUserData } from './userMapper';
+import { clearUserProfileCache } from './userProfileCache';
+import { Session } from '@supabase/supabase-js';
 
 export const useAuthListeners = (
   setUser,
   setSession,
   setIsAuthenticated,
   setLoading,
-  setAuthError,
-  refreshToken
+  refreshToken?: () => Promise<Session | null>
 ) => {
-  // Use refs to track initialization state
-  const isInitializing = useRef(true);
-  
-  // Initialize session based on stored data
-  useSessionInit(
-    setUser,
-    setSession,
-    setIsAuthenticated,
-    setLoading,
-    refreshToken
-  );
+  useEffect(() => {
+    setLoading(true);
 
-  // Set up auth state change listener
-  const { pendingAuthCheck, authSubscriptionRef } = useAuthStateChange(
-    setUser,
-    setSession,
-    setIsAuthenticated,
-    setLoading
-  );
+    // Set up auth state change listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state changed:', event, !!newSession);
 
-  // Explicitly check session if needed
-  useSessionCheck(
-    setUser,
-    setSession,
-    setIsAuthenticated,
-    setLoading,
-    setAuthError,
-    pendingAuthCheck,
-    isInitializing
-  );
+      // Handle various auth events
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // When signed in or token refreshed, synchronously update the session
+        // Then asynchronously fetch and update the user profile
+        setSession(newSession);
+        setIsAuthenticated(true);
+
+        // Don't do async operations directly in the callback to avoid blocking
+        setTimeout(async () => {
+          if (newSession?.user) {
+            const userData = await mapUserData(newSession.user);
+            setUser(userData);
+          }
+          setLoading(false);
+        }, 0);
+      } 
+      else if (event === 'SIGNED_OUT') {
+        // When signed out, clear everything
+        setUser(null);
+        setSession(null);
+        setIsAuthenticated(false);
+        clearUserProfileCache();
+        setLoading(false);
+      } 
+      else {
+        // For other events, just make sure loading is eventually set to false
+        setLoading(false);
+      }
+    });
+
+    // Check for existing session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (session) {
+          setSession(session);
+          setIsAuthenticated(true);
+          
+          const userData = await mapUserData(session.user);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Unexpected error during session initialization:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setUser, setSession, setIsAuthenticated, setLoading]);
 };
