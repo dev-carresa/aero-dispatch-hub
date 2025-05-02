@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +47,6 @@ import {
 } from "@/components/ui/tooltip";
 import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
 
 // Define proper TypeScript interfaces for our data structures
 interface RoleData {
@@ -171,7 +171,6 @@ const roleColorClasses: Record<string, string> = {
 
 export function PermissionSettings() {
   const { hasPermission, isAdmin, roles: rolePermissions } = usePermission();
-  const { user, loading: authLoading, resetSession } = useAuth();
   const [roles, setRoles] = useState<RoleData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -182,8 +181,6 @@ export function PermissionSettings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [confirmDeleteRoleId, setConfirmDeleteRoleId] = useState<string | null>(null);
-  const [showFixPermissionsDialog, setShowFixPermissionsDialog] = useState(false);
-  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
   // State for role operations
   const [selectedRole, setSelectedRole] = useState<RoleData | null>(null);
@@ -193,30 +190,9 @@ export function PermissionSettings() {
 
   // Initialize role data from our predefined permissions and/or database
   useEffect(() => {
-    const initializeData = async () => {
-      try {
-        await fetchRolesFromDB();
-        await fetchUsers();
-        setPermissionsLoaded(true);
-      } catch (error) {
-        console.error("Error initializing data:", error);
-        setPermissionsLoaded(false);
-        setIsLoading(false);
-      }
-    };
-    
-    initializeData();
+    fetchRolesFromDB();
+    fetchUsers();
   }, []);
-
-  // Show fix permissions dialog after a delay if data failed to load
-  useEffect(() => {
-    if (!isLoading && !permissionsLoaded && !showFixPermissionsDialog) {
-      const timer = setTimeout(() => {
-        setShowFixPermissionsDialog(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, permissionsLoaded, showFixPermissionsDialog]);
 
   // Fetch roles from the database or initialize from predefined permissions
   const fetchRolesFromDB = async () => {
@@ -776,19 +752,6 @@ export function PermissionSettings() {
     }
   };
 
-  const handleFixPermissions = async () => {
-    setShowFixPermissionsDialog(false);
-    toast.info("Tentative de correction des permissions...");
-    
-    try {
-      // Call the resetSession function from AuthContext
-      await resetSession();
-    } catch (error) {
-      console.error("Error fixing permissions:", error);
-      toast.error("Échec de la correction des permissions");
-    }
-  };
-
   // Count how many permissions are enabled in a category for a role
   const countEnabledPermissionsInCategory = (role: RoleData, category: string) => {
     const permissions = permissionCategories[category].permissions;
@@ -835,106 +798,6 @@ export function PermissionSettings() {
           </div>
         </CardContent>
       </Card>
-    );
-  }
-
-  // If loading has finished but permissions haven't loaded successfully
-  if (!permissionsLoaded) {
-    return (
-      <Dialog open={showFixPermissionsDialog} onOpenChange={setShowFixPermissionsDialog}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-amber-500">Problème de chargement des permissions</CardTitle>
-            <CardDescription>
-              Nous rencontrons un problème avec le chargement des permissions pour votre compte.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center p-6 gap-4">
-            <div className="rounded-full bg-amber-100 dark:bg-amber-900 p-3">
-              <Shield className="h-6 w-6 text-amber-500" />
-            </div>
-            <div className="text-center space-y-2">
-              <p className="font-medium">Incohérence détectée dans les données de rôle</p>
-              <p className="text-sm text-muted-foreground">
-                Votre compte a le rôle "{user?.role}" mais les permissions associées semblent être incorrectement configurées.
-                Cela peut être dû à des identifiants de rôle incohérents ou des permissions manquantes.
-              </p>
-            </div>
-            
-            <Button 
-              onClick={handleFixPermissions} 
-              className="w-full mt-2"
-              disabled={authLoading}
-            >
-              {authLoading ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white mr-2"></div>
-                  Correction en cours...
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Corriger les permissions
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Problème de permissions détecté</DialogTitle>
-            <DialogDescription>
-              Un problème a été détecté avec vos permissions. Cela peut être dû à une incohérence entre votre rôle et les identifiants de rôle associés.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md border border-amber-200 dark:border-amber-800">
-              <h4 className="font-medium flex items-center text-amber-800 dark:text-amber-300 mb-2">
-                <Shield className="h-4 w-4 mr-2" />
-                Diagnostic
-              </h4>
-              <ul className="list-disc list-inside text-sm space-y-1 text-amber-700 dark:text-amber-400">
-                <li>Votre compte a le rôle "{user?.role}"</li>
-                <li>Les permissions ne sont pas correctement chargées</li>
-                <li>L'identifiant de rôle peut être incorrectement associé</li>
-              </ul>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Cliquez sur "Corriger les permissions" pour résoudre automatiquement ce problème.
-              Cette opération va :
-            </p>
-            <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-              <li>Mettre à jour l'identifiant de rôle associé à votre compte</li>
-              <li>Régénérer les permissions système</li>
-              <li>Rafraîchir la session utilisateur</li>
-            </ul>
-          </div>
-          <DialogFooter className="flex justify-between sm:justify-between">
-            <DialogClose asChild>
-              <Button variant="outline" onClick={() => setShowFixPermissionsDialog(false)}>
-                Annuler
-              </Button>
-            </DialogClose>
-            <Button 
-              onClick={handleFixPermissions}
-              disabled={authLoading}
-            >
-              {authLoading ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white mr-2"></div>
-                  Correction en cours...
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Corriger les permissions
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     );
   }
 

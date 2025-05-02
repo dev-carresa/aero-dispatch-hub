@@ -1,16 +1,39 @@
 
-import { useState } from 'react';
-import { Session } from '@supabase/supabase-js';
+import { useState, useEffect } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from '@/types/auth';
+import { UserRole } from '@/types/user';
 
-// Re-export important functions
-export { mapUserData } from './userMapper';
-export { clearUserProfileCache } from './userProfileCache';
-export { hasStoredSession } from './sessionHelpers';
+// Map Supabase User to AuthUser with role
+export const mapUserData = async (supabaseUser: User): Promise<AuthUser | null> => {
+  if (!supabaseUser) return null;
 
-/**
- * Hook for managing user state in the application
- */
+  try {
+    // Fetch user profile to get role
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('name, role')
+      .eq('id', supabaseUser.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: data?.name || supabaseUser.email?.split('@')[0] || 'User',
+      role: (data?.role as UserRole) || 'Customer'
+    };
+  } catch (error) {
+    console.error('Error mapping user data:', error);
+    return null;
+  }
+};
+
 export const useUser = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);

@@ -1,89 +1,124 @@
-
-import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { mapUserData } from './userMapper';
-import { clearUserProfileCache } from './userProfileCache';
+import { useEffect, useRef } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { mapUserData } from './useUser';
 
 export const useAuthListeners = (
   setUser,
   setSession,
   setIsAuthenticated,
   setLoading,
-  refreshToken?,
-  setAuthError?
+  setAuthError
 ) => {
+  // Use a ref to track initialization state to prevent duplicate processing
+  const isInitializing = useRef(true);
+  // Track auth state changes to prevent duplicate processing
+  const isProcessingAuthChange = useRef(false);
+
+  // Initialize auth state and set up listeners
   useEffect(() => {
-    setLoading(true);
-
-    // Set up auth state change listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state changed:', event, !!newSession);
-
-      // Handle various auth events
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // When signed in or token refreshed, synchronously update the session
-        // Then asynchronously fetch and update the user profile
-        setSession(newSession);
-        setIsAuthenticated(true);
-
-        // Don't do async operations directly in the callback to avoid blocking
-        setTimeout(async () => {
-          if (newSession?.user) {
-            const userData = await mapUserData(newSession.user);
-            setUser(userData);
-          }
-          setLoading(false);
-        }, 0);
-      } 
-      else if (event === 'SIGNED_OUT') {
-        // When signed out, clear everything
-        setUser(null);
-        setSession(null);
-        setIsAuthenticated(false);
-        clearUserProfileCache();
-        setLoading(false);
-      } 
-      else {
-        // For other events, just make sure loading is eventually set to false
-        setLoading(false);
-      }
-    });
-
-    // Check for existing session
-    const getInitialSession = async () => {
+    console.log("Initializing auth provider");
+    let mounted = true;
+    
+    // Function to update auth state consistently
+    const updateAuthState = async (session) => {
+      if (!mounted || isProcessingAuthChange.current) return;
+      
+      isProcessingAuthChange.current = true;
+      
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting session:", error);
-          if (setAuthError) {
-            setAuthError(error.message);
-          }
-          setLoading(false);
+        if (!session) {
+          // Clear state if no session
+          setUser(null);
+          setSession(null);
+          setIsAuthenticated(false);
+          console.log("No session found, cleared auth state");
           return;
         }
-
-        if (session) {
-          setSession(session);
-          setIsAuthenticated(true);
-          
+        
+        // Otherwise set session and auth state
+        setSession(session);
+        setIsAuthenticated(true);
+        
+        // Map user data after auth state is updated
+        try {
           const userData = await mapUserData(session.user);
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Unexpected error during session initialization:", error);
-        if (setAuthError && error instanceof Error) {
-          setAuthError(error.message);
+          if (mounted) {
+            setUser(userData);
+            console.log("User data mapped:", userData?.email);
+          }
+        } catch (err) {
+          console.error("Error processing user data:", err);
         }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          isProcessingAuthChange.current = false;
+        }
       }
     };
 
-    getInitialSession();
+    // Set up auth state change listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
+        
+        // Only handle specific auth events to avoid duplicate processing
+        if (event === 'SIGNED_OUT') {
+          // For sign out, immediately clear state
+          if (mounted) {
+            setUser(null);
+            setSession(null);
+            setIsAuthenticated(false);
+            setLoading(false);
+            console.log("Signed out, cleared auth state");
+          }
+        } 
+        else if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
+          // For these events, update auth state
+          await updateAuthState(currentSession);
+        }
+      }
+    );
 
+    // Then check for existing session, but only if we're still initializing
+    if (isInitializing.current) {
+      const checkSession = async () => {
+        try {
+          const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+          
+          if (!mounted) return;
+          
+          if (error) {
+            console.error("Error getting session:", error);
+            setAuthError(error.message);
+            setIsAuthenticated(false);
+            setLoading(false);
+            return;
+          }
+          
+          // Update auth state with initial session
+          await updateAuthState(initialSession);
+          
+          // Mark initialization as complete
+          isInitializing.current = false;
+          console.log("Initial session check complete");
+        } catch (err) {
+          console.error("Unexpected error in session check:", err);
+          if (mounted) {
+            setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
+            setIsAuthenticated(false);
+            setLoading(false);
+          }
+        }
+      };
+
+      checkSession();
+    }
+
+    // Cleanup function
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [setUser, setSession, setIsAuthenticated, setLoading, refreshToken, setAuthError]);
+  }, [setUser, setSession, setIsAuthenticated, setLoading, setAuthError]);
 };

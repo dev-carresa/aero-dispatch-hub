@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -9,41 +9,19 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
-  const toastShown = useRef(false);
-
-  // Helper function to check if a route is an admin route
-  const isAdminRoute = (path: string): boolean => {
-    // Updated to match the new routing structure
-    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
-  };
 
   // Show toast when user is not authenticated
   useEffect(() => {
-    if (!loading && !isAuthenticated && !toastShown.current) {
+    if (!loading && !isAuthenticated) {
       toast.error("Vous devez être connecté pour accéder à cette page");
       console.log("Not authenticated, redirecting to login page");
-      toastShown.current = true;
     }
-    
-    // Reset the toast flag when location or auth state changes
-    return () => {
-      if (location.pathname !== '/dashboard' && location.pathname !== '/admin/dashboard') {
-        toastShown.current = false;
-      }
-    };
-  }, [isAuthenticated, loading, location.pathname]);
+  }, [isAuthenticated, loading]);
 
-  // If user is authenticated but not admin and tries to access admin-only routes
-  const currentRouteIsAdmin = isAdminRoute(location.pathname);
-  if (isAuthenticated && user && currentRouteIsAdmin && user.role !== 'Admin') {
-    toast.error("Vous n'avez pas les droits d'accès à cette page");
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // If authenticated, render children, otherwise redirect to appropriate login page
+  // If authenticated, render children, otherwise redirect to login
   return (isAuthenticated && user) ? (
     <>{children}</> 
   ) : (
-    <Navigate to={currentRouteIsAdmin ? "/admin/login" : "/"} state={{ from: location }} replace />
+    <Navigate to="/" state={{ from: location }} replace />
   );
 };

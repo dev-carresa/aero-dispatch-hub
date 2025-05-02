@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,78 +17,40 @@ import {
   Share2, 
   Trash2,
   User,
+  X,
   Plus
 } from "lucide-react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { useQuery } from "@tanstack/react-query";
-import { bookingService } from "@/services/bookingService";
-import { Spinner } from "@/components/ui/spinner";
-import { toast } from "@/components/ui/sonner";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+
+// Sample booking data
+const booking = {
+  id: "B39218",
+  referenceId: "REF-123456",
+  customer: "John Smith",
+  email: "john.smith@example.com",
+  phone: "+1 (555) 123-4567",
+  origin: "JFK Airport Terminal 4",
+  destination: "Hilton Manhattan Hotel, 152 W 54th St, New York",
+  date: "2023-10-15",
+  time: "14:30",
+  vehicle: "Sedan - Black",
+  driver: "Michael Rodriguez",
+  driverPhone: "+1 (555) 987-6543",
+  status: "confirmed",
+  price: "$125.00",
+  paymentStatus: "Paid",
+  paymentMethod: "Credit Card",
+  passengers: 2,
+  luggage: 2,
+  flightNumber: "AA1234",
+  notes: "Customer requested bottled water.",
+  createdAt: "2023-10-10 09:23:45",
+  updatedAt: "2023-10-12 14:05:12",
+  source: "Website"
+};
 
 const BookingDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-
-  const { data: booking, isLoading, error } = useQuery({
-    queryKey: ['booking', id],
-    queryFn: () => id ? bookingService.getBookingById(id) : null,
-    enabled: !!id
-  });
-
-  const handleDelete = async () => {
-    if (!id || !window.confirm("Êtes-vous sûr de vouloir supprimer cette réservation ?")) {
-      return;
-    }
-    
-    try {
-      await bookingService.deleteBooking(id);
-      toast.success("Réservation supprimée avec succès");
-      navigate('/bookings');
-    } catch (error) {
-      toast.error("Erreur lors de la suppression de la réservation");
-      console.error(error);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (error || !booking) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-red-500">Erreur lors du chargement de la réservation</h2>
-        <p className="text-muted-foreground mt-2">Impossible de trouver les détails de cette réservation</p>
-        <Link to="/bookings" className="mt-4 inline-block">
-          <Button variant="secondary">Retour aux réservations</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(new Date(dateStr), "dd MMMM yyyy", { locale: fr });
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  const formatDateTime = (dateStr: string, timeStr: string) => {
-    try {
-      return `${formatDate(dateStr)} à ${timeStr}`;
-    } catch (e) {
-      return `${dateStr} ${timeStr}`;
-    }
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -101,7 +62,7 @@ const BookingDetails = () => {
           </Link>
           <div>
             <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-              Réservation #{id?.substring(0, 6)}
+              Booking #{booking.id}
               <Badge className={
                 booking.status === 'confirmed' 
                   ? 'bg-green-500' 
@@ -115,51 +76,51 @@ const BookingDetails = () => {
               </Badge>
             </h2>
             <p className="text-muted-foreground">
-              Référence: REF-{id?.substring(0, 6)} • Créé le: {formatDate(booking.created_at)}
+              Reference: {booking.referenceId} • Created: {booking.createdAt}
             </p>
           </div>
         </div>
         <div className="flex gap-2 self-end sm:self-auto">
           <Button variant="outline" size="sm">
             <Share2 className="h-4 w-4 mr-2" />
-            Partager
+            Share
           </Button>
           <Button variant="outline" size="sm">
             <Printer className="h-4 w-4 mr-2" />
-            Imprimer
+            Print
           </Button>
-          <Link to={`/bookings/${id}/edit`}>
+          <Link to={`/bookings/${booking.id}/edit`}>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
-              Modifier
+              Edit
             </Button>
           </Link>
-          <Button variant="destructive" size="sm" onClick={handleDelete}>
+          <Button variant="destructive" size="sm">
             <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
+            Delete
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="details" className="w-full">
         <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="details">Détails</TabsTrigger>
-          <TabsTrigger value="activity">Activité</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="billing">Facturation</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="details" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Informations Client</CardTitle>
+                <CardTitle className="text-lg">Customer Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="font-medium">{booking.customer_name}</p>
+                      <p className="font-medium">{booking.customer}</p>
                       <p className="text-sm text-muted-foreground">{booking.email}</p>
                     </div>
                   </div>
@@ -169,16 +130,22 @@ const BookingDetails = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-muted-foreground" />
-                    <span>Passagers: {booking.passenger_count}</span>
+                    <span>Passengers: {booking.passengers}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-muted-foreground" />
-                    <span>Bagages: {booking.luggage_count}</span>
+                    <span>Luggage: {booking.luggage}</span>
                   </div>
-                  {booking.flight_number && (
+                  {booking.flightNumber && (
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
-                      <span>Vol: {booking.flight_number}</span>
+                      <span>Flight: {booking.flightNumber}</span>
+                    </div>
+                  )}
+                  {booking.source && (
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <span>Source: {booking.source}</span>
                     </div>
                   )}
                 </div>
@@ -187,15 +154,15 @@ const BookingDetails = () => {
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Détails du Trajet</CardTitle>
+                <CardTitle className="text-lg">Trip Details</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Lieu de prise en charge</p>
-                      <p className="font-medium">{booking.pickup_location}</p>
+                      <p className="text-sm text-muted-foreground">Pickup Location</p>
+                      <p className="font-medium">{booking.origin}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -209,8 +176,8 @@ const BookingDetails = () => {
                   <div className="flex items-center gap-3">
                     <CalendarClock className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Date & heure de prise en charge</p>
-                      <p className="font-medium">{formatDateTime(booking.pickup_date, booking.pickup_time)}</p>
+                      <p className="text-sm text-muted-foreground">Pickup Date & Time</p>
+                      <p className="font-medium">{booking.date} at {booking.time}</p>
                     </div>
                   </div>
                 </div>
@@ -219,29 +186,26 @@ const BookingDetails = () => {
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Véhicule & Chauffeur</CardTitle>
+                <CardTitle className="text-lg">Vehicle & Driver</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Car className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Type de véhicule</p>
-                      <p className="font-medium">{booking.vehicle_type.charAt(0).toUpperCase() + booking.vehicle_type.slice(1)}</p>
+                      <p className="text-sm text-muted-foreground">Vehicle Type</p>
+                      <p className="font-medium">{booking.vehicle}</p>
                     </div>
                   </div>
-                  {booking.tracking_status && (
-                    <>
-                      <Separator />
-                      <div className="flex items-start gap-3">
-                        <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Statut de suivi</p>
-                          <p className="font-medium">{booking.tracking_status}</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Driver</p>
+                      <p className="font-medium">{booking.driver}</p>
+                      <p className="text-sm text-muted-foreground">{booking.driverPhone}</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -250,39 +214,24 @@ const BookingDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Informations de paiement</CardTitle>
+                <CardTitle className="text-lg">Payment Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Montant</span>
-                    <span className="font-medium">${booking.price}</span>
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-medium">{booking.price}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Méthode de paiement</span>
-                    <span className="font-medium">
-                      {booking.payment_method === 'credit-card' ? 'Carte de crédit' : 
-                       booking.payment_method === 'cash' ? 'Espèces' : 
-                       booking.payment_method === 'invoice' ? 'Facture' : 
-                       booking.payment_method === 'paypal' ? 'PayPal' : 
-                       booking.payment_method}
-                    </span>
+                    <span className="text-muted-foreground">Payment Method</span>
+                    <span className="font-medium">{booking.paymentMethod}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Statut du paiement</span>
+                    <span className="text-muted-foreground">Payment Status</span>
                     <Badge variant="outline" className="font-medium">
-                      {booking.payment_status === 'paid' ? 'Payé' : 
-                       booking.payment_status === 'pending' ? 'En attente' : 
-                       booking.payment_status === 'failed' ? 'Échoué' : 
-                       booking.payment_status}
+                      {booking.paymentStatus}
                     </Badge>
                   </div>
-                  {booking.payment_notes && (
-                    <div className="flex flex-col gap-1 mt-2">
-                      <span className="text-muted-foreground">Notes de paiement</span>
-                      <p className="text-sm">{booking.payment_notes}</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -292,19 +241,7 @@ const BookingDetails = () => {
                 <CardTitle className="text-lg">Notes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{booking.special_instructions || "Aucune note disponible."}</p>
-                {booking.admin_notes && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-sm">Notes administratives</h4>
-                    <p className="text-sm text-muted-foreground">{booking.admin_notes}</p>
-                  </div>
-                )}
-                {booking.driver_notes && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-sm">Notes chauffeur</h4>
-                    <p className="text-sm text-muted-foreground">{booking.driver_notes}</p>
-                  </div>
-                )}
+                <p className="text-sm">{booking.notes || "No notes available."}</p>
               </CardContent>
             </Card>
           </div>
@@ -313,8 +250,8 @@ const BookingDetails = () => {
         <TabsContent value="activity" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Historique d'activité</CardTitle>
-              <CardDescription>Historique complet de cette réservation</CardDescription>
+              <CardTitle>Activity History</CardTitle>
+              <CardDescription>Complete history of this booking</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -323,22 +260,33 @@ const BookingDetails = () => {
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className="font-medium">Réservation {booking.status === 'confirmed' ? 'confirmée' : 'créée'}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(booking.created_at)}</p>
+                    <p className="font-medium">Booking Confirmed</p>
+                    <p className="text-sm text-muted-foreground">2023-10-12 14:05:12</p>
+                    <p className="text-sm mt-1">Driver assigned: Michael Rodriguez</p>
                   </div>
                 </div>
                 
-                {booking.updated_at !== booking.created_at && (
-                  <div className="relative pl-8">
-                    <div className="absolute w-6 h-6 rounded-full bg-muted-foreground flex items-center justify-center -left-3 top-0">
-                      <Edit className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Réservation mise à jour</p>
-                      <p className="text-sm text-muted-foreground">{formatDate(booking.updated_at)}</p>
-                    </div>
+                <div className="relative pl-8 pb-6 border-l border-muted">
+                  <div className="absolute w-6 h-6 rounded-full bg-muted-foreground flex items-center justify-center -left-3 top-0">
+                    <Clock className="h-4 w-4 text-white" />
                   </div>
-                )}
+                  <div>
+                    <p className="font-medium">Payment Received</p>
+                    <p className="text-sm text-muted-foreground">2023-10-11 10:12:34</p>
+                    <p className="text-sm mt-1">$125.00 via Credit Card</p>
+                  </div>
+                </div>
+                
+                <div className="relative pl-8">
+                  <div className="absolute w-6 h-6 rounded-full bg-muted-foreground flex items-center justify-center -left-3 top-0">
+                    <Plus className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Booking Created</p>
+                    <p className="text-sm text-muted-foreground">2023-10-10 09:23:45</p>
+                    <p className="text-sm mt-1">Created by admin@company.com</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -348,12 +296,38 @@ const BookingDetails = () => {
           <Card>
             <CardHeader>
               <CardTitle>Messages</CardTitle>
-              <CardDescription>Historique de communication pour cette réservation</CardDescription>
+              <CardDescription>Communication history for this booking</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-6">
-                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
-                <p className="mt-2 text-muted-foreground">Aucun message pour cette réservation</p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-muted p-3 rounded-lg">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-medium">System Notification</span>
+                        <span className="text-xs text-muted-foreground">2023-10-12 14:05:12</span>
+                      </div>
+                      <p className="text-sm">Driver Michael Rodriguez has been assigned to your booking.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-muted p-3 rounded-lg">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-medium">System Notification</span>
+                        <span className="text-xs text-muted-foreground">2023-10-11 10:12:34</span>
+                      </div>
+                      <p className="text-sm">Your payment of $125.00 has been processed successfully.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -362,8 +336,8 @@ const BookingDetails = () => {
         <TabsContent value="billing" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Informations de facturation</CardTitle>
-              <CardDescription>Détails sur le paiement et la facturation</CardDescription>
+              <CardTitle>Billing Information</CardTitle>
+              <CardDescription>Details about payment and invoicing</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -372,59 +346,44 @@ const BookingDetails = () => {
                     <thead className="bg-muted">
                       <tr>
                         <th className="py-3 px-4 text-left">Description</th>
-                        <th className="py-3 px-4 text-right">Montant</th>
+                        <th className="py-3 px-4 text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-t">
-                        <td className="py-3 px-4">Transport - {booking.pickup_location} à {booking.destination}</td>
-                        <td className="py-3 px-4 text-right">${booking.price}</td>
+                        <td className="py-3 px-4">Airport Transfer - JFK to Manhattan</td>
+                        <td className="py-3 px-4 text-right">$125.00</td>
                       </tr>
                       <tr className="border-t">
                         <td className="py-3 px-4 font-medium">Total</td>
-                        <td className="py-3 px-4 text-right font-medium">${booking.price}</td>
+                        <td className="py-3 px-4 text-right font-medium">$125.00</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 
                 <div>
-                  <h3 className="font-medium mb-2">Historique des paiements</h3>
+                  <h3 className="font-medium mb-2">Payment History</h3>
                   <div className="border rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-muted">
                         <tr>
                           <th className="py-3 px-4 text-left">Date</th>
-                          <th className="py-3 px-4 text-left">Méthode</th>
-                          <th className="py-3 px-4 text-left">Statut</th>
-                          <th className="py-3 px-4 text-right">Montant</th>
+                          <th className="py-3 px-4 text-left">Method</th>
+                          <th className="py-3 px-4 text-left">Status</th>
+                          <th className="py-3 px-4 text-right">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-t">
-                          <td className="py-3 px-4">{formatDate(booking.created_at)}</td>
+                          <td className="py-3 px-4">2023-10-11</td>
+                          <td className="py-3 px-4">Credit Card</td>
                           <td className="py-3 px-4">
-                            {booking.payment_method === 'credit-card' ? 'Carte de crédit' : 
-                             booking.payment_method === 'cash' ? 'Espèces' : 
-                             booking.payment_method === 'invoice' ? 'Facture' : 
-                             booking.payment_method === 'paypal' ? 'PayPal' : 
-                             booking.payment_method}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                              booking.payment_status === 'paid' 
-                                ? 'bg-green-50 text-green-700 ring-green-600/20' 
-                                : booking.payment_status === 'pending'
-                                ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20'
-                                : 'bg-red-50 text-red-700 ring-red-600/20'
-                            }`}>
-                              {booking.payment_status === 'paid' ? 'Payé' : 
-                               booking.payment_status === 'pending' ? 'En attente' : 
-                               booking.payment_status === 'failed' ? 'Échoué' : 
-                               booking.payment_status}
+                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                              Completed
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-right">${booking.price}</td>
+                          <td className="py-3 px-4 text-right">$125.00</td>
                         </tr>
                       </tbody>
                     </table>

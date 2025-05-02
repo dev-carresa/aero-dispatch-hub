@@ -1,5 +1,4 @@
-
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   User, 
@@ -23,8 +22,6 @@ import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
   const { user, signOut, isLoggingOut } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   
   // Helper function to get initials from a name
   const getInitials = () => {
@@ -38,10 +35,10 @@ export function Header() {
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Logout button clicked, current path:", location.pathname);
+    console.log("Logout button clicked");
     try {
       await signOut();
-      // La navigation est gérée dans la fonction signOut
+      // Navigation is handled inside signOut function
     } catch (error) {
       console.error("Failed to logout:", error);
     }
