@@ -15,10 +15,11 @@ export const ProtectedRoute: React.FC = () => {
   useEffect(() => {
     // Fast path: check if we don't have a token or if the token is invalid
     if (!hasStoredSession() || !isSessionValid()) {
+      console.log('ProtectedRoute: No valid session, redirecting to login');
       // Immediate redirection if no token or invalid token
       const redirectTimer = setTimeout(() => {
         navigate('/', { state: { from: location }, replace: true });
-      }, 10); // Slight delay to allow for React state updates
+      }, 50); // Slight delay to allow for React state updates
       
       return () => clearTimeout(redirectTimer);
     }
@@ -31,10 +32,12 @@ export const ProtectedRoute: React.FC = () => {
 
   // If not authenticated and not loading, redirect to login using React Router's Navigate
   if (!isAuthenticated) {
+    console.log('ProtectedRoute: Not authenticated, redirecting to login');
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // If authenticated, render the protected content
+  console.log('ProtectedRoute: Authenticated, rendering content');
   return (
     <AuthRedirect>
       <Outlet />

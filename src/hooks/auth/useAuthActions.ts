@@ -51,13 +51,14 @@ export const useAuthActions = (
 
   // Sign in function - améliorée pour gérer les promesses et mémoriser l'email
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
-    // Prevent multiple simultaneous auth actions
+    // Vérifier si une authentification est déjà en cours
     if (isAuthActionInProgress) {
+      console.log("Une authentification est déjà en cours, opération annulée");
       return Promise.reject(new Error("Authentication already in progress"));
     }
     
     try {
-      console.log("Attempting sign in for:", email, "with remember me:", rememberMe);
+      console.log("Tentative de connexion pour:", email, "avec remember me:", rememberMe);
       setIsAuthActionInProgress(true);
       setLoading(true);
       setAuthError(null);
@@ -73,14 +74,14 @@ export const useAuthActions = (
       });
 
       if (error) {
-        console.error("Sign in error:", error.message);
+        console.error("Erreur de connexion:", error.message);
         toast.error(error.message);
         setAuthError(`Login failed: ${error.message}`);
         throw error;
       }
 
       if (data.user && data.session) {
-        console.log("Sign in successful");
+        console.log("Connexion réussie");
         
         // Stockage des données utilisateur enrichies
         try {
@@ -152,6 +153,7 @@ export const useAuthActions = (
       console.error("Sign in error:", error);
       return Promise.reject(error);
     } finally {
+      // S'assurer que ces états sont toujours réinitialisés, même en cas d'erreur
       setLoading(false);
       setIsAuthActionInProgress(false);
     }
@@ -160,9 +162,12 @@ export const useAuthActions = (
   // Sign out function - inchangée
   const signOut = async () => {
     // Prevent multiple simultaneous auth actions
-    if (isAuthActionInProgress) return;
+    if (isAuthActionInProgress) {
+      console.log("Une déconnexion est déjà en cours, opération annulée");
+      return;
+    }
     
-    console.log("Signing out...");
+    console.log("Déconnexion en cours...");
     try {
       setIsAuthActionInProgress(true);
       setIsLoggingOut(true);
@@ -177,7 +182,7 @@ export const useAuthActions = (
       });
       
       if (error) {
-        console.error("Sign out error:", error);
+        console.error("Erreur lors de la déconnexion:", error);
         toast.error(`Échec de la déconnexion: ${error.message}`);
         throw error;
       }
@@ -188,14 +193,14 @@ export const useAuthActions = (
       setIsAuthenticated(false);
       
       toast.success("Déconnexion réussie");
-      console.log("Sign out successful");
+      console.log("Déconnexion réussie");
       
       // Utiliser React Router pour la navigation
       if (navigate) {
         navigate('/');
       }
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error("Erreur lors de la déconnexion:", error);
       toast.error("Échec de la déconnexion");
     } finally {
       setIsLoggingOut(false);

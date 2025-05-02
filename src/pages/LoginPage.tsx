@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [loginAttempt, setLoginAttempt] = useState(0);
   
   // Charger l'email mémorisé lors du chargement de la page
   useEffect(() => {
@@ -36,12 +37,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Tentative de connexion:", loginAttempt + 1);
+    
+    setLoginAttempt(prev => prev + 1);
     
     try {
       await signIn(email, password, rememberMe);
     } catch (error) {
-      console.error("Login error:", error);
-      // Error is handled in the signIn function
+      console.error("Erreur de connexion:", error);
+      // Si l'erreur est "Authentication already in progress", on informe l'utilisateur
+      if (error instanceof Error && error.message === "Authentication already in progress") {
+        toast.error("Une connexion est déjà en cours, veuillez patienter ou rafraîchir la page");
+      }
+      // Géré dans la fonction signIn
     }
   };
   
@@ -53,8 +61,13 @@ export default function LoginPage() {
       // Login with demo credentials
       await signIn("admin@example.com", "password", rememberMe);
     } catch (error) {
-      console.error("Demo login error:", error);
-      toast.error("Une erreur est survenue lors de la connexion avec le compte de démonstration");
+      console.error("Erreur lors de la connexion démo:", error);
+      // Si l'erreur est "Authentication already in progress", on informe l'utilisateur
+      if (error instanceof Error && error.message === "Authentication already in progress") {
+        toast.error("Une connexion est déjà en cours, veuillez patienter ou rafraîchir la page");
+      } else {
+        toast.error("Une erreur est survenue lors de la connexion avec le compte de démonstration");
+      }
     }
   };
 
