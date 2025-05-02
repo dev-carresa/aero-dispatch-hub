@@ -174,12 +174,11 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         }
         
         try {
-          // Request both establishments and addresses for a better reservation system experience
+          // Using empty types array to get all types (both establishments and addresses)
           autocompleteService.current?.getPlacePredictions(
             { 
               input: inputValue,
-              // Include more place types for a comprehensive reservation system
-              types: [] // Empty array means it will return all place types
+              types: [] // Empty array to get all types
             },
             (predictions, status) => {
               if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
@@ -215,6 +214,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
 
   // Handle place selection
   const handlePlaceSelect = (prediction: PlacePrediction) => {
+    // Call the onPlaceSelect callback with the address and placeId
     onPlaceSelect(prediction.description, prediction.place_id);
     setPredictions([]);
     setShowDropdown(false);

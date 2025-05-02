@@ -27,6 +27,12 @@ export function LocationInput({
   label,
   icon = <MapPin className="h-4 w-4" />
 }: LocationInputProps) {
+  // Create a handler that ensures both onChange and onPlaceSelect are called
+  const handlePlaceSelect = (address: string, placeId?: string) => {
+    onChange(address); // Update the form field value
+    onPlaceSelect(address, placeId); // Call the original onPlaceSelect
+  };
+
   return (
     <div className="relative w-full">
       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
@@ -36,7 +42,7 @@ export function LocationInput({
       <CustomPlacesAutocomplete
         value={value}
         onChange={onChange}
-        onPlaceSelect={onPlaceSelect}
+        onPlaceSelect={handlePlaceSelect}
         placeholder={placeholder}
         className={cn("pl-10", className)}
         required={required}

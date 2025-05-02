@@ -39,6 +39,11 @@ export function LocationFields({ form }: LocationFieldsProps) {
     form.setValue('destination', currentPickup);
   };
 
+  // Handle place selection with explicit address update
+  const handlePlaceSelect = (fieldName: 'pickupLocation' | 'destination') => (address: string) => {
+    form.setValue(fieldName, address);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -57,7 +62,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
                 <LocationInput
                   value={field.value}
                   onChange={(value) => field.onChange(value)}
-                  onPlaceSelect={(address) => field.onChange(address)}
+                  onPlaceSelect={handlePlaceSelect('pickupLocation')}
                   placeholder="Enter pickup location"
                 />
               </FormControl>
@@ -89,7 +94,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
                 <LocationInput
                   value={field.value}
                   onChange={(value) => field.onChange(value)}
-                  onPlaceSelect={(address) => field.onChange(address)}
+                  onPlaceSelect={handlePlaceSelect('destination')}
                   placeholder="Enter destination"
                 />
               </FormControl>

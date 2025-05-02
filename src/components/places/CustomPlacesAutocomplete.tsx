@@ -1,5 +1,5 @@
 
-import { useState, useRef, forwardRef, useCallback, memo } from 'react';
+import { useState, useRef, forwardRef, useCallback, memo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { usePlacesAutocomplete } from './hooks/usePlacesAutoComplete';
 import { PredictionsList } from './components/PredictionsList';
@@ -20,6 +20,11 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
     const [inputValue, setInputValue] = useState(value);
     const inputRef = useRef<HTMLInputElement>(null);
     
+    // Update internal state when value prop changes
+    useEffect(() => {
+      setInputValue(value);
+    }, [value]);
+    
     const { 
       isLoading, 
       predictions, 
@@ -28,7 +33,16 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
       handlePlaceSelect 
     } = usePlacesAutocomplete({ 
       inputValue, 
-      onPlaceSelect 
+      onPlaceSelect: (address, placeId) => {
+        // Update the input value to display the selected address
+        setInputValue(address);
+        // Call the parent component's onPlaceSelect callback
+        onPlaceSelect(address, placeId);
+        // Also call onChange if it exists
+        if (onChange) {
+          onChange(address);
+        }
+      }
     });
 
     // Handle input change with useCallback
