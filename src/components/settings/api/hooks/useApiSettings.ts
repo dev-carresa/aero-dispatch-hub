@@ -54,10 +54,13 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
               stateFromDb[integration.category] = {};
             }
             
+            // Ensure status is one of the valid enum values
+            const status = integration.status as "connected" | "disconnected" | "error" | "pending";
+            
             stateFromDb[integration.category][integration.key_name] = {
               value: integration.key_value || "",
               enabled: integration.enabled,
-              status: integration.status,
+              status: status,
               lastTested: integration.last_tested,
               error: integration.error
             };
