@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { LoginForm } from "@/components/login/LoginForm";
-import { Shield } from "lucide-react"; 
+import { Shield, RefreshCcw } from "lucide-react"; 
+import { Button } from "@/components/ui/button";
+import { clearUserSession } from "@/services/sessionStorageService";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -69,6 +71,14 @@ export default function AdminLoginPage() {
     }
   };
 
+  // Fonction pour réinitialiser la session
+  const handleResetSession = () => {
+    clearUserSession();
+    localStorage.clear(); // Nettoyage complet du localStorage
+    toast.success("Session réinitialisée avec succès");
+    window.location.reload(); // Recharger la page pour réinitialiser l'état React
+  };
+
   // Determine if button should be disabled
   const isButtonDisabled = loading || isSubmitting;
 
@@ -91,6 +101,17 @@ export default function AdminLoginPage() {
             loginError={loginError}
             variant="admin"
           />
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleResetSession} 
+              className="text-xs bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
+            >
+              <RefreshCcw className="mr-1 h-3 w-3" /> Réinitialiser la session
+            </Button>
+          </div>
         </CardContent>
         <CardFooter className="text-center border-t border-gray-700 pt-4">
           <p className="text-sm text-gray-400">

@@ -18,4 +18,6 @@ export interface AuthContextType {
   session: Session | null;
   isLoggingOut: boolean;
   authError: string | null;
+  isAuthActionInProgress: boolean;
+  resetSession?: () => void;
 }

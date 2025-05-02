@@ -14,7 +14,7 @@ export const useSignIn = (
   setIsAuthenticated,
   setLoading,
   setAuthError,
-  setIsAuthActionInProgress,
+  getIsAuthActionInProgress,
   navigate?: NavigateFunction
 ) => {
   const [loginAttemptCount, setLoginAttemptCount] = useState(0);
@@ -22,8 +22,9 @@ export const useSignIn = (
 
   // Sign in function - améliorée pour gérer les promesses, limiter les tentatives et mieux traiter les erreurs
   const signIn = async (email: string, password: string, rememberMe: boolean = true): Promise<any> => {
-    // Vérifier si une authentification est déjà en cours
-    if (setIsAuthActionInProgress(true)) {
+    // Vérifier si une authentification est déjà en cours avec la fonction getter
+    const isAuthInProgress = getIsAuthActionInProgress();
+    if (isAuthInProgress) {
       console.log("Une authentification est déjà en cours, opération annulée");
       toast.error("Une connexion est déjà en cours, veuillez patienter");
       return Promise.reject(new Error("Authentication already in progress"));
@@ -54,11 +55,13 @@ export const useSignIn = (
     
     try {
       console.log("Tentative de connexion pour:", email, "avec remember me:", rememberMe);
-      setIsAuthActionInProgress(true);
       setLoading(true);
       setAuthError(null);
       setLastLoginTimestamp(now);
       setLoginAttemptCount(prev => prev + 1);
+      
+      // Définir l'état d'authentification après les vérifications
+      getIsAuthActionInProgress(true);
       
       // Mémoriser l'email si demandé
       if (rememberMe && email) {
@@ -107,7 +110,11 @@ export const useSignIn = (
             // Utiliser React Router pour la navigation
             if (navigate) {
               setTimeout(() => {
-                navigate('/dashboard');
+                if (userData.role === 'Admin') {
+                  navigate('/dashboard');
+                } else {
+                  navigate('/dashboard');
+                }
               }, AUTH_CONSTANTS.NAVIGATION_DELAY);
             }
           }
@@ -159,7 +166,7 @@ export const useSignIn = (
       // S'assurer que ces états sont toujours réinitialisés, même en cas d'erreur
       setTimeout(() => {
         setLoading(false);
-        setIsAuthActionInProgress(false);
+        getIsAuthActionInProgress(false);
       }, AUTH_CONSTANTS.AUTH_ACTION_RESET_DELAY);
     }
   };

@@ -12,7 +12,7 @@ export const useSignOut = (
   setSession,
   setIsAuthenticated,
   setLoading,
-  setIsAuthActionInProgress,
+  getIsAuthActionInProgress,
   navigate?: NavigateFunction
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -20,14 +20,15 @@ export const useSignOut = (
   // Sign out function - améliorée pour éviter les problèmes
   const signOut = async (): Promise<void> => {
     // Prevent multiple simultaneous auth actions
-    if (setIsAuthActionInProgress(true)) {
+    const isAuthInProgress = getIsAuthActionInProgress();
+    if (isAuthInProgress) {
       console.log("Une déconnexion est déjà en cours, opération annulée");
       return;
     }
     
     console.log("Déconnexion en cours...");
     try {
-      setIsAuthActionInProgress(true);
+      getIsAuthActionInProgress(true);
       setIsLoggingOut(true);
       
       // Nettoyage du cache et du stockage local avant la déconnexion
@@ -63,7 +64,7 @@ export const useSignOut = (
     } finally {
       setTimeout(() => {
         setIsLoggingOut(false);
-        setIsAuthActionInProgress(false);
+        getIsAuthActionInProgress(false);
         setLoading(false);
       }, AUTH_CONSTANTS.AUTH_ACTION_RESET_DELAY);
     }

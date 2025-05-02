@@ -4,6 +4,8 @@ import { useUser } from './auth/useUser';
 import { useAuthListeners } from './auth/useAuthListeners'; 
 import { useAuthActions } from './auth/useAuthActions';
 import { useDebugLogging } from './auth/useDebugLogging';
+import { clearUserSession } from '@/services/sessionStorageService';
+import { toast } from 'sonner';
 
 export const useAuthProvider = (navigate?: NavigateFunction) => {
   // Get state variables and setters
@@ -25,7 +27,9 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     signIn,
     signOut,
     refreshToken,
-    isLoggingOut
+    isLoggingOut,
+    isAuthActionInProgress,
+    getIsAuthActionInProgress
   } = useAuthActions(
     setUser,
     setSession,
@@ -55,6 +59,14 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     authError
   );
 
+  // Function to reset session state
+  const resetSession = () => {
+    clearUserSession();
+    localStorage.clear(); // Nettoyage complet du localStorage
+    toast.success("Session réinitialisée avec succès");
+    window.location.reload(); // Recharger la page pour réinitialiser l'état React
+  };
+
   return {
     user,
     loading,
@@ -63,6 +75,8 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     isAuthenticated,
     session,
     isLoggingOut,
-    authError
+    authError,
+    isAuthActionInProgress,
+    resetSession
   };
 };

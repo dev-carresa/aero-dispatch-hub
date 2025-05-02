@@ -4,7 +4,7 @@ import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AuthenticationCheck } from './AuthenticationCheck';
 import { AuthRedirect } from './AuthRedirect';
-import { hasStoredSession, isSessionValid } from '@/services/sessionStorageService';
+import { hasStoredSession, isSessionValid, clearUserSession } from '@/services/sessionStorageService';
 import { toast } from "sonner";
 
 export const ProtectedRoute: React.FC = () => {
@@ -12,6 +12,12 @@ export const ProtectedRoute: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [redirectTriggered, setRedirectTriggered] = useState(false);
+  
+  // Helper function to check if a route is an admin route
+  const isAdminRoute = (path: string): boolean => {
+    // Consider both /admin and /admin-* paths as admin routes
+    return path === '/admin' || path.startsWith('/admin-');
+  };
   
   // Fast check for token existence and validity
   useEffect(() => {
@@ -26,11 +32,11 @@ export const ProtectedRoute: React.FC = () => {
       toast.error("Session expirée ou invalide. Veuillez vous reconnecter.");
       
       // Determine if the user was trying to access an admin page
-      const isAdminPath = location.pathname.includes('/admin-');
+      const currentPathIsAdmin = isAdminRoute(location.pathname);
       
       // Immediate redirection if no token or invalid token
       const redirectTimer = setTimeout(() => {
-        navigate(isAdminPath ? '/admin' : '/', { state: { from: location }, replace: true });
+        navigate(currentPathIsAdmin ? '/admin' : '/', { state: { from: location }, replace: true });
       }, 100); // Slight delay to allow for React state updates
       
       return () => clearTimeout(redirectTimer);
@@ -45,9 +51,9 @@ export const ProtectedRoute: React.FC = () => {
   // If not authenticated and not loading, redirect to appropriate login page
   if (!isAuthenticated) {
     // Determine which login page to redirect to based on the route
-    const isAdminPath = location.pathname.includes('/admin-');
-    console.log(`ProtectedRoute: Not authenticated, redirecting to ${isAdminPath ? 'admin' : 'standard'} login`);
-    return <Navigate to={isAdminPath ? "/admin" : "/"} state={{ from: location }} replace />;
+    const currentPathIsAdmin = isAdminRoute(location.pathname);
+    console.log(`ProtectedRoute: Not authenticated, redirecting to ${currentPathIsAdmin ? 'admin' : 'standard'} login`);
+    return <Navigate to={currentPathIsAdmin ? "/admin" : "/"} state={{ from: location }} replace />;
   }
 
   // If authenticated, render the protected content

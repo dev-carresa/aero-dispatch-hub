@@ -15,6 +15,14 @@ export const useAuthActions = (
 ) => {
   const [isAuthActionInProgress, setIsAuthActionInProgress] = useState(false);
   
+  // Créer une fonction qui permet à la fois de lire et de définir l'état
+  const getIsAuthActionInProgress = (setValue?: boolean): boolean => {
+    if (setValue !== undefined) {
+      setIsAuthActionInProgress(setValue);
+    }
+    return isAuthActionInProgress;
+  };
+  
   // Get token refresh functionality
   const { refreshToken } = useTokenRefresh();
   
@@ -25,7 +33,7 @@ export const useAuthActions = (
     setIsAuthenticated, 
     setLoading, 
     setAuthError, 
-    () => isAuthActionInProgress, 
+    getIsAuthActionInProgress, 
     navigate
   );
   
@@ -35,7 +43,7 @@ export const useAuthActions = (
     setSession, 
     setIsAuthenticated, 
     setLoading, 
-    () => isAuthActionInProgress, 
+    getIsAuthActionInProgress, 
     navigate
   );
 
@@ -44,6 +52,8 @@ export const useAuthActions = (
     signOut,
     refreshToken,
     isLoggingOut,
-    loginAttemptCount
+    loginAttemptCount,
+    isAuthActionInProgress,
+    getIsAuthActionInProgress
   };
 };

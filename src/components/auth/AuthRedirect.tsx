@@ -11,6 +11,12 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
   const location = useLocation();
   const toastShown = useRef(false);
 
+  // Helper function to check if a route is an admin route
+  const isAdminRoute = (path: string): boolean => {
+    // Consider both /admin and /admin-* paths as admin routes
+    return path === '/admin' || path.startsWith('/admin-');
+  };
+
   // Show toast when user is not authenticated
   useEffect(() => {
     if (!loading && !isAuthenticated && !toastShown.current) {
@@ -28,8 +34,8 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
   }, [isAuthenticated, loading, location.pathname]);
 
   // If user is authenticated but not admin and tries to access admin-only routes
-  const isAdminRoute = location.pathname.startsWith('/admin-');
-  if (isAuthenticated && user && isAdminRoute && user.role !== 'Admin') {
+  const currentRouteIsAdmin = isAdminRoute(location.pathname);
+  if (isAuthenticated && user && currentRouteIsAdmin && user.role !== 'Admin') {
     toast.error("Vous n'avez pas les droits d'accès à cette page");
     return <Navigate to="/dashboard" replace />;
   }
@@ -38,6 +44,6 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
   return (isAuthenticated && user) ? (
     <>{children}</> 
   ) : (
-    <Navigate to={isAdminRoute ? "/admin" : "/"} state={{ from: location }} replace />
+    <Navigate to={currentRouteIsAdmin ? "/admin" : "/"} state={{ from: location }} replace />
   );
 };

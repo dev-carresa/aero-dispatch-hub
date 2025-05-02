@@ -8,6 +8,9 @@ import { useAuth } from "@/context/AuthContext";
 import { LoginForm } from "@/components/login/LoginForm";
 import { DemoLoginButton } from "@/components/login/DemoLoginButton";
 import { LoginDivider } from "@/components/login/LoginDivider";
+import { Button } from "@/components/ui/button";
+import { clearUserSession } from "@/services/sessionStorageService";
+import { RefreshCcw } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -94,6 +97,14 @@ export default function LoginPage() {
     }
   };
 
+  // Fonction pour réinitialiser la session
+  const handleResetSession = () => {
+    clearUserSession();
+    localStorage.clear(); // Nettoyage complet du localStorage
+    toast.success("Session réinitialisée avec succès");
+    window.location.reload(); // Recharger la page pour réinitialiser l'état React
+  };
+
   // Determine if button should be disabled
   const isButtonDisabled = loading || isSubmitting;
 
@@ -120,6 +131,17 @@ export default function LoginPage() {
             onClick={handleDemoLogin}
             isButtonDisabled={isButtonDisabled}
           />
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleResetSession} 
+              className="text-xs"
+            >
+              <RefreshCcw className="mr-1 h-3 w-3" /> Réinitialiser la session
+            </Button>
+          </div>
         </CardContent>
         <CardFooter className="text-center flex flex-col space-y-2">
           <p className="text-sm text-muted-foreground">
