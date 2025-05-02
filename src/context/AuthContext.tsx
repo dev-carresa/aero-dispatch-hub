@@ -4,6 +4,7 @@ import { UserRole } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AuthUser {
   id: string;
@@ -173,7 +174,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     console.log("Signing out...");
     try {
+      // We're still showing loading state during sign out
       setLoading(true);
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
@@ -181,15 +184,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      // Clear user state regardless of API success
+      // Clear user state - we do this here for immediate UI response
+      // Even if we let onAuthStateChange handle this later, it's better UX
+      // to do it immediately
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
+      
       toast.success("Successfully logged out");
       console.log("Sign out successful");
       
-      // Force a reload to ensure clean state
-      window.location.href = '/';
+      // We don't force page reload anymore
+      // onAuthStateChange will handle the rest
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Sign out failed");

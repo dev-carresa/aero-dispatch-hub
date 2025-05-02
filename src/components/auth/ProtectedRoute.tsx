@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ export const ProtectedRoute: React.FC = () => {
   const location = useLocation();
   
   // Show a better loading indicator during authentication check
+  // Only show the loading state if we're actually checking authentication
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -20,11 +21,15 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   // Only show the error toast when we're certain user is not authenticated
-  React.useEffect(() => {
+  // and only once (when the component mounts)
+  useEffect(() => {
     if (!loading && !isAuthenticated) {
       toast.error("You must be logged in to access this page");
+      console.log("Not authenticated, redirecting to login page");
     }
   }, [isAuthenticated, loading]);
 
+  // If authenticated, render the child routes
+  // If not authenticated, redirect to the login page
   return isAuthenticated ? <Outlet /> : <Navigate to="/" state={{ from: location }} replace />;
 };

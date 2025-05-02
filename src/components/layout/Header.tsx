@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -40,9 +41,12 @@ export function Header() {
     console.log("Logout button clicked");
     try {
       await signOut();
-      // Note: We don't need to navigate here as the signOut function now handles redirection
+      // Navigate to login page after successful logout
+      // This is now handled by the AuthContext
+      navigate('/');
     } catch (error) {
       console.error("Failed to logout:", error);
+      toast.error("Failed to logout. Please try again.");
     }
   };
 
