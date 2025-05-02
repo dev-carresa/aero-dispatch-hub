@@ -8,7 +8,7 @@ import { hasStoredSession, isSessionValid } from '@/services/sessionStorageServi
 import { toast } from "sonner";
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [redirectTriggered, setRedirectTriggered] = useState(false);
@@ -25,9 +25,12 @@ export const ProtectedRoute: React.FC = () => {
       // Show toast notification
       toast.error("Session expirée ou invalide. Veuillez vous reconnecter.");
       
+      // Determine if the user was trying to access an admin page
+      const isAdminPath = location.pathname.includes('/admin-');
+      
       // Immediate redirection if no token or invalid token
       const redirectTimer = setTimeout(() => {
-        navigate('/', { state: { from: location }, replace: true });
+        navigate(isAdminPath ? '/admin' : '/', { state: { from: location }, replace: true });
       }, 100); // Slight delay to allow for React state updates
       
       return () => clearTimeout(redirectTimer);
@@ -39,10 +42,12 @@ export const ProtectedRoute: React.FC = () => {
     return <AuthenticationCheck><Outlet /></AuthenticationCheck>;
   }
 
-  // If not authenticated and not loading, redirect to login using React Router's Navigate
+  // If not authenticated and not loading, redirect to appropriate login page
   if (!isAuthenticated) {
-    console.log('ProtectedRoute: Not authenticated, redirecting to login');
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // Determine which login page to redirect to based on the route
+    const isAdminPath = location.pathname.includes('/admin-');
+    console.log(`ProtectedRoute: Not authenticated, redirecting to ${isAdminPath ? 'admin' : 'standard'} login`);
+    return <Navigate to={isAdminPath ? "/admin" : "/"} state={{ from: location }} replace />;
   }
 
   // If authenticated, render the protected content

@@ -11,7 +11,7 @@ import { LoginDivider } from "@/components/login/LoginDivider";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, loading, isAuthenticated, authError } = useAuth();
+  const { signIn, loading, isAuthenticated, authError, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
   
@@ -19,6 +19,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated) {
       console.log("Utilisateur authentifié, redirection vers le tableau de bord");
+      // For now, redirect all users to the dashboard
+      // In a more sophisticated app, you might want different destinations based on role
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
@@ -99,7 +101,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-gray-50">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Connexion</CardTitle>
+          <CardTitle className="text-2xl font-bold">Connexion Utilisateur</CardTitle>
           <CardDescription>
             Entrez vos identifiants pour accéder à votre compte
           </CardDescription>
@@ -109,6 +111,7 @@ export default function LoginPage() {
             onSubmit={handleLogin}
             isButtonDisabled={isButtonDisabled}
             loginError={loginError}
+            variant="standard"
           />
           
           <LoginDivider />
@@ -118,9 +121,14 @@ export default function LoginPage() {
             isButtonDisabled={isButtonDisabled}
           />
         </CardContent>
-        <CardFooter className="text-center">
+        <CardFooter className="text-center flex flex-col space-y-2">
           <p className="text-sm text-muted-foreground">
             Pas encore de compte? Contactez votre administrateur
+          </p>
+          <p className="text-sm">
+            <a href="/admin" className="text-primary hover:underline">
+              Accès administrateur
+            </a>
           </p>
         </CardFooter>
       </Card>

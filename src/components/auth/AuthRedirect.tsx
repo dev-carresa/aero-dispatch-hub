@@ -27,10 +27,17 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [isAuthenticated, loading, location.pathname]);
 
-  // If authenticated, render children, otherwise redirect to login
+  // If user is authenticated but not admin and tries to access admin-only routes
+  const isAdminRoute = location.pathname.startsWith('/admin-');
+  if (isAuthenticated && user && isAdminRoute && user.role !== 'Admin') {
+    toast.error("Vous n'avez pas les droits d'accès à cette page");
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // If authenticated, render children, otherwise redirect to appropriate login page
   return (isAuthenticated && user) ? (
     <>{children}</> 
   ) : (
-    <Navigate to="/" state={{ from: location }} replace />
+    <Navigate to={isAdminRoute ? "/admin" : "/"} state={{ from: location }} replace />
   );
 };
