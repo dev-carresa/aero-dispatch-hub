@@ -29,7 +29,7 @@ interface NavigationItem {
 }
 
 export const navigation: NavigationItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: 'dashboard:view' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
   { name: 'Bookings', href: '/bookings', icon: CalendarCheck, permission: 'bookings:view' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users:view' },
   { name: 'API Users', href: '/api-users', icon: Key, permission: 'api_users:view' },
