@@ -9,8 +9,12 @@ import { ApiCategoryTab } from "../api/components/ApiCategoryTab";
 import { ApiDocumentation } from "../api/components/ApiDocumentation";
 import { useApiSettings } from "../api/hooks/useApiSettings";
 import { apiCategories } from "../api/data/apiCategories";
+import { useAuth } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ApiSettings() {
+  const { isAuthenticated } = useAuth();
+  
   const {
     apiKeysState,
     searchQuery,
@@ -21,7 +25,8 @@ export function ApiSettings() {
     testApiConnection,
     handleSaveApiKeys,
     handleResetApiKeys,
-    formState
+    formState,
+    isLoading
   } = useApiSettings(apiCategories);
 
   // Filter API categories based on search query
@@ -37,13 +42,46 @@ export function ApiSettings() {
 
   const [activeTab, setActiveTab] = useState(filteredCategories[0]?.name || "");
 
+  if (!isAuthenticated) {
+    return (
+      <Alert>
+        <AlertDescription>
+          Vous devez être connecté pour gérer les configurations API.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div className="space-y-0.5">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="space-y-0.5">
-          <h2 className="text-2xl font-bold tracking-tight">API Integrations</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Intégrations API</h2>
           <p className="text-muted-foreground">
-            Configure your API keys and external service connections
+            Configurez vos clés API et connexions aux services externes
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -54,7 +92,7 @@ export function ApiSettings() {
       {filteredCategories.length === 0 ? (
         <Alert>
           <AlertDescription>
-            No API integrations found matching your search criteria. Please try a different search term.
+            Aucune intégration API ne correspond à votre recherche. Veuillez essayer un autre terme.
           </AlertDescription>
         </Alert>
       ) : (
@@ -101,7 +139,14 @@ export function ApiSettings() {
           onClick={handleResetApiKeys}
           disabled={formState.isSubmitting}
         >
-          Reset to Default
+          {formState.isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Réinitialisation...
+            </>
+          ) : (
+            "Réinitialiser"
+          )}
         </Button>
         <Button 
           onClick={handleSaveApiKeys} 
@@ -110,10 +155,10 @@ export function ApiSettings() {
           {formState.isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              Enregistrement...
             </>
           ) : (
-            "Save API Settings"
+            "Enregistrer"
           )}
         </Button>
       </div>

@@ -1,11 +1,88 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { ApiCategory, ApiFormState, ApiKeyState } from "../models/apiSettings";
+import { useAuth } from "@/context/AuthContext";
 
 export function useApiSettings(apiCategories: ApiCategory[]) {
-  // Initialize API keys state
-  const [apiKeysState, setApiKeysState] = useState<Record<string, Record<string, ApiKeyState>>>(() => {
+  // State for API keys
+  const [apiKeysState, setApiKeysState] = useState<Record<string, Record<string, ApiKeyState>>>({});
+  
+  // For search functionality
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Loading state for initial data fetch
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Form submission state
+  const [formState, setFormState] = useState<ApiFormState>({
+    isSubmitting: false,
+  });
+  
+  // Get the current user
+  const { user, isAuthenticated } = useAuth();
+
+  // Load API integrations from Supabase on component mount
+  useEffect(() => {
+    const fetchApiIntegrations = async () => {
+      if (!isAuthenticated || !user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('api_integrations')
+          .select('*')
+          .order('category');
+
+        if (error) {
+          console.error("Error fetching API integrations:", error);
+          toast.error("Impossible de charger les intégrations API");
+          setIsLoading(false);
+          return;
+        }
+
+        // Transform data from database format to our state format
+        const stateFromDb: Record<string, Record<string, ApiKeyState>> = {};
+        
+        if (data && data.length > 0) {
+          data.forEach(integration => {
+            if (!stateFromDb[integration.category]) {
+              stateFromDb[integration.category] = {};
+            }
+            
+            stateFromDb[integration.category][integration.key_name] = {
+              value: integration.key_value || "",
+              enabled: integration.enabled,
+              status: integration.status,
+              lastTested: integration.last_tested,
+              error: integration.error
+            };
+          });
+          
+          setApiKeysState(stateFromDb);
+        } else {
+          // Initialize with empty state if no data
+          initializeEmptyState();
+        }
+      } catch (err) {
+        console.error("Error in fetching API integrations:", err);
+        toast.error("Une erreur s'est produite lors du chargement des intégrations API");
+        // Initialize with empty state on error
+        initializeEmptyState();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApiIntegrations();
+  }, [isAuthenticated, user]);
+
+  // Initialize empty state based on API categories
+  const initializeEmptyState = () => {
     const initialState: Record<string, Record<string, ApiKeyState>> = {};
     
     apiCategories.forEach(category => {
@@ -22,30 +99,85 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
       });
     });
     
-    // Try to load from localStorage if available
-    try {
-      const savedState = localStorage.getItem("apiKeysState");
-      if (savedState) {
-        const parsedState = JSON.parse(savedState);
-        return parsedState;
-      }
-    } catch (error) {
-      console.error("Failed to load API keys from localStorage:", error);
-    }
-    
-    return initialState;
-  });
+    setApiKeysState(initialState);
+  };
 
-  // For search functionality
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  // Form submission state
-  const [formState, setFormState] = useState<ApiFormState>({
-    isSubmitting: false,
-  });
+  // Save a single API key to database
+  const saveApiKeyToDb = async (
+    category: string,
+    apiTitle: string,
+    keyName: string,
+    keyState: ApiKeyState
+  ) => {
+    if (!isAuthenticated || !user) {
+      toast.error("Vous devez être connecté pour enregistrer des clés API");
+      return false;
+    }
+
+    try {
+      // First check if this key exists already
+      const { data: existingKeys } = await supabase
+        .from('api_integrations')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('category', category)
+        .eq('key_name', keyName)
+        .maybeSingle();
+
+      if (existingKeys) {
+        // Update existing key
+        const { error } = await supabase
+          .from('api_integrations')
+          .update({
+            key_value: keyState.value,
+            enabled: keyState.enabled,
+            status: keyState.status,
+            last_tested: keyState.lastTested,
+            error: keyState.error,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingKeys.id);
+
+        if (error) {
+          console.error("Error updating API key:", error);
+          return false;
+        }
+      } else {
+        // Insert new key
+        const { error } = await supabase
+          .from('api_integrations')
+          .insert({
+            user_id: user.id,
+            category,
+            api_title: apiTitle,
+            key_name: keyName,
+            key_value: keyState.value,
+            enabled: keyState.enabled,
+            status: keyState.status,
+            last_tested: keyState.lastTested,
+            error: keyState.error
+          });
+
+        if (error) {
+          console.error("Error inserting API key:", error);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error saving API key to database:", error);
+      return false;
+    }
+  };
 
   // Handle API enable/disable toggle
-  const handleApiToggle = (category: string, apiTitle: string, enabled: boolean) => {
+  const handleApiToggle = async (category: string, apiTitle: string, enabled: boolean) => {
+    if (!isAuthenticated) {
+      toast.error("Vous devez être connecté pour activer/désactiver des API");
+      return;
+    }
+    
     const updatedState = { ...apiKeysState };
     
     // Find all keys related to this API and update their enabled state
@@ -58,6 +190,9 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
             updatedState[category][keyName].status = enabled ? "pending" : "disconnected";
             // Clear any errors when toggling
             updatedState[category][keyName].error = undefined;
+            
+            // Save changes to database
+            saveApiKeyToDb(category, apiTitle, keyName, updatedState[category][keyName]);
           }
         });
       }
@@ -65,10 +200,10 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     
     setApiKeysState(updatedState);
     
-    toast(enabled ? "API Enabled" : "API Disabled", {
+    toast(enabled ? "API Activée" : "API Désactivée", {
       description: enabled 
-        ? "API integration has been enabled. Please configure your API keys." 
-        : "API integration has been disabled.",
+        ? "L'intégration API a été activée. Veuillez configurer vos clés API." 
+        : "L'intégration API a été désactivée.",
     });
   };
 
@@ -96,7 +231,8 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     const keyValue = updatedState[category][keyName]?.value || "";
     const keyEnabled = updatedState[category][keyName]?.enabled || false;
     
-    // Find the key configuration
+    // Find the API title and key configuration
+    let apiTitle = "";
     let keyConfig;
     apiCategories.forEach(c => {
       if (c.name === category) {
@@ -104,6 +240,7 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
           const apiKeyConfig = api.keys[keyName];
           if (apiKeyConfig) {
             keyConfig = apiKeyConfig;
+            apiTitle = api.title;
           }
         });
       }
@@ -116,15 +253,25 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     
     // Validate required fields
     if (keyConfig?.required && (!keyValue || keyValue.trim() === "")) {
-      updatedState[category][keyName].error = "This field is required";
+      updatedState[category][keyName].error = "Ce champ est obligatoire";
       setApiKeysState(updatedState);
+      
+      // Save error state to database
+      if (isAuthenticated && apiTitle) {
+        saveApiKeyToDb(category, apiTitle, keyName, updatedState[category][keyName]);
+      }
       return;
     }
     
     // Validate against regex pattern if provided and there's a value
     if (keyConfig?.validation && keyValue && !keyConfig.validation.test(keyValue)) {
-      updatedState[category][keyName].error = "Invalid format";
+      updatedState[category][keyName].error = "Format invalide";
       setApiKeysState(updatedState);
+      
+      // Save error state to database
+      if (isAuthenticated && apiTitle) {
+        saveApiKeyToDb(category, apiTitle, keyName, updatedState[category][keyName]);
+      }
       return;
     }
     
@@ -132,11 +279,21 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     if (updatedState[category][keyName].error) {
       updatedState[category][keyName].error = undefined;
       setApiKeysState(updatedState);
+      
+      // Save updated state to database
+      if (isAuthenticated && apiTitle) {
+        saveApiKeyToDb(category, apiTitle, keyName, updatedState[category][keyName]);
+      }
     }
   };
 
   // Test API connection
-  const testApiConnection = (category: string, apiTitle: string) => {
+  const testApiConnection = async (category: string, apiTitle: string) => {
+    if (!isAuthenticated) {
+      toast.error("Vous devez être connecté pour tester les connexions API");
+      return;
+    }
+    
     // First validate all keys for this API
     const updatedState = { ...apiKeysState };
     let allKeysProvided = true;
@@ -160,36 +317,40 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     // Don't proceed if validation failed
     const hasErrors = keysToTest.some(keyName => updatedState[category][keyName].error);
     if (hasErrors || !allKeysProvided) {
-      toast.error("Validation Failed", {
-        description: "Please correct the errors before testing the connection."
+      toast.error("Validation échouée", {
+        description: "Veuillez corriger les erreurs avant de tester la connexion."
       });
       return;
     }
     
     // Simulate API connection test
-    toast("Testing API Connection", {
-      description: `Testing connection to ${apiTitle}...`
+    toast("Test de connexion API en cours", {
+      description: `Test de connexion à ${apiTitle}...`
     });
     
     // Simulate connection test with timeout
-    setTimeout(() => {
+    setTimeout(async () => {
       // For demo: randomly succeed or fail (80% success rate)
       const success = Math.random() > 0.2;
       
-      keysToTest.forEach(keyName => {
+      // Update state
+      for (const keyName of keysToTest) {
         updatedState[category][keyName].status = success ? "connected" : "error";
         updatedState[category][keyName].lastTested = new Date().toISOString();
-      });
+        
+        // Save test result to database
+        await saveApiKeyToDb(category, apiTitle, keyName, updatedState[category][keyName]);
+      }
       
       setApiKeysState(updatedState);
       
       if (success) {
-        toast.success("Connection Successful", {
-          description: `Successfully connected to ${apiTitle}.`
+        toast.success("Connexion réussie", {
+          description: `Connexion réussie à ${apiTitle}.`
         });
       } else {
-        toast.error("Connection Failed", {
-          description: `Failed to connect to ${apiTitle}. Please check your API keys.`
+        toast.error("Échec de la connexion", {
+          description: `Échec de la connexion à ${apiTitle}. Veuillez vérifier vos clés API.`
         });
       }
     }, 1500);
@@ -224,10 +385,10 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
           const keyEnabled = updatedState[category.name][keyName]?.enabled || false;
           
           if (keyEnabled && keyConfig.required && (!keyValue || keyValue.trim() === "")) {
-            updatedState[category.name][keyName].error = "This field is required";
+            updatedState[category.name][keyName].error = "Ce champ est obligatoire";
             isValid = false;
           } else if (keyEnabled && keyConfig.validation && keyValue && !keyConfig.validation.test(keyValue)) {
-            updatedState[category.name][keyName].error = "Invalid format";
+            updatedState[category.name][keyName].error = "Format invalide";
             isValid = false;
           } else if (updatedState[category.name][keyName].error) {
             // Clear error if validation passed
@@ -243,12 +404,17 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
 
   // Save API keys
   const handleSaveApiKeys = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("Vous devez être connecté pour enregistrer les configurations API");
+      return;
+    }
+
     // Validate all API keys first
     const isValid = validateAllApiKeys();
     
     if (!isValid) {
-      toast.error("Validation Failed", {
-        description: "Please correct the errors before saving."
+      toast.error("Validation échouée", {
+        description: "Veuillez corriger les erreurs avant d'enregistrer."
       });
       return;
     }
@@ -256,58 +422,88 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     setFormState({ isSubmitting: true });
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save all API keys to database
+      const savePromises: Promise<boolean>[] = [];
       
-      // In a real app, you would send this to your backend
-      console.log("Saving API keys:", apiKeysState);
+      apiCategories.forEach(category => {
+        category.apis.forEach(api => {
+          Object.keys(api.keys).forEach(keyName => {
+            if (apiKeysState[category.name] && apiKeysState[category.name][keyName]) {
+              savePromises.push(
+                saveApiKeyToDb(
+                  category.name,
+                  api.title,
+                  keyName,
+                  apiKeysState[category.name][keyName]
+                )
+              );
+            }
+          });
+        });
+      });
       
-      // Save to localStorage for demo purposes
-      localStorage.setItem("apiKeysState", JSON.stringify(apiKeysState));
+      // Wait for all save operations to complete
+      const results = await Promise.all(savePromises);
+      
+      // Check if any save operations failed
+      if (results.some(result => !result)) {
+        throw new Error("Certaines configurations n'ont pas pu être enregistrées");
+      }
       
       setFormState({
         isSubmitting: false,
         submitSuccess: true
       });
       
-      toast.success("API settings saved successfully!");
+      toast.success("Configurations API enregistrées avec succès!");
     } catch (error) {
-      console.error("Error saving API keys:", error);
+      console.error("Erreur lors de l'enregistrement des clés API:", error);
       setFormState({
         isSubmitting: false,
-        submitError: "Failed to save API settings. Please try again."
+        submitError: "Échec de l'enregistrement des configurations API. Veuillez réessayer."
       });
       
-      toast.error("Save Failed", {
-        description: "Failed to save API settings. Please try again."
+      toast.error("Échec de l'enregistrement", {
+        description: "Échec de l'enregistrement des configurations API. Veuillez réessayer."
       });
     }
   };
 
   // Reset to default
-  const handleResetApiKeys = () => {
-    // Clear localStorage
-    localStorage.removeItem("apiKeysState");
+  const handleResetApiKeys = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("Vous devez être connecté pour réinitialiser les configurations API");
+      return;
+    }
     
-    const resetState: Record<string, Record<string, ApiKeyState>> = {};
+    setFormState({ isSubmitting: true });
     
-    apiCategories.forEach(category => {
-      resetState[category.name] = {};
+    try {
+      // Delete all API integrations for this user
+      const { error } = await supabase
+        .from('api_integrations')
+        .delete()
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
       
-      category.apis.forEach(api => {
-        Object.keys(api.keys).forEach(keyName => {
-          resetState[category.name][keyName] = {
-            value: "",
-            enabled: false,
-            status: "disconnected"
-          };
-        });
+      // Reset state
+      initializeEmptyState();
+      
+      setFormState({ isSubmitting: false });
+      toast.success("Configurations API réinitialisées");
+    } catch (error) {
+      console.error("Erreur lors de la réinitialisation des clés API:", error);
+      
+      setFormState({
+        isSubmitting: false,
+        submitError: "Échec de la réinitialisation des configurations API. Veuillez réessayer."
       });
-    });
-    
-    setApiKeysState(resetState);
-    setFormState({ isSubmitting: false });
-    toast.success("API keys reset to default");
+      
+      toast.error("Échec de la réinitialisation", {
+        description: "Échec de la réinitialisation des configurations API. Veuillez réessayer."
+      });
+    }
   };
 
   return {
@@ -321,6 +517,7 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     getKeysForApi,
     handleSaveApiKeys,
     handleResetApiKeys,
-    formState
+    formState,
+    isLoading
   };
 }
