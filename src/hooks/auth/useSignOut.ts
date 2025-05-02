@@ -23,7 +23,7 @@ export const useSignOut = (
     return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
   };
 
-  // Sign out function - améliorée pour éviter les problèmes
+  // Sign out function - améliorée pour éviter les problèmes et garantir la redirection
   const signOut = async (currentPath?: string): Promise<void> => {
     // Prevent multiple simultaneous auth actions
     const isAuthInProgress = getIsAuthActionInProgress();
@@ -68,28 +68,42 @@ export const useSignOut = (
       if (navigate) {
         navigate(redirectPath);
         
-        // Ajouter une redirection forcée pour les pages admin après un court délai
+        // Pour les pages admin, ajouter une redirection forcée après un court délai
         if (isAdminRoute(currentPath)) {
-          console.log("Ajout d'une redirection forcée vers /admin/login après délai");
+          console.log("Ajout d'une redirection forcée vers /admin/login après délai de 100ms");
           setTimeout(() => {
             console.log("Redirection forcée vers la page d'admin login");
             window.location.href = '/admin/login';
-          }, AUTH_CONSTANTS.NAVIGATION_DELAY + 100);
+          }, AUTH_CONSTANTS.NAVIGATION_DELAY);
         }
+      } else {
+        // Si pas de navigate disponible, forcer la redirection
+        console.log("Fonction navigate non disponible, utilisation de window.location");
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, AUTH_CONSTANTS.NAVIGATION_DELAY);
       }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast.error("Échec de la déconnexion");
+      
+      // En cas d'erreur sur une page admin, rediriger vers login admin
+      if (currentPath && isAdminRoute(currentPath)) {
+        setTimeout(() => {
+          console.log("Redirection vers /admin/login suite à une erreur");
+          window.location.href = '/admin/login';
+        }, AUTH_CONSTANTS.NAVIGATION_DELAY);
+      }
     } finally {
+      // Réinitialisation des états
       setTimeout(() => {
         setIsLoggingOut(false);
         getIsAuthActionInProgress(false);
         setLoading(false);
         
-        // Ajouter une redirection de sécurité supplémentaire
+        // Redirection de sécurité supplémentaire pour les pages admin
         if (currentPath && isAdminRoute(currentPath)) {
           console.log("Redirection finale de sécurité vers /admin/login");
-          // Redirection forcée en dernier recours
           window.location.href = '/admin/login';
         }
       }, AUTH_CONSTANTS.AUTH_ACTION_RESET_DELAY);
