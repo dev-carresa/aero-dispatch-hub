@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +63,7 @@ export const useAuthProvider = () => {
         if (!isMounted) return;
         
         // Update auth state based on event
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
           setIsAuthenticated(false);
