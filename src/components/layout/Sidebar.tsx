@@ -1,11 +1,10 @@
 
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { navigation } from './sidebarNavigation';
 import { SidebarItem } from './SidebarItem';
 import { SidebarLogo } from './SidebarLogo';
-import { MobileToggle, MobileClose, DesktopToggle } from './SidebarToggle';
+import { MobileToggle, SidebarToggle } from './SidebarToggle';
 
 function SidebarContent() {
   const { expanded, mobileOpen, toggleMobileSidebar } = useSidebar();
@@ -35,9 +34,9 @@ function SidebarContent() {
       >
         <div className="flex h-16 items-center justify-between border-b px-4">
           <SidebarLogo />
-          <div className="flex gap-1">
-            <MobileClose />
-            <DesktopToggle />
+          {/* Unified sidebar toggle button with improved positioning */}
+          <div className="flex items-center justify-center">
+            <SidebarToggle />
           </div>
         </div>
         <div className="flex-1 overflow-auto py-2">
