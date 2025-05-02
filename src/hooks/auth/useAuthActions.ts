@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { NavigateFunction } from 'react-router-dom';
+import { NavigateFunction, useLocation } from 'react-router-dom';
 import { useSignIn } from './useSignIn';
 import { useSignOut } from './useSignOut';
 import { useTokenRefresh } from './useTokenRefresh';
@@ -14,6 +14,7 @@ export const useAuthActions = (
   navigate?: NavigateFunction
 ) => {
   const [isAuthActionInProgress, setIsAuthActionInProgress] = useState(false);
+  const location = useLocation();
   
   // Créer une fonction qui permet à la fois de lire et de définir l'état
   const getIsAuthActionInProgress = (setValue?: boolean): boolean => {
@@ -47,9 +48,14 @@ export const useAuthActions = (
     navigate
   );
 
+  // Wrapper function to pass current path to signOut
+  const handleSignOut = async (): Promise<void> => {
+    await signOut(location.pathname);
+  };
+
   return {
     signIn,
-    signOut,
+    signOut: handleSignOut,
     refreshToken,
     isLoggingOut,
     loginAttemptCount,

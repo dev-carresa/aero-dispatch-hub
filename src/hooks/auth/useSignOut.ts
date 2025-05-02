@@ -17,8 +17,13 @@ export const useSignOut = (
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Helper function to check if a route is an admin route
+  const isAdminRoute = (path: string): boolean => {
+    return path === '/admin' || path.startsWith('/admin-');
+  };
+
   // Sign out function - améliorée pour éviter les problèmes
-  const signOut = async (): Promise<void> => {
+  const signOut = async (currentPath?: string): Promise<void> => {
     // Prevent multiple simultaneous auth actions
     const isAuthInProgress = getIsAuthActionInProgress();
     if (isAuthInProgress) {
@@ -31,11 +36,11 @@ export const useSignOut = (
       getIsAuthActionInProgress(true);
       setIsLoggingOut(true);
       
-      // Nettoyage du cache et du stockage local avant la déconnexion
-      clearUserProfileCache();
-      clearUserSession();
+      // Déterminer la page de redirection en fonction du chemin actuel
+      const redirectPath = currentPath && isAdminRoute(currentPath) ? '/admin' : '/';
+      console.log(`Redirection prévue vers : ${redirectPath} (chemin actuel: ${currentPath})`);
       
-      // Appel API Supabase pour la déconnexion
+      // Appel API Supabase pour la déconnexion - DOIT ÊTRE FAIT EN PREMIER
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -46,17 +51,21 @@ export const useSignOut = (
         throw error;
       }
       
+      // Nettoyage du cache et du stockage local APRÈS la déconnexion Supabase
+      clearUserProfileCache();
+      clearUserSession();
+      
       // Réinitialiser les états
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
       
       toast.success("Déconnexion réussie");
-      console.log("Déconnexion réussie");
+      console.log(`Déconnexion réussie, redirection vers ${redirectPath}`);
       
       // Utiliser React Router pour la navigation
       if (navigate) {
-        navigate('/');
+        navigate(redirectPath);
       }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
