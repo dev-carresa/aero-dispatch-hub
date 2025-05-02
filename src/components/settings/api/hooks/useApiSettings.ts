@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ApiCategory, ApiKeyState } from "../models/apiSettings";
+import { ApiCategory, ApiFormState, ApiKeyState } from "../models/apiSettings";
 
 export function useApiSettings(apiCategories: ApiCategory[]) {
   // Initialize API keys state
@@ -22,11 +22,27 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
       });
     });
     
+    // Try to load from localStorage if available
+    try {
+      const savedState = localStorage.getItem("apiKeysState");
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        return parsedState;
+      }
+    } catch (error) {
+      console.error("Failed to load API keys from localStorage:", error);
+    }
+    
     return initialState;
   });
 
   // For search functionality
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Form submission state
+  const [formState, setFormState] = useState<ApiFormState>({
+    isSubmitting: false,
+  });
 
   // Handle API enable/disable toggle
   const handleApiToggle = (category: string, apiTitle: string, enabled: boolean) => {
@@ -40,6 +56,8 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
             updatedState[category][keyName].enabled = enabled;
             // Set status to pending when enabled, disconnected when disabled
             updatedState[category][keyName].status = enabled ? "pending" : "disconnected";
+            // Clear any errors when toggling
+            updatedState[category][keyName].error = undefined;
           }
         });
       }
@@ -47,7 +65,7 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     
     setApiKeysState(updatedState);
     
-    toast(`${apiTitle} ${enabled ? "enabled" : "disabled"}`, {
+    toast(enabled ? "API Enabled" : "API Disabled", {
       description: enabled 
         ? "API integration has been enabled. Please configure your API keys." 
         : "API integration has been disabled.",
@@ -64,14 +82,62 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
           ...prev[category][keyName],
           value: value,
           // Reset status to pending if the value is changed
-          status: value ? "pending" : "disconnected"
+          status: value ? "pending" : "disconnected",
+          // Clear any errors when the value changes
+          error: undefined
         }
       }
     }));
   };
 
+  // Validate a single API key on blur
+  const validateApiKey = (category: string, keyName: string) => {
+    const updatedState = { ...apiKeysState };
+    const keyValue = updatedState[category][keyName]?.value || "";
+    const keyEnabled = updatedState[category][keyName]?.enabled || false;
+    
+    // Find the key configuration
+    let keyConfig;
+    apiCategories.forEach(c => {
+      if (c.name === category) {
+        c.apis.forEach(api => {
+          const apiKeyConfig = api.keys[keyName];
+          if (apiKeyConfig) {
+            keyConfig = apiKeyConfig;
+          }
+        });
+      }
+    });
+    
+    // Skip validation if not enabled
+    if (!keyEnabled) {
+      return;
+    }
+    
+    // Validate required fields
+    if (keyConfig?.required && (!keyValue || keyValue.trim() === "")) {
+      updatedState[category][keyName].error = "This field is required";
+      setApiKeysState(updatedState);
+      return;
+    }
+    
+    // Validate against regex pattern if provided and there's a value
+    if (keyConfig?.validation && keyValue && !keyConfig.validation.test(keyValue)) {
+      updatedState[category][keyName].error = "Invalid format";
+      setApiKeysState(updatedState);
+      return;
+    }
+    
+    // Clear error if validation passed
+    if (updatedState[category][keyName].error) {
+      updatedState[category][keyName].error = undefined;
+      setApiKeysState(updatedState);
+    }
+  };
+
   // Test API connection
   const testApiConnection = (category: string, apiTitle: string) => {
+    // First validate all keys for this API
     const updatedState = { ...apiKeysState };
     let allKeysProvided = true;
     let keysToTest: string[] = [];
@@ -79,18 +145,23 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     // Find all keys for this API
     apiCategories.find(c => c.name === category)?.apis.forEach(api => {
       if (api.title === apiTitle) {
-        Object.keys(api.keys).forEach(keyName => {
+        Object.entries(api.keys).forEach(([keyName, keyConfig]) => {
           keysToTest.push(keyName);
-          if (!updatedState[category][keyName].value) {
+          validateApiKey(category, keyName);
+          
+          // Check if required keys are missing
+          if (keyConfig.required && (!updatedState[category][keyName].value || updatedState[category][keyName].value.trim() === "")) {
             allKeysProvided = false;
           }
         });
       }
     });
     
-    if (!allKeysProvided) {
-      toast("Missing API Keys", {
-        description: "Please provide all required API keys before testing the connection."
+    // Don't proceed if validation failed
+    const hasErrors = keysToTest.some(keyName => updatedState[category][keyName].error);
+    if (hasErrors || !allKeysProvided) {
+      toast.error("Validation Failed", {
+        description: "Please correct the errors before testing the connection."
       });
       return;
     }
@@ -113,11 +184,11 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
       setApiKeysState(updatedState);
       
       if (success) {
-        toast("Connection Successful", {
+        toast.success("Connection Successful", {
           description: `Successfully connected to ${apiTitle}.`
         });
       } else {
-        toast("Connection Failed", {
+        toast.error("Connection Failed", {
           description: `Failed to connect to ${apiTitle}. Please check your API keys.`
         });
       }
@@ -137,15 +208,87 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     return keys;
   };
 
+  // Validate all API keys
+  const validateAllApiKeys = (): boolean => {
+    let isValid = true;
+    const updatedState = { ...apiKeysState };
+    
+    apiCategories.forEach(category => {
+      category.apis.forEach(api => {
+        Object.entries(api.keys).forEach(([keyName, keyConfig]) => {
+          // Skip validation if this API is not enabled
+          const isEnabled = Object.values(updatedState[category.name]).some(state => state.enabled);
+          if (!isEnabled) return;
+          
+          const keyValue = updatedState[category.name][keyName]?.value || "";
+          const keyEnabled = updatedState[category.name][keyName]?.enabled || false;
+          
+          if (keyEnabled && keyConfig.required && (!keyValue || keyValue.trim() === "")) {
+            updatedState[category.name][keyName].error = "This field is required";
+            isValid = false;
+          } else if (keyEnabled && keyConfig.validation && keyValue && !keyConfig.validation.test(keyValue)) {
+            updatedState[category.name][keyName].error = "Invalid format";
+            isValid = false;
+          } else if (updatedState[category.name][keyName].error) {
+            // Clear error if validation passed
+            updatedState[category.name][keyName].error = undefined;
+          }
+        });
+      });
+    });
+    
+    setApiKeysState(updatedState);
+    return isValid;
+  };
+
   // Save API keys
-  const handleSaveApiKeys = () => {
-    // Here you would typically save the API keys to your backend
-    console.log("Saving API keys:", apiKeysState);
-    toast.success("API settings saved successfully!");
+  const handleSaveApiKeys = async () => {
+    // Validate all API keys first
+    const isValid = validateAllApiKeys();
+    
+    if (!isValid) {
+      toast.error("Validation Failed", {
+        description: "Please correct the errors before saving."
+      });
+      return;
+    }
+    
+    setFormState({ isSubmitting: true });
+    
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In a real app, you would send this to your backend
+      console.log("Saving API keys:", apiKeysState);
+      
+      // Save to localStorage for demo purposes
+      localStorage.setItem("apiKeysState", JSON.stringify(apiKeysState));
+      
+      setFormState({
+        isSubmitting: false,
+        submitSuccess: true
+      });
+      
+      toast.success("API settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving API keys:", error);
+      setFormState({
+        isSubmitting: false,
+        submitError: "Failed to save API settings. Please try again."
+      });
+      
+      toast.error("Save Failed", {
+        description: "Failed to save API settings. Please try again."
+      });
+    }
   };
 
   // Reset to default
   const handleResetApiKeys = () => {
+    // Clear localStorage
+    localStorage.removeItem("apiKeysState");
+    
     const resetState: Record<string, Record<string, ApiKeyState>> = {};
     
     apiCategories.forEach(category => {
@@ -163,6 +306,7 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     });
     
     setApiKeysState(resetState);
+    setFormState({ isSubmitting: false });
     toast.success("API keys reset to default");
   };
 
@@ -172,9 +316,11 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
     setSearchQuery,
     handleApiToggle,
     handleApiKeyChange,
+    validateApiKey,
     testApiConnection,
     getKeysForApi,
     handleSaveApiKeys,
-    handleResetApiKeys
+    handleResetApiKeys,
+    formState
   };
 }

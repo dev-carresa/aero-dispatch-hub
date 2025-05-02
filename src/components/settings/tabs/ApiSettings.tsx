@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 import { ApiSearchBar } from "../api/components/ApiSearchBar";
 import { ApiCategoryTab } from "../api/components/ApiCategoryTab";
 import { ApiDocumentation } from "../api/components/ApiDocumentation";
@@ -15,9 +17,11 @@ export function ApiSettings() {
     setSearchQuery,
     handleApiToggle,
     handleApiKeyChange,
+    validateApiKey,
     testApiConnection,
     handleSaveApiKeys,
-    handleResetApiKeys
+    handleResetApiKeys,
+    formState
   } = useApiSettings(apiCategories);
 
   // Filter API categories based on search query
@@ -30,6 +34,8 @@ export function ApiSettings() {
           api.description.toLowerCase().includes(searchQuery.toLowerCase())
         )
       })).filter(category => category.apis.length > 0);
+
+  const [activeTab, setActiveTab] = useState(filteredCategories[0]?.name || "");
 
   return (
     <div className="space-y-6">
@@ -45,33 +51,71 @@ export function ApiSettings() {
         </div>
       </div>
 
-      <Tabs defaultValue="payment" className="w-full">
-        <TabsList className="mb-6 w-full justify-start overflow-x-auto">
+      {filteredCategories.length === 0 ? (
+        <Alert>
+          <AlertDescription>
+            No API integrations found matching your search criteria. Please try a different search term.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Tabs 
+          value={activeTab || filteredCategories[0]?.name} 
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="mb-6 w-full justify-start overflow-x-auto">
+            {filteredCategories.map((category) => (
+              <TabsTrigger key={category.name} value={category.name} className="capitalize">
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
           {filteredCategories.map((category) => (
-            <TabsTrigger key={category.name} value={category.name} className="capitalize">
-              {category.name}
-            </TabsTrigger>
+            <TabsContent key={category.name} value={category.name} className="animate-fade-in">
+              <ApiCategoryTab 
+                category={category}
+                apiKeysState={apiKeysState}
+                onApiToggle={handleApiToggle}
+                onApiKeyChange={handleApiKeyChange}
+                onApiKeyBlur={validateApiKey}
+                onTestConnection={testApiConnection}
+                isSubmitting={formState.isSubmitting}
+              />
+            </TabsContent>
           ))}
-        </TabsList>
-        
-        {filteredCategories.map((category) => (
-          <TabsContent key={category.name} value={category.name} className="animate-fade-in">
-            <ApiCategoryTab 
-              category={category}
-              apiKeysState={apiKeysState}
-              onApiToggle={handleApiToggle}
-              onApiKeyChange={handleApiKeyChange}
-              onTestConnection={testApiConnection}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+        </Tabs>
+      )}
 
       <ApiDocumentation />
 
+      {formState.submitError && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{formState.submitError}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between pt-4">
-        <Button variant="outline" onClick={handleResetApiKeys}>Reset to Default</Button>
-        <Button onClick={handleSaveApiKeys}>Save API Settings</Button>
+        <Button 
+          variant="outline" 
+          onClick={handleResetApiKeys}
+          disabled={formState.isSubmitting}
+        >
+          Reset to Default
+        </Button>
+        <Button 
+          onClick={handleSaveApiKeys} 
+          disabled={formState.isSubmitting}
+        >
+          {formState.isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save API Settings"
+          )}
+        </Button>
       </div>
     </div>
   );

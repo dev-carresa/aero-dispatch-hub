@@ -7,7 +7,9 @@ interface ApiCategoryTabProps {
   apiKeysState: Record<string, Record<string, ApiKeyState>>;
   onApiToggle: (categoryName: string, apiTitle: string, enabled: boolean) => void;
   onApiKeyChange: (categoryName: string, keyName: string, value: string) => void;
+  onApiKeyBlur?: (categoryName: string, keyName: string) => void;
   onTestConnection: (categoryName: string, apiTitle: string) => void;
+  isSubmitting?: boolean;
 }
 
 export function ApiCategoryTab({
@@ -15,7 +17,9 @@ export function ApiCategoryTab({
   apiKeysState,
   onApiToggle,
   onApiKeyChange,
-  onTestConnection
+  onApiKeyBlur,
+  onTestConnection,
+  isSubmitting
 }: ApiCategoryTabProps) {
   return (
     <div className="grid gap-6">
@@ -27,7 +31,9 @@ export function ApiCategoryTab({
           apiKeysState={apiKeysState[category.name] || {}}
           onApiToggle={(enabled) => onApiToggle(category.name, api.title, enabled)}
           onApiKeyChange={(keyName, value) => onApiKeyChange(category.name, keyName, value)}
+          onApiKeyBlur={onApiKeyBlur && ((keyName) => onApiKeyBlur(category.name, keyName))}
           onTestConnection={() => onTestConnection(category.name, api.title)}
+          isSubmitting={isSubmitting}
         />
       ))}
     </div>

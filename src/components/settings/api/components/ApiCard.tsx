@@ -17,7 +17,9 @@ interface ApiCardProps {
   apiKeysState: Record<string, ApiKeyState>;
   onApiToggle: (enabled: boolean) => void;
   onApiKeyChange: (keyName: string, value: string) => void;
+  onApiKeyBlur?: (keyName: string) => void;
   onTestConnection: () => void;
+  isSubmitting?: boolean;
 }
 
 export function ApiCard({
@@ -26,7 +28,9 @@ export function ApiCard({
   apiKeysState,
   onApiToggle,
   onApiKeyChange,
-  onTestConnection
+  onApiKeyBlur,
+  onTestConnection,
+  isSubmitting
 }: ApiCardProps) {
   // Check if any key in the API is enabled
   const isEnabled = Object.keys(api.keys).some(keyName => 
@@ -51,6 +55,32 @@ export function ApiCard({
           )
             ? "pending"
             : "disconnected";
+
+  // Check if all required fields have values when enabled
+  const hasAllRequiredFields = !isEnabled || Object.entries(api.keys).every(
+    ([keyName, keyConfig]) => {
+      return !keyConfig.required || (apiKeysState[keyName]?.value && apiKeysState[keyName]?.value.trim() !== "");
+    }
+  );
+
+  // Handle toggle with validation
+  const handleToggle = (enabled: boolean) => {
+    if (enabled) {
+      // When enabling, check for required fields
+      const missingRequiredFields = Object.entries(api.keys)
+        .filter(([keyName, keyConfig]) => keyConfig.required && (!apiKeysState[keyName]?.value || apiKeysState[keyName]?.value.trim() === ""))
+        .map(([_, keyConfig]) => keyConfig.label);
+      
+      if (missingRequiredFields.length > 0) {
+        toast.error("Missing required fields", {
+          description: `Please provide values for: ${missingRequiredFields.join(", ")}`
+        });
+        return;
+      }
+    }
+    
+    onApiToggle(enabled);
+  };
 
   return (
     <Card className="hover-scale shadow-sm card-gradient overflow-hidden">
@@ -81,7 +111,8 @@ export function ApiCard({
               <Switch 
                 id={`${api.title}-toggle`}
                 checked={isEnabled}
-                onCheckedChange={onApiToggle}
+                onCheckedChange={handleToggle}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -96,8 +127,10 @@ export function ApiCard({
               keyConfig={keyConfig}
               value={apiKeysState[keyName]?.value || ""}
               onChange={(value) => onApiKeyChange(keyName, value)}
+              onBlur={() => onApiKeyBlur && onApiKeyBlur(keyName)}
               lastTested={apiKeysState[keyName]?.lastTested}
-              disabled={!apiKeysState[keyName]?.enabled}
+              disabled={!apiKeysState[keyName]?.enabled || isSubmitting}
+              error={apiKeysState[keyName]?.error}
             />
           ))}
         </div>
@@ -106,7 +139,7 @@ export function ApiCard({
             <Button 
               variant="outline" 
               onClick={onTestConnection}
-              disabled={!isEnabled}
+              disabled={!isEnabled || !hasAllRequiredFields || isSubmitting}
             >
               Test Connection
             </Button>
