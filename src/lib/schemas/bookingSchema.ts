@@ -13,6 +13,7 @@ export const bookingFormSchema = z.object({
   pickupDate: z.date({ required_error: "Please select a pickup date" }),
   pickupTime: z.string({ required_error: "Please select a pickup time" }),
   vehicleType: z.enum(["sedan", "suv", "van", "luxury"]),
+  tripType: z.enum(["arrival", "departure", "transfer"]).default("transfer"),
   
   // Passengers tab
   passengerCount: z.number().min(1, "At least 1 passenger is required"),
@@ -52,3 +53,6 @@ export interface TrackingHistoryEntry {
   notes: string;
   user: string;
 }
+
+// Trip type for bookings
+export type TripType = "arrival" | "departure" | "transfer";

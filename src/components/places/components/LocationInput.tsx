@@ -25,7 +25,7 @@ export function LocationInput({
 }: LocationInputProps) {
   return (
     <div className="relative">
-      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
+      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground pointer-events-none z-10">
         <MapPin className="h-4 w-4" />
       </div>
       

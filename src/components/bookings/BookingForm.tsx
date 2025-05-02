@@ -33,6 +33,7 @@ export function BookingForm({ isEditing = false, bookingId }: BookingFormProps) 
       price: 0,
       paymentMethod: "credit-card",
       paymentStatus: "pending",
+      tripType: "transfer",
     },
   });
 
