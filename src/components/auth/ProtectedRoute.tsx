@@ -12,6 +12,7 @@ export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, loading, isLoggingOut, user, authError } = useAuth();
   const location = useLocation();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [showAuthMessage, setShowAuthMessage] = useState(false);
   
   // Set a timeout for loading to show a different UI after 5 seconds
   useEffect(() => {
@@ -30,9 +31,24 @@ export const ProtectedRoute: React.FC = () => {
     };
   }, [loading]);
   
-  // Don't show any authentication messages if we're in the process of logging out
-  const shouldShowAuthMessages = !isLoggingOut;
-  
+  // Handle auth messages - separate effect to avoid conditional hook issue
+  useEffect(() => {
+    // Don't show any authentication messages if we're in the process of logging out
+    const shouldShowAuthMessages = !isLoggingOut && !loading;
+    setShowAuthMessage(shouldShowAuthMessages);
+    
+    // Only show the error toast when we're certain user is not authenticated
+    // and only once (when the component mounts)
+    if (!loading && !isAuthenticated && shouldShowAuthMessages) {
+      toast.error("Vous devez être connecté pour accéder à cette page");
+      console.log("Not authenticated, redirecting to login page");
+    }
+    
+    if (authError && shouldShowAuthMessages) {
+      toast.error(authError);
+    }
+  }, [isAuthenticated, loading, isLoggingOut, authError]);
+
   // Show loading indicator during authentication check
   if (loading) {
     return (
@@ -73,20 +89,6 @@ export const ProtectedRoute: React.FC = () => {
       </div>
     );
   }
-
-  // Only show the error toast when we're certain user is not authenticated
-  // and only once (when the component mounts)
-  // and not during logout process
-  useEffect(() => {
-    if (!loading && !isAuthenticated && shouldShowAuthMessages) {
-      toast.error("Vous devez être connecté pour accéder à cette page");
-      console.log("Not authenticated, redirecting to login page");
-    }
-    
-    if (authError && shouldShowAuthMessages) {
-      toast.error(authError);
-    }
-  }, [isAuthenticated, loading, shouldShowAuthMessages, authError]);
 
   // If authenticated, render the child routes
   // If not authenticated, redirect to the login page
