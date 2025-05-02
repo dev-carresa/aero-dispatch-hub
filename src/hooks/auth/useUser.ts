@@ -5,32 +5,48 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from '@/types/auth';
 import { UserRole } from '@/types/user';
 
-// Map Supabase User to AuthUser with role
+// Map Supabase User to AuthUser with role - optimized for performance
 export const mapUserData = async (supabaseUser: User): Promise<AuthUser | null> => {
   if (!supabaseUser) return null;
 
   try {
-    // Fetch user profile to get role
+    // Prepare default values in case profile fetch fails
+    let userData: AuthUser = {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: supabaseUser.email?.split('@')[0] || 'User',
+      role: 'Customer' as UserRole
+    };
+
+    // Try to fetch user profile to get role
     const { data, error } = await supabase
       .from('profiles')
       .select('name, role')
       .eq('id', supabaseUser.id)
       .maybeSingle();
 
-    if (error) {
+    if (!error && data) {
+      // Update with profile data if available
+      userData = {
+        ...userData,
+        name: data.name || userData.name,
+        role: (data.role as UserRole) || userData.role
+      };
+    } else if (error) {
       console.error('Error fetching user profile:', error);
-      return null;
+      // Continue with default values instead of returning null
     }
 
+    return userData;
+  } catch (error) {
+    console.error('Error mapping user data:', error);
+    // Return basic user data instead of null to prevent authentication failures
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      name: data?.name || supabaseUser.email?.split('@')[0] || 'User',
-      role: (data?.role as UserRole) || 'Customer'
+      name: supabaseUser.email?.split('@')[0] || 'User',
+      role: 'Customer' as UserRole
     };
-  } catch (error) {
-    console.error('Error mapping user data:', error);
-    return null;
   }
 };
 

@@ -13,14 +13,14 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
   const { loading, isLoggingOut, authError } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   
-  // Show timeout message if loading takes too long
+  // Show timeout message if loading takes too long - increased to 5000ms
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
     if (loading) {
       timeoutId = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 3000);
+      }, 5000); // Increased from 3000ms to 5000ms
     } else {
       setLoadingTimeout(false);
     }

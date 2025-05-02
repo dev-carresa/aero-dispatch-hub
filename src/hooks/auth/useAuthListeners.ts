@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { mapUserData } from './useUser';
@@ -28,16 +29,20 @@ export const useAuthListeners = (
       try {
         if (!session) {
           // Clear state if no session
-          setUser(null);
-          setSession(null);
-          setIsAuthenticated(false);
-          console.log("No session found, cleared auth state");
+          if (mounted) {
+            setUser(null);
+            setSession(null);
+            setIsAuthenticated(false);
+            console.log("No session found, cleared auth state");
+          }
           return;
         }
         
-        // Otherwise set session and auth state
-        setSession(session);
-        setIsAuthenticated(true);
+        // Set session and auth state right away to improve perceived performance
+        if (mounted) {
+          setSession(session);
+          setIsAuthenticated(true);
+        }
         
         // Map user data after auth state is updated
         try {
@@ -48,6 +53,14 @@ export const useAuthListeners = (
           }
         } catch (err) {
           console.error("Error processing user data:", err);
+          if (mounted) {
+            setAuthError(`Error retrieving user profile: ${err.message}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error in updateAuthState:", error);
+        if (mounted) {
+          setAuthError(`Authentication error: ${error.message}`);
         }
       } finally {
         if (mounted) {
@@ -84,6 +97,7 @@ export const useAuthListeners = (
     if (isInitializing.current) {
       const checkSession = async () => {
         try {
+          console.log("Checking initial session");
           const { data: { session: initialSession }, error } = await supabase.auth.getSession();
           
           if (!mounted) return;
@@ -101,7 +115,7 @@ export const useAuthListeners = (
           
           // Mark initialization as complete
           isInitializing.current = false;
-          console.log("Initial session check complete");
+          console.log("Initial session check complete", initialSession ? "session found" : "no session");
         } catch (err) {
           console.error("Unexpected error in session check:", err);
           if (mounted) {
@@ -112,7 +126,8 @@ export const useAuthListeners = (
         }
       };
 
-      checkSession();
+      // Use a short timeout to ensure the auth listener is registered first
+      setTimeout(checkSession, 0);
     }
 
     // Cleanup function
