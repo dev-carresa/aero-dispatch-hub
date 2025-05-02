@@ -51,6 +51,7 @@ export function SearchInputWithClear({
             onClick={onClear}
             className="text-muted-foreground hover:text-foreground"
             tabIndex={-1}
+            aria-label="Clear input"
           >
             <X className="h-4 w-4" />
           </button>

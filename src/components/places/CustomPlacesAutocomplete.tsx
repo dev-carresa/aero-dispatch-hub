@@ -70,7 +70,7 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
     }, [handlePlaceSelect]);
 
     return (
-      <div className="relative">
+      <div className="relative w-full">
         <SearchInputWithClear 
           value={inputValue}
           onChange={handleInputChange}

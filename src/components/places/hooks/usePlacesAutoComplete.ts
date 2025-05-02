@@ -177,7 +177,8 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
           autocompleteService.current?.getPlacePredictions(
             { 
               input: inputValue,
-              types: ['establishment', 'geocode', 'address', 'transit_station', 'airport', 'lodging']
+              // Fixed: Reduced to 5 types to comply with Google's limit
+              types: ['geocode', 'address', 'establishment', 'transit_station', 'airport']
             },
             (predictions, status) => {
               if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
