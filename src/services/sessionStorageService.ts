@@ -13,6 +13,7 @@ interface SessionData {
 const SESSION_KEY = 'sb-qqfnokbhdzmffywksmvl-auth-token';
 const USER_DATA_KEY = 'user-session-data';
 const REMEMBERED_EMAIL_KEY = 'remembered-email';
+const LOGIN_ATTEMPTS_KEY = 'login-attempts';
 
 // Stocke les données utilisateur complètes lors de la connexion
 export const storeUserSession = (
@@ -36,6 +37,9 @@ export const storeUserSession = (
   };
   
   localStorage.setItem(USER_DATA_KEY, JSON.stringify(sessionData));
+  
+  // Réinitialiser le compteur de tentatives après une connexion réussie
+  resetLoginAttempts();
 };
 
 // Mémoriser l'email de l'utilisateur
@@ -137,3 +141,56 @@ export const updateSessionExpiry = (expiresIn: number = 3600): void => {
     console.error('Error updating session expiry:', e);
   }
 };
+
+// Nouvelles fonctions pour gérer les tentatives de connexion
+export const trackLoginAttempt = (): number => {
+  try {
+    const now = new Date().getTime();
+    const attemptsData = localStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    
+    let attempts = [];
+    if (attemptsData) {
+      attempts = JSON.parse(attemptsData);
+      // Supprimer les tentatives datant de plus de 5 minutes
+      attempts = attempts.filter(timestamp => (now - timestamp) < 5 * 60 * 1000);
+    }
+    
+    // Ajouter la nouvelle tentative
+    attempts.push(now);
+    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(attempts));
+    
+    return attempts.length;
+  } catch (e) {
+    console.error('Error tracking login attempt:', e);
+    return 1;
+  }
+};
+
+export const getLoginAttempts = (): number => {
+  try {
+    const now = new Date().getTime();
+    const attemptsData = localStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    
+    if (!attemptsData) return 0;
+    
+    const attempts = JSON.parse(attemptsData);
+    // Filtrer les tentatives datant de plus de 5 minutes
+    const recentAttempts = attempts.filter(timestamp => (now - timestamp) < 5 * 60 * 1000);
+    
+    return recentAttempts.length;
+  } catch (e) {
+    console.error('Error getting login attempts:', e);
+    return 0;
+  }
+};
+
+export const resetLoginAttempts = (): void => {
+  try {
+    localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+  } catch (e) {
+    console.error('Error resetting login attempts:', e);
+  }
+};
+
+// Mémoriser le password n'est PAS implémenté pour des raisons de sécurité
+// Nous recommandons d'utiliser le gestionnaire de mots de passe du navigateur à la place

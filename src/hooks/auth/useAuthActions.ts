@@ -8,8 +8,21 @@ import {
   storeUserSession, 
   clearUserSession, 
   updateSessionExpiry,
-  rememberUserEmail
+  rememberUserEmail,
+  getRememberedEmail
 } from '@/services/sessionStorageService';
+
+// Add debounce utility to prevent multiple rapid login attempts
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      func.apply(null, args);
+    }, delay);
+  };
+};
 
 export const useAuthActions = (
   setUser,
@@ -21,6 +34,8 @@ export const useAuthActions = (
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAuthActionInProgress, setIsAuthActionInProgress] = useState(false);
+  const [loginAttemptCount, setLoginAttemptCount] = useState(0);
+  const [lastLoginTimestamp, setLastLoginTimestamp] = useState(0);
 
   // Rafraîchir silencieusement le token
   const refreshToken = async () => {
@@ -49,12 +64,37 @@ export const useAuthActions = (
     }
   };
 
-  // Sign in function - améliorée pour gérer les promesses et mémoriser l'email
+  // Sign in function - améliorée pour gérer les promesses, limiter les tentatives et mieux traiter les erreurs
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     // Vérifier si une authentification est déjà en cours
     if (isAuthActionInProgress) {
       console.log("Une authentification est déjà en cours, opération annulée");
+      toast.error("Une connexion est déjà en cours, veuillez patienter");
       return Promise.reject(new Error("Authentication already in progress"));
+    }
+    
+    // Vérifier le temps écoulé depuis la dernière tentative
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastLoginTimestamp;
+    const MIN_TIME_BETWEEN_ATTEMPTS = 800; // 800ms minimum entre les tentatives
+    
+    if (timeSinceLastAttempt < MIN_TIME_BETWEEN_ATTEMPTS) {
+      console.log("Tentatives trop rapprochées, attendre un moment");
+      toast.warning("Veuillez attendre un moment avant de réessayer");
+      return Promise.reject(new Error("Too many attempts too quickly"));
+    }
+    
+    // Vérifier le nombre de tentatives récentes
+    if (loginAttemptCount >= 5) {
+      console.log("Trop de tentatives de connexion, veuillez réessayer plus tard");
+      toast.error("Trop de tentatives de connexion, veuillez réessayer plus tard");
+      
+      // Reset des tentatives après un délai
+      setTimeout(() => {
+        setLoginAttemptCount(0);
+      }, 30000); // 30 secondes
+      
+      return Promise.reject(new Error("Too many login attempts"));
     }
     
     try {
@@ -62,6 +102,8 @@ export const useAuthActions = (
       setIsAuthActionInProgress(true);
       setLoading(true);
       setAuthError(null);
+      setLastLoginTimestamp(now);
+      setLoginAttemptCount(prev => prev + 1);
       
       // Mémoriser l'email si demandé
       if (rememberMe && email) {
@@ -102,6 +144,9 @@ export const useAuthActions = (
             setSession(data.session);
             setIsAuthenticated(true);
             
+            // Réinitialiser le compteur de tentatives
+            setLoginAttemptCount(0);
+            
             toast.success("Connexion réussie");
             
             // Utiliser React Router pour la navigation
@@ -136,6 +181,9 @@ export const useAuthActions = (
           setSession(data.session);
           setIsAuthenticated(true);
           
+          // Réinitialiser le compteur de tentatives
+          setLoginAttemptCount(0);
+          
           toast.success("Connexion réussie");
           
           if (navigate) {
@@ -154,12 +202,15 @@ export const useAuthActions = (
       return Promise.reject(error);
     } finally {
       // S'assurer que ces états sont toujours réinitialisés, même en cas d'erreur
-      setLoading(false);
-      setIsAuthActionInProgress(false);
+      // Utiliser setTimeout pour éviter les problèmes de concurrent mode de React
+      setTimeout(() => {
+        setLoading(false);
+        setIsAuthActionInProgress(false);
+      }, 500);
     }
   };
 
-  // Sign out function - inchangée
+  // Sign out function - améliorée pour éviter les problèmes
   const signOut = async () => {
     // Prevent multiple simultaneous auth actions
     if (isAuthActionInProgress) {
@@ -203,16 +254,22 @@ export const useAuthActions = (
       console.error("Erreur lors de la déconnexion:", error);
       toast.error("Échec de la déconnexion");
     } finally {
-      setIsLoggingOut(false);
-      setIsAuthActionInProgress(false);
-      setLoading(false);
+      setTimeout(() => {
+        setIsLoggingOut(false);
+        setIsAuthActionInProgress(false);
+        setLoading(false);
+      }, 500);
     }
   };
 
+  // Version debounced de la fonction signIn pour éviter les appels multiples rapides
+  const debouncedSignIn = debounce(signIn, 300);
+
   return {
-    signIn,
+    signIn: debouncedSignIn,
     signOut,
     refreshToken,
-    isLoggingOut
+    isLoggingOut,
+    loginAttemptCount
   };
 };

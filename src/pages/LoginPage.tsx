@@ -8,17 +8,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ensureDemoUserExists } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { getRememberedEmail } from "@/services/sessionStorageService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, loading, isAuthenticated } = useAuth();
+  const { signIn, loading, isAuthenticated, authError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [loginAttempt, setLoginAttempt] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
   
   // Charger l'email mémorisé lors du chargement de la page
   useEffect(() => {
@@ -31,29 +32,62 @@ export default function LoginPage() {
   // Gérer la redirection après authentification avec useEffect
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("Utilisateur authentifié, redirection vers le tableau de bord");
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
+  // Effet pour gérer les erreurs d'authentification
+  useEffect(() => {
+    if (authError) {
+      setLoginError(authError);
+      setIsSubmitting(false);
+    }
+  }, [authError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Tentative de connexion:", loginAttempt + 1);
     
-    setLoginAttempt(prev => prev + 1);
+    // Vérifier les champs
+    if (!email || !password) {
+      setLoginError("Veuillez remplir tous les champs");
+      return;
+    }
+    
+    // Réinitialiser les erreurs
+    setLoginError("");
+    setIsSubmitting(true);
     
     try {
+      console.log("Tentative de connexion...");
       await signIn(email, password, rememberMe);
     } catch (error) {
       console.error("Erreur de connexion:", error);
-      // Si l'erreur est "Authentication already in progress", on informe l'utilisateur
-      if (error instanceof Error && error.message === "Authentication already in progress") {
-        toast.error("Une connexion est déjà en cours, veuillez patienter ou rafraîchir la page");
+      
+      // Gérer différents types d'erreurs
+      if (error instanceof Error) {
+        if (error.message === "Authentication already in progress") {
+          setLoginError("Une connexion est déjà en cours, veuillez patienter");
+        } else if (error.message === "Too many login attempts") {
+          setLoginError("Trop de tentatives de connexion, veuillez réessayer plus tard");
+        } else if (error.message === "Too many attempts too quickly") {
+          setLoginError("Veuillez attendre un moment avant de réessayer");
+        } else {
+          setLoginError(error.message);
+        }
       }
-      // Géré dans la fonction signIn
+    } finally {
+      // Réinitialiser l'état de soumission après un délai
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 1000);
     }
   };
   
   const handleDemoLogin = async () => {
+    setLoginError("");
+    setIsSubmitting(true);
+    
     try {
       // Create demo user if it doesn't exist
       await ensureDemoUserExists();
@@ -62,14 +96,25 @@ export default function LoginPage() {
       await signIn("admin@example.com", "password", rememberMe);
     } catch (error) {
       console.error("Erreur lors de la connexion démo:", error);
-      // Si l'erreur est "Authentication already in progress", on informe l'utilisateur
-      if (error instanceof Error && error.message === "Authentication already in progress") {
-        toast.error("Une connexion est déjà en cours, veuillez patienter ou rafraîchir la page");
-      } else {
-        toast.error("Une erreur est survenue lors de la connexion avec le compte de démonstration");
+      
+      // Gérer différents types d'erreurs
+      if (error instanceof Error) {
+        if (error.message === "Authentication already in progress") {
+          setLoginError("Une connexion est déjà en cours, veuillez patienter");
+        } else {
+          setLoginError("Une erreur est survenue lors de la connexion avec le compte de démonstration");
+        }
       }
+    } finally {
+      // Réinitialiser l'état de soumission après un délai
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 1000);
     }
   };
+
+  // Déterminer si le bouton doit être désactivé
+  const isButtonDisabled = loading || isSubmitting;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-gray-50">
@@ -81,6 +126,12 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {loginError && (
+            <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive text-destructive">
+              {loginError}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -92,6 +143,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
+                disabled={isButtonDisabled}
                 required
               />
             </div>
@@ -111,6 +163,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  disabled={isButtonDisabled}
                   required
                 />
                 <Button
@@ -119,6 +172,7 @@ export default function LoginPage() {
                   size="icon"
                   className="absolute right-0 top-0 h-full"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isButtonDisabled}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -134,6 +188,7 @@ export default function LoginPage() {
                 id="remember" 
                 checked={rememberMe} 
                 onCheckedChange={(checked) => setRememberMe(checked === true)} 
+                disabled={isButtonDisabled}
               />
               <label
                 htmlFor="remember"
@@ -143,9 +198,18 @@ export default function LoginPage() {
               </label>
             </div>
             
-            <Button type="submit" className="w-full" disabled={loading}>
-              <LogIn className="mr-2 h-4 w-4" />
-              {loading ? "Connexion en cours..." : "Se connecter"}
+            <Button type="submit" className="w-full" disabled={isButtonDisabled}>
+              {isButtonDisabled ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connexion en cours...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Se connecter
+                </>
+              )}
             </Button>
           </form>
           
@@ -158,9 +222,16 @@ export default function LoginPage() {
             variant="outline"
             onClick={handleDemoLogin}
             className="w-full mt-4"
-            disabled={loading}
+            disabled={isButtonDisabled}
           >
-            Démo (connexion rapide)
+            {isButtonDisabled ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connexion en cours...
+              </>
+            ) : (
+              "Démo (connexion rapide)"
+            )}
           </Button>
         </CardContent>
         <CardFooter className="text-center">

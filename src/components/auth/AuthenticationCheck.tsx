@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { hasStoredSession, isSessionValid, getStoredUserData } from '@/services/sessionStorageService';
+import { hasStoredSession, isSessionValid, getStoredUserData, clearUserSession } from '@/services/sessionStorageService';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({ 
@@ -15,6 +15,7 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
   const { loading, isLoggingOut, authError } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [showQuickLoading, setShowQuickLoading] = useState(true);
+  const [authRetries, setAuthRetries] = useState(0);
   const navigate = useNavigate();
   
   // Vérification initiale optimisée
@@ -22,6 +23,8 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
     const hasToken = hasStoredSession();
     const tokenIsValid = isSessionValid();
     const userData = getStoredUserData();
+    
+    console.log("AuthenticationCheck: Vérification initiale", { hasToken, tokenIsValid, hasUserData: !!userData });
     
     // Fast path: si nous avons un token valide et des données utilisateur, afficher le contenu
     if (hasToken && tokenIsValid && userData) {
@@ -31,9 +34,17 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
       
       // Si pas de token ou token invalide, rediriger vers la page d'accueil
       if (!hasToken || !tokenIsValid) {
+        console.log("AuthenticationCheck: Token invalide ou absent, redirection");
+        toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+        
+        // Nettoyer les données de session périmées
+        if (hasToken && !tokenIsValid) {
+          clearUserSession();
+        }
+        
         const redirectTimer = setTimeout(() => {
           navigate('/');
-        }, 5); // 5ms timeout
+        }, 100);
         
         return () => clearTimeout(redirectTimer);
       }
@@ -47,6 +58,7 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
     if (loading) {
       timeoutId = setTimeout(() => {
         setLoadingTimeout(true);
+        setAuthRetries(prev => prev + 1);
       }, 8000); // Increased timeout to 8 seconds
     } else {
       setLoadingTimeout(false);
@@ -65,6 +77,17 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [loading, isLoggingOut, authError]);
 
+  // Reset après trop de tentatives
+  useEffect(() => {
+    if (authRetries >= 3) {
+      toast.error("Problème de connexion persistant. Réinitialisation de la session.");
+      clearUserSession();
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+    }
+  }, [authRetries]);
+
   // Si nous pensons être authentifiés en fonction du token localStorage,
   // afficher un rendu rapide pour éviter les scintillements
   if (showQuickLoading && hasStoredSession() && isSessionValid()) {
@@ -82,12 +105,16 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
       <Spinner size="lg" className="mb-4" />
       <p className="text-muted-foreground mb-2">Vérification de l'authentification...</p>
       
-      {loadingTimeout && <LoadingTimeoutAlert />}
+      {loadingTimeout && <LoadingTimeoutAlert authRetries={authRetries} />}
     </div>
   );
 };
 
-const LoadingTimeoutAlert: React.FC = () => {
+interface LoadingTimeoutAlertProps {
+  authRetries: number;
+}
+
+const LoadingTimeoutAlert: React.FC<LoadingTimeoutAlertProps> = ({ authRetries }) => {
   return (
     <div className="mt-6 max-w-md">
       <Alert variant="destructive" className="mb-4">
@@ -96,6 +123,7 @@ const LoadingTimeoutAlert: React.FC = () => {
         <AlertDescription>
           La vérification de l'authentification prend plus de temps que prévu. 
           Cela peut être dû à des problèmes de réseau ou de connexion avec le serveur.
+          {authRetries > 1 && " Plusieurs tentatives infructueuses."}
         </AlertDescription>
       </Alert>
       
@@ -114,10 +142,11 @@ const LoadingTimeoutAlert: React.FC = () => {
           onClick={() => {
             localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
             localStorage.removeItem('user-session-data');
+            localStorage.removeItem('login-attempts');
             window.location.href = '/';
           }}
         >
-          Retour à la page d'accueil
+          Réinitialiser et retourner à la page d'accueil
         </Button>
       </div>
     </div>
