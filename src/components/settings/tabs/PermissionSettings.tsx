@@ -537,7 +537,7 @@ export function PermissionSettings() {
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', userId);
+        .eq('id', userId.toString()); // Convert number to string here
         
       if (error) throw error;
     } catch (error) {
