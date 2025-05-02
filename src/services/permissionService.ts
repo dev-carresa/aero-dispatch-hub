@@ -1,17 +1,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Seed the permissions and roles in the database
 export const seedPermissionsAndRoles = async () => {
   try {
+    console.log("Seeding permissions and roles...");
     // Call the seed-permissions edge function
     const response = await supabase.functions.invoke('admin-seed-permissions');
     
     if (!response.data?.success) {
-      throw new Error('Failed to seed permissions and roles');
+      console.error("Seed function response error:", response);
+      throw new Error('Failed to seed permissions and roles: ' + (response.error?.message || 'Unknown error'));
     }
     
-    return { success: true };
+    console.log("Seed function success:", response.data);
+    return { success: true, data: response.data };
   } catch (error) {
     console.error('Error seeding permissions and roles:', error);
     return { success: false, error };
@@ -68,5 +72,17 @@ export const getAllRoles = async () => {
   } catch (error) {
     console.error('Error fetching roles with permissions:', error);
     return { success: false, error };
+  }
+};
+
+// Clear permission cache from localStorage
+export const clearPermissionCache = () => {
+  try {
+    localStorage.removeItem('user-permissions');
+    localStorage.removeItem('role-permissions');
+    return true;
+  } catch (e) {
+    console.error("Failed to clear permission cache:", e);
+    return false;
   }
 };

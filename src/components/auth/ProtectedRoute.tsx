@@ -1,38 +1,66 @@
 
-import React, { useEffect } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
+import { AuthenticationCheck } from './AuthenticationCheck';
+import { AuthRedirect } from './AuthRedirect';
+import { hasStoredSession, isSessionValid, clearUserSession } from '@/services/sessionStorageService';
+import { toast } from "sonner";
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, loading, isLoggingOut } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [redirectTriggered, setRedirectTriggered] = useState(false);
   
-  // Don't show any authentication messages if we're in the process of logging out
-  const shouldShowAuthMessages = !isLoggingOut;
+  // Helper function to check if a route is an admin route
+  const isAdminRoute = (path: string): boolean => {
+    // Updated to match the new routing structure
+    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
+  };
   
-  // Show loading indicator during authentication check
+  // Fast check for token existence and validity
+  useEffect(() => {
+    // Fast path: check if we don't have a token or if the token is invalid
+    if (!hasStoredSession() || !isSessionValid()) {
+      if (redirectTriggered) return; // Prevent multiple redirects
+      
+      console.log('ProtectedRoute: No valid session, redirecting to login');
+      setRedirectTriggered(true);
+      
+      // Show toast notification
+      toast.error("Session expirée ou invalide. Veuillez vous reconnecter.");
+      
+      // Determine if the user was trying to access an admin page
+      const currentPathIsAdmin = isAdminRoute(location.pathname);
+      
+      // Immediate redirection if no token or invalid token
+      const redirectTimer = setTimeout(() => {
+        navigate(currentPathIsAdmin ? '/admin/login' : '/', { state: { from: location }, replace: true });
+      }, 100); // Slight delay to allow for React state updates
+      
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [location, navigate, redirectTriggered]);
+
+  // If still loading, show AuthenticationCheck which handles the loading state
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Spinner size="lg" className="mb-4" />
-        <p className="text-muted-foreground">Vérification de l'authentification...</p>
-      </div>
-    );
+    return <AuthenticationCheck><Outlet /></AuthenticationCheck>;
   }
 
-  // Only show the error toast when we're certain user is not authenticated
-  // and only once (when the component mounts)
-  // and not during logout process
-  useEffect(() => {
-    if (!loading && !isAuthenticated && shouldShowAuthMessages) {
-      toast.error("Vous devez être connecté pour accéder à cette page");
-      console.log("Not authenticated, redirecting to login page");
-    }
-  }, [isAuthenticated, loading, shouldShowAuthMessages]);
+  // If not authenticated and not loading, redirect to appropriate login page
+  if (!isAuthenticated) {
+    // Determine which login page to redirect to based on the route
+    const currentPathIsAdmin = isAdminRoute(location.pathname);
+    console.log(`ProtectedRoute: Not authenticated, redirecting to ${currentPathIsAdmin ? 'admin' : 'standard'} login`);
+    return <Navigate to={currentPathIsAdmin ? "/admin/login" : "/"} state={{ from: location }} replace />;
+  }
 
-  // If authenticated, render the child routes
-  // If not authenticated, redirect to the login page
-  return isAuthenticated ? <Outlet /> : <Navigate to="/" state={{ from: location }} replace />;
+  // If authenticated, render the protected content
+  console.log('ProtectedRoute: Authenticated, rendering content');
+  return (
+    <AuthRedirect>
+      <Outlet />
+    </AuthRedirect>
+  );
 };
