@@ -7,12 +7,49 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, loading, isLoggingOut, user, authError } = useAuth();
+  const { isAuthenticated, loading, isLoggingOut, user, authError, session } = useAuth();
   const location = useLocation();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [showAuthMessage, setShowAuthMessage] = useState(false);
+  const [performingSecondaryCheck, setPerformingSecondaryCheck] = useState(false);
+  const [secondaryCheckFailed, setSecondaryCheckFailed] = useState(false);
+  
+  // Additional security check - verify the token is still valid
+  useEffect(() => {
+    const verifyToken = async () => {
+      // Only perform secondary check if we think we're authenticated but not loading
+      if (isAuthenticated && !loading && session?.access_token && !performingSecondaryCheck) {
+        try {
+          setPerformingSecondaryCheck(true);
+          
+          // Make a lightweight call to verify the token is still valid
+          const { error } = await supabase.auth.getUser();
+          
+          if (error) {
+            console.error("Secondary token check failed:", error.message);
+            setSecondaryCheckFailed(true);
+            // Force logout and redirect to login
+            localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+            window.location.href = '/';
+            return;
+          }
+          
+          console.log("Secondary token verification passed");
+          setSecondaryCheckFailed(false);
+        } catch (err) {
+          console.error("Error in secondary token verification:", err);
+          setSecondaryCheckFailed(true);
+        } finally {
+          setPerformingSecondaryCheck(false);
+        }
+      }
+    };
+    
+    verifyToken();
+  }, [isAuthenticated, loading, session]);
   
   // Set a timeout for loading to show a different UI after 5 seconds
   useEffect(() => {
@@ -47,10 +84,14 @@ export const ProtectedRoute: React.FC = () => {
     if (authError && shouldShowAuthMessages) {
       toast.error(authError);
     }
-  }, [isAuthenticated, loading, isLoggingOut, authError]);
+    
+    if (secondaryCheckFailed && shouldShowAuthMessages) {
+      toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+    }
+  }, [isAuthenticated, loading, isLoggingOut, authError, secondaryCheckFailed]);
 
   // Show loading indicator during authentication check
-  if (loading) {
+  if (loading || performingSecondaryCheck) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <Spinner size="lg" className="mb-4" />
@@ -90,7 +131,9 @@ export const ProtectedRoute: React.FC = () => {
     );
   }
 
-  // If authenticated, render the child routes
+  // If authenticated and secondary check passed, render the child routes
   // If not authenticated, redirect to the login page
-  return isAuthenticated ? <Outlet /> : <Navigate to="/" state={{ from: location }} replace />;
+  return (isAuthenticated && !secondaryCheckFailed) ? 
+    <Outlet /> : 
+    <Navigate to="/" state={{ from: location }} replace />;
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,30 @@ export const useAuthProvider = () => {
     }
   }, []);
 
+  // Validate if a session is actually valid
+  const validateSession = useCallback((currentSession: Session | null): boolean => {
+    if (!currentSession) return false;
+    
+    try {
+      // Check if token exists and is not expired
+      const { access_token, expires_at } = currentSession;
+      
+      if (!access_token) return false;
+      
+      // If token has expiry information, check if it's expired
+      // expires_at is in seconds since epoch
+      if (expires_at && Date.now() / 1000 >= expires_at) {
+        console.log("Token expired, needs refresh");
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Error validating session:", err);
+      return false;
+    }
+  }, []);
+
   // Check for existing session on load with improved timeout handling
   useEffect(() => {
     let isMounted = true;
@@ -52,6 +77,10 @@ export const useAuthProvider = () => {
       if (isMounted) {
         setLoading(false);
         setAuthError('Authentication verification timeout. Please try refreshing the page.');
+        // Force authentication state to false on timeout
+        setIsAuthenticated(false);
+        setUser(null);
+        setSession(null);
       }
     }, AUTH_TIMEOUT);
     
@@ -69,27 +98,43 @@ export const useAuthProvider = () => {
           setIsAuthenticated(false);
           setIsLoggingOut(false);
           clearTimeout(authTimeout);
+          setLoading(false);
+          // Clear any stored credentials to prevent ghost sessions
+          localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          // Immediately update session state
-          setSession(currentSession);
-          setIsAuthenticated(!!currentSession);
+          const isValid = validateSession(currentSession);
           
-          if (currentSession?.user) {
-            try {
-              const mappedUser = await mapUserData(currentSession.user);
-              if (isMounted) {
-                setUser(mappedUser);
-                console.log("User mapped successfully:", mappedUser?.email);
-                clearTimeout(authTimeout);
-                setLoading(false);
-              }
-            } catch (err) {
-              console.error("Error mapping user in auth state change:", err);
-              if (isMounted) {
-                setAuthError('Error retrieving user profile');
-                setLoading(false);
+          // Only update authenticated state if session is valid
+          if (isValid && currentSession) {
+            setSession(currentSession);
+            setIsAuthenticated(true);
+            
+            if (currentSession?.user) {
+              try {
+                const mappedUser = await mapUserData(currentSession.user);
+                if (isMounted) {
+                  setUser(mappedUser);
+                  console.log("User mapped successfully:", mappedUser?.email);
+                  clearTimeout(authTimeout);
+                  setLoading(false);
+                }
+              } catch (err) {
+                console.error("Error mapping user in auth state change:", err);
+                if (isMounted) {
+                  setAuthError('Error retrieving user profile');
+                  setIsAuthenticated(false);
+                  setLoading(false);
+                }
               }
             }
+          } else {
+            // Invalid session, force logout
+            console.log("Invalid session detected in auth state change");
+            setIsAuthenticated(false);
+            setUser(null);
+            setSession(null);
+            setLoading(false);
+            clearTimeout(authTimeout);
           }
         }
       }
@@ -106,6 +151,7 @@ export const useAuthProvider = () => {
         if (error) {
           console.error("Error getting session:", error);
           setAuthError(`Session error: ${error.message}`);
+          setIsAuthenticated(false);
           setLoading(false);
           clearTimeout(authTimeout);
           return;
@@ -113,18 +159,34 @@ export const useAuthProvider = () => {
         
         console.log("Session check result:", currentSession ? "session exists" : "no session");
         
-        if (!currentSession) {
-          // No session found, clear loading state
+        // Validate the session
+        const isValid = validateSession(currentSession);
+        
+        if (!isValid) {
+          console.log("Invalid or expired session found");
+          // Force sign out if we have an invalid session
+          if (currentSession) {
+            try {
+              await supabase.auth.signOut();
+              console.log("Invalid session cleared");
+            } catch (err) {
+              console.error("Error clearing invalid session:", err);
+            }
+          }
+          
+          // Set authenticated state to false
           setIsAuthenticated(false);
+          setSession(null);
+          setUser(null);
           setLoading(false);
           clearTimeout(authTimeout);
           return;
         }
         
-        setSession(currentSession);
-        setIsAuthenticated(!!currentSession);
-        
         if (currentSession?.user) {
+          setSession(currentSession);
+          setIsAuthenticated(true);
+          
           try {
             const mappedUser = await mapUserData(currentSession.user);
             if (isMounted) {
@@ -135,6 +197,7 @@ export const useAuthProvider = () => {
             console.error("Error mapping user on init:", err);
             if (isMounted) {
               setAuthError('Error retrieving user profile');
+              setIsAuthenticated(false);
             }
           } finally {
             if (isMounted) {
@@ -142,11 +205,19 @@ export const useAuthProvider = () => {
               clearTimeout(authTimeout);
             }
           }
+        } else {
+          // No session found, clear loading state
+          setIsAuthenticated(false);
+          setUser(null);
+          setSession(null);
+          setLoading(false);
+          clearTimeout(authTimeout);
         }
       } catch (err) {
         console.error("Unexpected error in session check:", err);
         if (isMounted) {
           setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
+          setIsAuthenticated(false);
           setLoading(false);
           clearTimeout(authTimeout);
         }
@@ -165,7 +236,7 @@ export const useAuthProvider = () => {
       subscription.unsubscribe();
       clearTimeout(authTimeout);
     };
-  }, [mapUserData]);
+  }, [mapUserData, validateSession]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -212,8 +283,13 @@ export const useAuthProvider = () => {
       setSession(null);
       setIsAuthenticated(false);
       
+      // Explicitly clear local storage before signout
+      localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
+      
       // Then call Supabase API to sign out
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Sign out from all tabs/devices
+      });
       
       if (error) {
         console.error("Sign out error:", error);
