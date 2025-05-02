@@ -1,12 +1,41 @@
 
 import { useEffect, useRef } from 'react';
 import { 
-  hasStoredSession, 
-  isSessionValid, 
-  getStoredUserData,
-  shouldRefreshToken 
+  hasStoredSession
 } from '@/services/sessionStorageService';
 import { supabase } from "@/integrations/supabase/client";
+
+// Add the missing functions here
+const isSessionValid = (): boolean => {
+  const sessionStr = localStorage.getItem('supabase.auth.session');
+  if (!sessionStr) return false;
+  
+  const session = JSON.parse(sessionStr);
+  if (!session.expires_at) return false;
+  
+  return session.expires_at * 1000 > Date.now();
+};
+
+const getStoredUserData = () => {
+  const userDataStr = localStorage.getItem('user-session-data');
+  if (!userDataStr) return null;
+  
+  return JSON.parse(userDataStr);
+};
+
+const shouldRefreshToken = (): boolean => {
+  const sessionStr = localStorage.getItem('supabase.auth.session');
+  if (!sessionStr) return false;
+  
+  const session = JSON.parse(sessionStr);
+  if (!session.expires_at) return false;
+  
+  // Refresh if less than 5 minutes remaining (300 seconds)
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  const fiveMinutesBeforeExpiry = session.expires_at - 300;
+  
+  return nowInSeconds >= fiveMinutesBeforeExpiry;
+};
 
 export const useSessionInit = (
   setUser,

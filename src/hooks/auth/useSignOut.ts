@@ -1,11 +1,8 @@
-
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { clearUserProfileCache } from './userProfileCache';
-import { clearUserSession } from '@/services/sessionStorageService';
 import { NavigateFunction } from 'react-router-dom';
-import { AUTH_CONSTANTS } from './utils/authUtils';
+import { clearStoredSession } from '@/services/sessionStorageService';
 
 export const useSignOut = (
   setUser,
@@ -17,98 +14,53 @@ export const useSignOut = (
 ) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Helper function to check if a route is an admin route
-  const isAdminRoute = (path: string): boolean => {
-    // Updated to match the new routing structure
-    return path === '/admin' || path.startsWith('/admin/') || path.startsWith('/admin-');
-  };
-
-  // Sign out function - améliorée pour éviter les problèmes et garantir la redirection
   const signOut = async (currentPath?: string): Promise<void> => {
-    // Prevent multiple simultaneous auth actions
+    // Vérifier si une authentification est déjà en cours avec la fonction getter
     const isAuthInProgress = getIsAuthActionInProgress();
     if (isAuthInProgress) {
       console.log("Une déconnexion est déjà en cours, opération annulée");
+      toast.error("Une déconnexion est déjà en cours, veuillez patienter");
       return;
     }
     
-    console.log("Déconnexion en cours...");
     try {
-      getIsAuthActionInProgress(true);
+      console.log("Déconnexion en cours...");
       setIsLoggingOut(true);
+      setLoading(true);
       
-      // Déterminer la page de redirection en fonction du chemin actuel
-      const redirectPath = currentPath && isAdminRoute(currentPath) ? '/admin/login' : '/';
-      console.log(`Redirection prévue vers : ${redirectPath} (chemin actuel: ${currentPath})`);
-      
-      // Appel API Supabase pour la déconnexion - DOIT ÊTRE FAIT EN PREMIER
-      const { error } = await supabase.auth.signOut({
-        scope: 'global' // Sign out from all tabs/devices
-      });
-      
+      // Définir l'état d'authentification après les vérifications
+      getIsAuthActionInProgress(true);
+
+      const { error } = await supabase.auth.signOut();
+
       if (error) {
-        console.error("Erreur lors de la déconnexion:", error);
-        toast.error(`Échec de la déconnexion: ${error.message}`);
-        throw error;
-      }
-      
-      // Nettoyage du cache et du stockage local APRÈS la déconnexion Supabase
-      clearUserProfileCache();
-      clearUserSession();
-      
-      // Réinitialiser les états
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-      
-      toast.success("Déconnexion réussie");
-      console.log(`Déconnexion réussie, redirection vers ${redirectPath}`);
-      
-      // Utiliser React Router pour la navigation
-      if (navigate) {
-        navigate(redirectPath);
-        
-        // Pour les pages admin, ajouter une redirection forcée après un court délai
-        if (isAdminRoute(currentPath)) {
-          console.log("Ajout d'une redirection forcée vers /admin/login après délai de 100ms");
-          setTimeout(() => {
-            console.log("Redirection forcée vers la page d'admin login");
-            window.location.href = '/admin/login';
-          }, AUTH_CONSTANTS.NAVIGATION_DELAY);
-        }
+        console.error("Erreur de déconnexion:", error.message);
+        toast.error(error.message);
       } else {
-        // Si pas de navigate disponible, forcer la redirection
-        console.log("Fonction navigate non disponible, utilisation de window.location");
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, AUTH_CONSTANTS.NAVIGATION_DELAY);
+        console.log("Déconnexion réussie");
+        clearStoredSession();
+        setUser(null);
+        setSession(null);
+        setIsAuthenticated(false);
+        toast.success("Déconnexion réussie");
+
+        // Rediriger l'utilisateur vers la page d'accueil après la déconnexion
+        if (navigate) {
+          navigate('/');
+        }
       }
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      toast.error("Échec de la déconnexion");
-      
-      // En cas d'erreur sur une page admin, rediriger vers login admin
-      if (currentPath && isAdminRoute(currentPath)) {
-        setTimeout(() => {
-          console.log("Redirection vers /admin/login suite à une erreur");
-          window.location.href = '/admin/login';
-        }, AUTH_CONSTANTS.NAVIGATION_DELAY);
-      }
+      console.error("Sign out error:", error);
+      toast.error("Erreur lors de la déconnexion");
     } finally {
-      // Réinitialisation des états
-      setTimeout(() => {
-        setIsLoggingOut(false);
-        getIsAuthActionInProgress(false);
-        setLoading(false);
-        
-        // Redirection de sécurité supplémentaire pour les pages admin
-        if (currentPath && isAdminRoute(currentPath)) {
-          console.log("Redirection finale de sécurité vers /admin/login");
-          window.location.href = '/admin/login';
-        }
-      }, AUTH_CONSTANTS.AUTH_ACTION_RESET_DELAY);
+      setIsLoggingOut(false);
+      setLoading(false);
+      getIsAuthActionInProgress(false);
     }
   };
 
-  return { signOut, isLoggingOut };
+  return {
+    signOut,
+    isLoggingOut
+  };
 };

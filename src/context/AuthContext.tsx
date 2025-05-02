@@ -1,6 +1,5 @@
 
 import React, { createContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AuthContextType } from '@/types/auth';
 import { useAuthProvider } from '@/hooks/useAuthProvider';
 
@@ -9,13 +8,13 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
   signIn: async () => null,
-  signOut: async (currentPath?: string) => {},
+  signOut: async () => {}, // Remove currentPath parameter to match the type
   isAuthenticated: false,
   session: null,
   isLoggingOut: false,
   authError: null,
   isAuthActionInProgress: false,
-  resetSession: () => {}
+  resetSession: async () => {} // Make it return a Promise
 });
 
 // Export the useAuth hook for components to use
@@ -25,11 +24,8 @@ export const useAuth = () => {
 
 // Export the AuthProvider component to wrap the app
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Get the navigate function from React Router
-  const navigate = useNavigate();
-  
   // Use the custom hook to get all auth-related state and functions
-  const authState = useAuthProvider(navigate);
+  const authState = useAuthProvider();
 
   return (
     <AuthContext.Provider value={authState}>

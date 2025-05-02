@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AuthenticationCheck } from './AuthenticationCheck';
 import { AuthRedirect } from './AuthRedirect';
-import { hasStoredSession, isSessionValid, clearUserSession } from '@/services/sessionStorageService';
+import { hasStoredSession, isSessionValid, clearStoredSession } from '@/services/sessionStorageService';
 import { toast } from "sonner";
 
 export const ProtectedRoute: React.FC = () => {

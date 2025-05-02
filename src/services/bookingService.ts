@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BookingFormData } from "@/lib/schemas/bookingSchema";
 
@@ -15,7 +14,7 @@ export const bookingService = {
         status: bookingData.status,
         pickup_location: bookingData.pickupLocation,
         destination: bookingData.destination,
-        pickup_date: bookingData.pickupDate,
+        pickup_date: bookingData.pickupDate ? bookingData.pickupDate.toISOString().split('T')[0] : null,
         pickup_time: bookingData.pickupTime,
         vehicle_type: bookingData.vehicleType,
         passenger_count: bookingData.passengerCount,
@@ -83,7 +82,7 @@ export const bookingService = {
         status: bookingData.status,
         pickup_location: bookingData.pickupLocation,
         destination: bookingData.destination,
-        pickup_date: bookingData.pickupDate,
+        pickup_date: bookingData.pickupDate ? bookingData.pickupDate.toISOString().split('T')[0] : undefined,
         pickup_time: bookingData.pickupTime,
         vehicle_type: bookingData.vehicleType,
         passenger_count: bookingData.passengerCount,

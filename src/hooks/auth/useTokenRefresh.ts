@@ -1,32 +1,42 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { updateSessionExpiry } from '@/services/sessionStorageService';
+import { Session } from '@supabase/supabase-js';
 
-export const useTokenRefresh = () => {
-  // Rafraîchir silencieusement le token
-  const refreshToken = async (): Promise<boolean> => {
+// Add the missing updateSessionExpiry function here
+const updateSessionExpiry = (expiresIn: number): void => {
+  const sessionStr = localStorage.getItem('supabase.auth.session');
+  if (!sessionStr) return;
+  
+  const session = JSON.parse(sessionStr);
+  const updatedSession = {
+    ...session,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn
+  };
+  
+  localStorage.setItem('supabase.auth.session', JSON.stringify(updatedSession));
+};
+
+export const useTokenRefresh = (setSession) => {
+  const refreshToken = async (): Promise<void> => {
     try {
-      console.log("Rafraîchissement silencieux du token...");
+      console.log("Refreshing token...");
       const { data, error } = await supabase.auth.refreshSession();
-      
+
       if (error) {
-        console.error("Erreur lors du rafraîchissement du token:", error);
-        return false;
+        console.error("Token refresh failed:", error);
+        throw error;
       }
-      
+
       if (data?.session) {
-        // Mettre à jour les dates d'expiration dans le stockage local
-        const expiresIn = data.session.expires_in || 3600;
-        updateSessionExpiry(expiresIn);
+        console.log("Token refreshed successfully.");
         
-        console.log("Token rafraîchi avec succès");
-        return true;
+        // Update session expiry in localStorage
+        updateSessionExpiry(data.session.expires_in);
+        
+        // Update the session state
+        setSession(data.session);
       }
-      
-      return false;
     } catch (error) {
-      console.error("Erreur inattendue lors du rafraîchissement du token:", error);
-      return false;
+      console.error("Error during token refresh:", error);
     }
   };
 

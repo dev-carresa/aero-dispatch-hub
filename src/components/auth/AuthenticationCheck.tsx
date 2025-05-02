@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -6,7 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { hasStoredSession, isSessionValid, getStoredUserData, clearUserSession } from '@/services/sessionStorageService';
+import { hasStoredSession, isSessionValid, getStoredUserData, clearStoredSession } from '@/services/sessionStorageService';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({ 
@@ -39,7 +38,7 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
         
         // Nettoyer les données de session périmées
         if (hasToken && !tokenIsValid) {
-          clearUserSession();
+          clearStoredSession();
         }
         
         const redirectTimer = setTimeout(() => {
@@ -81,7 +80,7 @@ export const AuthenticationCheck: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (authRetries >= 3) {
       toast.error("Problème de connexion persistant. Réinitialisation de la session.");
-      clearUserSession();
+      clearStoredSession();
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);

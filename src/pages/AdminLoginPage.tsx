@@ -1,16 +1,12 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/context/AuthContext";
+import React, { useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { LoginForm } from "@/components/login/LoginForm";
-import { Shield, RefreshCcw } from "lucide-react"; 
-import { Button } from "@/components/ui/button";
-import { clearUserSession } from "@/services/sessionStorageService";
+import { useAuth } from "@/context/AuthContext";
+import { clearStoredSession } from "@/services/sessionStorageService";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, loading, isAuthenticated, authError, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
@@ -73,7 +69,7 @@ export default function AdminLoginPage() {
 
   // Fonction pour réinitialiser la session
   const handleResetSession = () => {
-    clearUserSession();
+    clearStoredSession();
     localStorage.clear(); // Nettoyage complet du localStorage
     toast.success("Session réinitialisée avec succès");
     window.location.reload(); // Recharger la page pour réinitialiser l'état React

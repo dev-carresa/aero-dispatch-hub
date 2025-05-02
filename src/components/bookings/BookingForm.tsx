@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,7 @@ import { PassengersTab } from "./form/PassengersTab";
 import { PaymentTab } from "./form/PaymentTab";
 import { NotesTab } from "./form/NotesTab";
 import { bookingFormSchema, type BookingFormData } from "@/lib/schemas/bookingSchema";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { bookingService } from "@/services/bookingService";
 import { useQuery } from "@tanstack/react-query";
@@ -46,31 +46,31 @@ export function BookingForm({ isEditing = false, bookingId }: BookingFormProps) 
   });
   
   // Populate form when editing and data is loaded
-  useState(() => {
+  useEffect(() => {
     if (isEditing && bookingData) {
       form.reset({
         customerName: bookingData.customer_name,
         email: bookingData.email,
         phone: bookingData.phone,
-        status: bookingData.status,
+        status: bookingData.status as "pending" | "confirmed" | "cancelled" | "completed",
         pickupLocation: bookingData.pickup_location,
         destination: bookingData.destination,
-        pickupDate: new Date(bookingData.pickup_date),
+        pickupDate: bookingData.pickup_date ? new Date(bookingData.pickup_date) : undefined,
         pickupTime: bookingData.pickup_time,
-        vehicleType: bookingData.vehicle_type,
+        vehicleType: bookingData.vehicle_type as "sedan" | "suv" | "van" | "luxury",
         passengerCount: bookingData.passenger_count,
         luggageCount: bookingData.luggage_count,
         flightNumber: bookingData.flight_number,
         specialInstructions: bookingData.special_instructions,
         price: bookingData.price,
-        paymentMethod: bookingData.payment_method,
-        paymentStatus: bookingData.payment_status,
+        paymentMethod: bookingData.payment_method as "credit-card" | "cash" | "invoice" | "paypal",
+        paymentStatus: bookingData.payment_status as "pending" | "paid" | "failed",
         paymentNotes: bookingData.payment_notes,
         adminNotes: bookingData.admin_notes,
         driverNotes: bookingData.driver_notes,
         driverIncome: bookingData.driver_income,
         fleetIncome: bookingData.fleet_income,
-        trackingStatus: bookingData.tracking_status
+        trackingStatus: bookingData.tracking_status as "accepted" | "onroute" | "arrived" | "onboard" | "completed" | "noshow" | undefined
       });
     }
   }, [isEditing, bookingData, form]);

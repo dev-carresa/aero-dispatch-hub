@@ -1,15 +1,17 @@
 
-import { NavigateFunction } from 'react-router-dom';
 import { useUser } from './auth/useUser';
 import { useAuthListeners } from './auth/useAuthListeners'; 
 import { useAuthActions } from './auth/useAuthActions';
 import { useDebugLogging } from './auth/useDebugLogging';
-import { clearUserSession } from '@/services/sessionStorageService';
+import { clearStoredSession } from '@/services/sessionStorageService';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { seedPermissionsAndRoles } from '@/services/permissionService';
+import { useNavigate } from 'react-router-dom';
 
-export const useAuthProvider = (navigate?: NavigateFunction) => {
+export const useAuthProvider = () => {
+  const navigate = useNavigate();
+  
   // Get state variables and setters
   const {
     user,
@@ -47,14 +49,15 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
     setSession,
     setIsAuthenticated,
     setLoading,
-    refreshToken
+    refreshToken,
+    setAuthError
   );
 
   // Function to reset session and update role_id to match role for admin
   const resetSession = async () => {
     if (!user || !session) {
       toast.error("Vous devez être connecté pour effectuer cette action");
-      return;
+      return Promise.resolve(false);
     }
 
     try {
@@ -108,9 +111,11 @@ export const useAuthProvider = (navigate?: NavigateFunction) => {
         window.location.reload();
       }, 1500);
 
+      return Promise.resolve(true);
     } catch (error) {
       console.error("Erreur lors de la réinitialisation de la session:", error);
       toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
+      return Promise.resolve(false);
     } finally {
       setLoading(false);
     }

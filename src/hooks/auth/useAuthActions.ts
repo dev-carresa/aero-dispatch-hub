@@ -25,7 +25,7 @@ export const useAuthActions = (
   };
   
   // Get token refresh functionality
-  const { refreshToken } = useTokenRefresh();
+  const { refreshToken } = useTokenRefresh(setSession);
   
   // Get sign-in functionality
   const { signIn, loginAttemptCount } = useSignIn(
@@ -49,8 +49,8 @@ export const useAuthActions = (
   );
 
   // Wrapper function to pass current path to signOut
-  const handleSignOut = async (currentPath?: string): Promise<void> => {
-    await signOut(currentPath || location.pathname);
+  const handleSignOut = async (): Promise<void> => {
+    await signOut(location.pathname);
   };
 
   return {

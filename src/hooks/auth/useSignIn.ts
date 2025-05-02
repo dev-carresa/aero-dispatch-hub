@@ -1,12 +1,42 @@
-
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { mapUserData } from './useUser';
 import { NavigateFunction } from 'react-router-dom';
-import { rememberUserEmail } from '@/services/sessionStorageService';
 import { debounce, AUTH_CONSTANTS } from './utils/authUtils';
-import { storeUserSession } from '@/services/sessionStorageService';
+import { storeSession } from '@/services/sessionStorageService';
+
+// Add the missing rememberUserEmail function inline since it's used here
+const rememberUserEmail = (email: string, remember: boolean): void => {
+  if (typeof window !== 'undefined') {
+    if (remember) {
+      localStorage.setItem('remembered-email', email);
+    } else {
+      localStorage.removeItem('remembered-email');
+    }
+  }
+};
+
+// Add the missing storeUserSession function inline since it's used here
+const storeUserSession = (
+  id: string,
+  email: string,
+  name: string,
+  role: string,
+  expiresIn: number
+): void => {
+  if (typeof window !== 'undefined') {
+    const expiryTime = Date.now() + expiresIn * 1000;
+    const userData = {
+      id,
+      email,
+      name,
+      role,
+      expiryTime
+    };
+    localStorage.setItem('user-session-data', JSON.stringify(userData));
+  }
+};
 
 export const useSignIn = (
   setUser,
