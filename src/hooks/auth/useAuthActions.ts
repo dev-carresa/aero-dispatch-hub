@@ -7,7 +7,8 @@ import { NavigateFunction } from 'react-router-dom';
 import { 
   storeUserSession, 
   clearUserSession, 
-  updateSessionExpiry 
+  updateSessionExpiry,
+  rememberUserEmail
 } from '@/services/sessionStorageService';
 
 export const useAuthActions = (
@@ -48,16 +49,23 @@ export const useAuthActions = (
     }
   };
 
-  // Sign in function - modifié pour stocker plus d'informations
+  // Sign in function - améliorée pour gérer les promesses et mémoriser l'email
   const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     // Prevent multiple simultaneous auth actions
-    if (isAuthActionInProgress) return;
+    if (isAuthActionInProgress) {
+      return Promise.reject(new Error("Authentication already in progress"));
+    }
     
     try {
       console.log("Attempting sign in for:", email, "with remember me:", rememberMe);
       setIsAuthActionInProgress(true);
       setLoading(true);
       setAuthError(null);
+      
+      // Mémoriser l'email si demandé
+      if (rememberMe && email) {
+        rememberUserEmail(email, true);
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -97,9 +105,13 @@ export const useAuthActions = (
             
             // Utiliser React Router pour la navigation
             if (navigate) {
-              navigate('/dashboard');
+              setTimeout(() => {
+                navigate('/dashboard');
+              }, 100);
             }
           }
+          
+          return Promise.resolve(userData);
         } catch (profileError) {
           console.error("Erreur lors du chargement du profil:", profileError);
           
@@ -126,19 +138,26 @@ export const useAuthActions = (
           toast.success("Connexion réussie");
           
           if (navigate) {
-            navigate('/dashboard');
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 100);
           }
+          
+          return Promise.resolve(basicUserInfo);
         }
       }
+      
+      return Promise.resolve(null);
     } catch (error) {
       console.error("Sign in error:", error);
+      return Promise.reject(error);
     } finally {
       setLoading(false);
       setIsAuthActionInProgress(false);
     }
   };
 
-  // Sign out function - amélioré pour nettoyer toutes les données
+  // Sign out function - inchangée
   const signOut = async () => {
     // Prevent multiple simultaneous auth actions
     if (isAuthActionInProgress) return;

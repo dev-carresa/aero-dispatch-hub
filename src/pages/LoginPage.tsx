@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { ensureDemoUserExists } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { getRememberedEmail } from "@/services/sessionStorageService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -17,12 +18,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  
+  // Charger l'email mémorisé lors du chargement de la page
+  useEffect(() => {
+    const savedEmail = getRememberedEmail();
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
-  // If already authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    navigate('/dashboard');
-    return null;
-  }
+  // Gérer la redirection après authentification avec useEffect
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

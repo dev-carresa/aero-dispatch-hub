@@ -13,12 +13,12 @@ export const ProtectedRoute: React.FC = () => {
   
   // Fast check for token existence and validity
   useEffect(() => {
-    // Fast path: check if we n'avons pas de token ou si le token est invalide
+    // Fast path: check if we don't have a token or if the token is invalid
     if (!hasStoredSession() || !isSessionValid()) {
-      // Redirection immédiate si pas de token ou token invalide
+      // Immediate redirection if no token or invalid token
       const redirectTimer = setTimeout(() => {
         navigate('/', { state: { from: location }, replace: true });
-      }, 5); // 5ms timeout
+      }, 10); // Slight delay to allow for React state updates
       
       return () => clearTimeout(redirectTimer);
     }

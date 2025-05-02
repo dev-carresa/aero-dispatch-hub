@@ -20,6 +20,7 @@ export const useAuthListeners = (
   // Use refs to track initialization state and prevent duplicate processing
   const isInitializing = useRef(true);
   const pendingAuthCheck = useRef<NodeJS.Timeout | null>(null);
+  const authSubscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
   
   // Set initial authentication state based on stored session
   useEffect(() => {
@@ -40,6 +41,15 @@ export const useAuthListeners = (
           role: userData.role || 'Customer'
         });
         setIsAuthenticated(true);
+        
+        // Déclencher la récupération complète de la session en arrière-plan
+        setTimeout(() => {
+          supabase.auth.getSession().then(({ data }) => {
+            if (data?.session) {
+              setSession(data.session);
+            }
+          });
+        }, 0);
       } else {
         console.log("Token présent mais données utilisateur incomplètes");
       }
@@ -49,9 +59,6 @@ export const useAuthListeners = (
       console.log("Pas de token ou token invalide en localStorage");
       setIsAuthenticated(false);
       setLoading(false);
-      
-      // Pas besoin de continuer avec la vérification de session
-      return;
     }
     
     // Vérifier si nous devons rafraîchir le token
@@ -62,7 +69,7 @@ export const useAuthListeners = (
         refreshToken();
       }, 0);
     }
-  }, [setUser, setIsAuthenticated, setLoading, refreshToken]);
+  }, [setUser, setIsAuthenticated, setLoading, refreshToken, setSession]);
 
   // Initialize auth state and set up listeners
   useEffect(() => {
@@ -131,10 +138,14 @@ export const useAuthListeners = (
         }
       }
     );
+    
+    // Store the subscription for cleanup
+    authSubscriptionRef.current = subscription;
 
-    // Vérification de session minimale - uniquement si nécessaire
-    if (hasStoredSession() && !isSessionValid()) {
-      console.log("Session stockée mais invalidée, vérification auprès de Supabase");
+    // Si aucune session valide n'a été trouvée dans localStorage, vérifier avec Supabase
+    if (!hasStoredSession() || !isSessionValid()) {
+      console.log("Aucune session valide dans localStorage, vérification avec Supabase");
+      
       const checkSession = async () => {
         try {
           // Obtenir la session depuis Supabase
@@ -177,7 +188,7 @@ export const useAuthListeners = (
               }
             }
           } else {
-            console.log("Aucune session trouvée");
+            console.log("Aucune session trouvée auprès de Supabase");
             setIsAuthenticated(false);
             setLoading(false);
           }
@@ -208,7 +219,9 @@ export const useAuthListeners = (
       if (pendingAuthCheck.current) {
         clearTimeout(pendingAuthCheck.current);
       }
-      subscription.unsubscribe();
+      if (authSubscriptionRef.current) {
+        authSubscriptionRef.current.unsubscribe();
+      }
     };
   }, [setUser, setSession, setIsAuthenticated, setLoading, setAuthError, refreshToken]);
 };

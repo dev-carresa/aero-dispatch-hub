@@ -12,6 +12,7 @@ interface SessionData {
 
 const SESSION_KEY = 'sb-qqfnokbhdzmffywksmvl-auth-token';
 const USER_DATA_KEY = 'user-session-data';
+const REMEMBERED_EMAIL_KEY = 'remembered-email';
 
 // Stocke les données utilisateur complètes lors de la connexion
 export const storeUserSession = (
@@ -37,6 +38,20 @@ export const storeUserSession = (
   localStorage.setItem(USER_DATA_KEY, JSON.stringify(sessionData));
 };
 
+// Mémoriser l'email de l'utilisateur
+export const rememberUserEmail = (email: string, remember: boolean = true): void => {
+  if (remember && email) {
+    localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+  } else {
+    localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+  }
+};
+
+// Récupérer l'email mémorisé
+export const getRememberedEmail = (): string => {
+  return localStorage.getItem(REMEMBERED_EMAIL_KEY) || '';
+};
+
 // Supprimer toutes les données de session lors de la déconnexion
 export const clearUserSession = (): void => {
   localStorage.removeItem(USER_DATA_KEY);
@@ -46,6 +61,7 @@ export const clearUserSession = (): void => {
   } catch (e) {
     console.error('Error clearing Supabase token:', e);
   }
+  // Ne pas effacer l'email mémorisé lors de la déconnexion
 };
 
 // Vérifier si la session est valide basée sur les données stockées localement
