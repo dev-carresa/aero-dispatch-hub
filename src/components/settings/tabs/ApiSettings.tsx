@@ -223,8 +223,7 @@ export function ApiSettings() {
     
     setApiKeysState(updatedState);
     
-    toast({
-      title: `${apiTitle} ${enabled ? "enabled" : "disabled"}`,
+    toast(`${apiTitle} ${enabled ? "enabled" : "disabled"}`, {
       description: enabled 
         ? "API integration has been enabled. Please configure your API keys." 
         : "API integration has been disabled.",
@@ -266,8 +265,7 @@ export function ApiSettings() {
     });
     
     if (!allKeysProvided) {
-      toast({
-        title: "Missing API Keys",
+      toast("Missing API Keys", {
         description: "Please provide all required API keys before testing the connection.",
         variant: "destructive"
       });
@@ -275,8 +273,7 @@ export function ApiSettings() {
     }
     
     // Simulate API connection test
-    toast({
-      title: "Testing API Connection",
+    toast("Testing API Connection", {
       description: `Testing connection to ${apiTitle}...`
     });
     
@@ -293,13 +290,11 @@ export function ApiSettings() {
       setApiKeysState(updatedState);
       
       if (success) {
-        toast({
-          title: "Connection Successful",
+        toast("Connection Successful", {
           description: `Successfully connected to ${apiTitle}.`,
         });
       } else {
-        toast({
-          title: "Connection Failed",
+        toast("Connection Failed", {
           description: `Failed to connect to ${apiTitle}. Please check your API keys.`,
           variant: "destructive"
         });
