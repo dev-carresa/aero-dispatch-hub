@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon, Clock, Plane } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,10 @@ interface PickupAndVehicleFieldsProps {
 }
 
 export function PickupAndVehicleFields({ form }: PickupAndVehicleFieldsProps) {
+  // Get trip type value from the form
+  const tripType = form.watch('tripType');
+  const showFlightNumber = tripType === 'arrival' || tripType === 'departure';
+  
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Schedule & Vehicle</h3>
@@ -104,6 +108,62 @@ export function PickupAndVehicleFields({ form }: PickupAndVehicleFieldsProps) {
             </FormItem>
           )}
         />
+      </div>
+      
+      {/* Trip Type Selection and Flight Number */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="tripType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Trip Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select trip type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="arrival">Airport Arrival</SelectItem>
+                  <SelectItem value="departure">Airport Departure</SelectItem>
+                  <SelectItem value="transfer">Point-to-Point Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {showFlightNumber && (
+          <FormField
+            control={form.control}
+            name="flightNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Flight Number</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
+                      <Plane className="h-4 w-4" />
+                    </div>
+                    <Input
+                      placeholder="e.g. AF1234"
+                      className="pl-10"
+                      {...field}
+                      onChange={(e) => {
+                        // Convert to uppercase
+                        const value = e.target.value.toUpperCase();
+                        field.onChange(value);
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
     </div>
   );

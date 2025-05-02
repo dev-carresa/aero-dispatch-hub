@@ -62,20 +62,6 @@ export function PassengersTab({ form, onBack, onNext }: PassengersTabProps) {
 
           <FormField
             control={form.control}
-            name="flightNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Flight Number (if applicable)</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="specialInstructions"
             render={({ field }) => (
               <FormItem>
