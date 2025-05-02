@@ -1,34 +1,21 @@
+
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ensureDemoUserExists } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
-import { getRememberedEmail } from "@/services/sessionStorageService";
+import { LoginForm } from "@/components/login/LoginForm";
+import { DemoLoginButton } from "@/components/login/DemoLoginButton";
+import { LoginDivider } from "@/components/login/LoginDivider";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { signIn, loading, isAuthenticated, authError } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
   
-  // Charger l'email mémorisé lors du chargement de la page
-  useEffect(() => {
-    const savedEmail = getRememberedEmail();
-    if (savedEmail) {
-      setEmail(savedEmail);
-    }
-  }, []);
-
-  // Gérer la redirection après authentification avec useEffect
+  // Handle redirection after authentication with useEffect
   useEffect(() => {
     if (isAuthenticated) {
       console.log("Utilisateur authentifié, redirection vers le tableau de bord");
@@ -36,7 +23,7 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Effet pour gérer les erreurs d'authentification
+  // Handle authentication errors
   useEffect(() => {
     if (authError) {
       setLoginError(authError);
@@ -44,16 +31,8 @@ export default function LoginPage() {
     }
   }, [authError]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Vérifier les champs
-    if (!email || !password) {
-      setLoginError("Veuillez remplir tous les champs");
-      return;
-    }
-    
-    // Réinitialiser les erreurs
+  const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
+    // Reset errors
     setLoginError("");
     setIsSubmitting(true);
     
@@ -64,7 +43,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error("Erreur de connexion:", error);
       
-      // Gérer différents types d'erreurs
+      // Handle different error types
       if (error instanceof Error) {
         if (error.message === "Authentication already in progress") {
           setLoginError("Une connexion est déjà en cours, veuillez patienter");
@@ -77,7 +56,7 @@ export default function LoginPage() {
         }
       }
     } finally {
-      // Réinitialiser l'état de soumission après un délai
+      // Reset submission state after a delay
       setTimeout(() => {
         setIsSubmitting(false);
       }, 1000);
@@ -93,11 +72,11 @@ export default function LoginPage() {
       await ensureDemoUserExists();
       
       // Login with demo credentials
-      await signIn("admin@example.com", "password", rememberMe);
+      await signIn("admin@example.com", "password", true);
     } catch (error) {
       console.error("Erreur lors de la connexion démo:", error);
       
-      // Gérer différents types d'erreurs
+      // Handle different error types
       if (error instanceof Error) {
         if (error.message === "Authentication already in progress") {
           setLoginError("Une connexion est déjà en cours, veuillez patienter");
@@ -106,14 +85,14 @@ export default function LoginPage() {
         }
       }
     } finally {
-      // Réinitialiser l'état de soumission après un délai
+      // Reset submission state after a delay
       setTimeout(() => {
         setIsSubmitting(false);
       }, 1000);
     }
   };
 
-  // Déterminer si le bouton doit être désactivé
+  // Determine if button should be disabled
   const isButtonDisabled = loading || isSubmitting;
 
   return (
@@ -126,113 +105,18 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loginError && (
-            <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive text-destructive">
-              {loginError}
-            </div>
-          )}
+          <LoginForm 
+            onSubmit={handleLogin}
+            isButtonDisabled={isButtonDisabled}
+            loginError={loginError}
+          />
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
-                disabled={isButtonDisabled}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Mot de passe
-                </label>
-                <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-                  Mot de passe oublié?
-                </Link>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={isButtonDisabled}
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isButtonDisabled}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="remember" 
-                checked={rememberMe} 
-                onCheckedChange={(checked) => setRememberMe(checked === true)} 
-                disabled={isButtonDisabled}
-              />
-              <label
-                htmlFor="remember"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Se souvenir de moi
-              </label>
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={isButtonDisabled}>
-              {isButtonDisabled ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Connexion en cours...
-                </>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Se connecter
-                </>
-              )}
-            </Button>
-          </form>
+          <LoginDivider />
           
-          <div className="mt-4 flex items-center justify-center">
-            <span className="text-xs text-muted-foreground px-2">Ou</span>
-          </div>
-          
-          <Button
-            type="button"
-            variant="outline"
+          <DemoLoginButton 
             onClick={handleDemoLogin}
-            className="w-full mt-4"
-            disabled={isButtonDisabled}
-          >
-            {isButtonDisabled ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connexion en cours...
-              </>
-            ) : (
-              "Démo (connexion rapide)"
-            )}
-          </Button>
+            isButtonDisabled={isButtonDisabled}
+          />
         </CardContent>
         <CardFooter className="text-center">
           <p className="text-sm text-muted-foreground">
