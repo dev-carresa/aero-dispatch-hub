@@ -3,14 +3,13 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { mapUserData } from './userMapper';
 import { clearUserProfileCache } from './userProfileCache';
-import { Session } from '@supabase/supabase-js';
 
 export const useAuthListeners = (
   setUser,
   setSession,
   setIsAuthenticated,
   setLoading,
-  refreshToken?: () => Promise<Session | null>
+  refreshToken?
 ) => {
   useEffect(() => {
     setLoading(true);
@@ -79,5 +78,5 @@ export const useAuthListeners = (
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setSession, setIsAuthenticated, setLoading]);
+  }, [setUser, setSession, setIsAuthenticated, setLoading, refreshToken]);
 };

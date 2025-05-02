@@ -12,12 +12,12 @@ export interface AuthUser {
 export interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<any>; // Updated return type to match implementation
-  signOut: (currentPath?: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<any>;
+  signOut: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
   isLoggingOut: boolean;
   authError: string | null;
   isAuthActionInProgress: boolean;
-  resetSession: () => Promise<void>;
+  resetSession: () => Promise<boolean>; // Modifié pour retourner Promise<boolean> au lieu de Promise<void>
 }

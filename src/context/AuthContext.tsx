@@ -8,13 +8,13 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
   signIn: async () => null,
-  signOut: async () => {}, // Remove currentPath parameter to match the type
+  signOut: async () => {}, 
   isAuthenticated: false,
   session: null,
   isLoggingOut: false,
   authError: null,
   isAuthActionInProgress: false,
-  resetSession: async () => {} // Make it return a Promise
+  resetSession: async () => false // Modifié pour retourner un boolean
 });
 
 // Export the useAuth hook for components to use
