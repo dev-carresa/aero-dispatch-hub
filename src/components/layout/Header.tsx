@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
@@ -39,10 +38,9 @@ export function Header() {
     console.log("Logout button clicked");
     try {
       await signOut();
-      // Navigation is handled in AuthContext
+      // Navigation is handled inside signOut function
     } catch (error) {
       console.error("Failed to logout:", error);
-      // Toast message will be shown by AuthContext
     }
   };
 

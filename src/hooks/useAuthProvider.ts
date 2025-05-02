@@ -206,16 +206,14 @@ export const useAuthProvider = () => {
     try {
       // Set logging out state to prevent flashing of default values
       setIsLoggingOut(true);
-      setLoading(true);
       
       // First clear local state for immediate UI response
       setUser(null);
+      setSession(null);
       setIsAuthenticated(false);
       
       // Then call Supabase API to sign out
-      const { error } = await supabase.auth.signOut({
-        scope: 'local' // Only sign out from this device/tab
-      });
+      const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Sign out error:", error);
@@ -223,20 +221,17 @@ export const useAuthProvider = () => {
         throw error;
       }
       
-      // Clear all auth state
-      setSession(null);
-      
       toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       
-      // Navigate to login page with full page refresh to clear any potentially problematic state
+      // Force navigation to login page and clear any auth state
       window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Échec de la déconnexion");
     } finally {
+      setIsLoggingOut(false);
       setLoading(false);
-      // We keep isLoggingOut true until next auth state change
     }
   };
 
