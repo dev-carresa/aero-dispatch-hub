@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from '@/types/auth';
@@ -14,8 +14,8 @@ export const useAuthProvider = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  // Convert Supabase User to AuthUser with role
-  const mapUserData = useCallback(async (supabaseUser: User | null): Promise<AuthUser | null> => {
+  // Map Supabase User to AuthUser with role
+  const mapUserData = async (supabaseUser: User): Promise<AuthUser | null> => {
     if (!supabaseUser) return null;
 
     try {
@@ -41,209 +41,114 @@ export const useAuthProvider = () => {
       console.error('Error mapping user data:', error);
       return null;
     }
-  }, []);
+  };
 
-  // Validate if a session is actually valid
-  const validateSession = useCallback((currentSession: Session | null): boolean => {
-    if (!currentSession) return false;
-    
-    try {
-      // Check if token exists and is not expired
-      const { access_token, expires_at } = currentSession;
-      
-      if (!access_token) return false;
-      
-      // If token has expiry information, check if it's expired
-      // expires_at is in seconds since epoch
-      if (expires_at && Date.now() / 1000 >= expires_at) {
-        console.log("Token expired, needs refresh");
-        return false;
-      }
-      
-      return true;
-    } catch (err) {
-      console.error("Error validating session:", err);
-      return false;
-    }
-  }, []);
-
-  // Check for existing session and set up auth listener
+  // Initialize auth state and set up listeners
   useEffect(() => {
-    let isMounted = true;
-    const AUTH_TIMEOUT = 2000; // Reduced timeout for faster feedback
-    
-    let authTimeout = setTimeout(() => {
-      console.log('Auth timeout reached, setting loading to false');
-      if (isMounted) {
-        setLoading(false);
-        setAuthError('Authentication verification timeout. Please try refreshing the page.');
-        // Force authentication state to false on timeout
-        setIsAuthenticated(false);
-        setUser(null);
-        setSession(null);
-      }
-    }, AUTH_TIMEOUT);
-    
-    // First set up auth state listener
+    console.log("Initializing auth provider");
+    let mounted = true;
+
+    // Set up auth state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession ? "session exists" : "no session");
         
-        if (!isMounted) return;
+        if (!mounted) return;
         
-        // Clear timeout since we got a response
-        clearTimeout(authTimeout);
-        
-        // Update auth state based on event
-        if (event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          // Clear state immediately for responsive UI
           setUser(null);
           setSession(null);
           setIsAuthenticated(false);
-          setIsLoggingOut(false);
           setLoading(false);
-          // Clear any stored credentials to prevent ghost sessions
-          localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          const isValid = validateSession(currentSession);
-          
-          // Only update authenticated state if session is valid
-          if (isValid && currentSession) {
+        } 
+        else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          if (currentSession?.user) {
             setSession(currentSession);
             setIsAuthenticated(true);
             
-            if (currentSession?.user) {
-              try {
-                const mappedUser = await mapUserData(currentSession.user);
-                if (isMounted) {
-                  setUser(mappedUser);
-                  console.log("User mapped successfully:", mappedUser?.email);
+            // Map user data after small delay to prevent deadlocks
+            setTimeout(async () => {
+              if (mounted) {
+                try {
+                  const userData = await mapUserData(currentSession.user);
+                  setUser(userData);
                   setLoading(false);
-                }
-              } catch (err) {
-                console.error("Error mapping user in auth state change:", err);
-                if (isMounted) {
-                  setAuthError('Error retrieving user profile');
-                  setIsAuthenticated(false);
+                } catch (err) {
+                  console.error("Error processing user data:", err);
                   setLoading(false);
                 }
               }
-            }
-          } else {
-            // Invalid session, force logout
-            console.log("Invalid session detected in auth state change");
-            setIsAuthenticated(false);
-            setUser(null);
-            setSession(null);
-            setLoading(false);
+            }, 0);
           }
         }
       }
     );
 
     // Then check for existing session
-    const checkExistingSession = async () => {
+    const initializeAuth = async () => {
       try {
-        console.log("Checking for existing session");
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
-        if (!isMounted) return;
-        
-        // Clear timeout since we got a response
-        clearTimeout(authTimeout);
+        if (!mounted) return;
         
         if (error) {
           console.error("Error getting session:", error);
-          setAuthError(`Session error: ${error.message}`);
+          setAuthError(error.message);
           setIsAuthenticated(false);
           setLoading(false);
           return;
         }
         
-        console.log("Session check result:", currentSession ? "session exists" : "no session");
-        
-        // Validate the session
-        const isValid = validateSession(currentSession);
-        
-        if (!isValid) {
-          console.log("Invalid or expired session found");
-          // Force sign out if we have an invalid session
-          if (currentSession) {
-            try {
-              await supabase.auth.signOut();
-              console.log("Invalid session cleared");
-            } catch (err) {
-              console.error("Error clearing invalid session:", err);
-            }
-          }
-          
-          // Set authenticated state to false
-          setIsAuthenticated(false);
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        
-        if (currentSession?.user) {
-          setSession(currentSession);
+        if (initialSession?.user) {
+          setSession(initialSession);
           setIsAuthenticated(true);
           
           try {
-            const mappedUser = await mapUserData(currentSession.user);
-            if (isMounted) {
-              setUser(mappedUser);
-              console.log("User mapped successfully on init:", mappedUser?.email);
-              setLoading(false);
-            }
+            const userData = await mapUserData(initialSession.user);
+            setUser(userData);
           } catch (err) {
             console.error("Error mapping user on init:", err);
-            if (isMounted) {
-              setAuthError('Error retrieving user profile');
-              setIsAuthenticated(false);
-              setLoading(false);
-            }
           }
         } else {
-          // No session found, clear loading state
           setIsAuthenticated(false);
           setUser(null);
           setSession(null);
-          setLoading(false);
         }
+        
+        setLoading(false);
       } catch (err) {
         console.error("Unexpected error in session check:", err);
-        if (isMounted) {
-          setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
-          setIsAuthenticated(false);
-          setLoading(false);
-        }
+        setAuthError(`Unexpected authentication error: ${err instanceof Error ? err.message : String(err)}`);
+        setIsAuthenticated(false);
+        setLoading(false);
       }
     };
-    
-    // Start session check - use setTimeout to ensure auth state listener is set up first
+
+    // Start auth initialization after a minimal timeout
     setTimeout(() => {
-      if (isMounted) {
-        checkExistingSession();
+      if (mounted) {
+        initializeAuth();
       }
     }, 0);
 
+    // Cleanup function
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(authTimeout);
     };
-  }, [mapUserData, validateSession]);
+  }, []);
 
+  // Sign in function
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Sign in attempt for:", email);
+      console.log("Attempting sign in for:", email);
       setLoading(true);
       setAuthError(null);
       
-      // First clear any existing sessions to avoid potential conflicts
-      await supabase.auth.signOut();
+      // Clear any previous session first to avoid conflicts
+      await supabase.auth.signOut({ scope: 'local' });
       
-      // Then attempt to sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -261,10 +166,11 @@ export const useAuthProvider = () => {
         console.log("Sign in successful");
         toast.success("Connexion réussie");
         
-        // Set auth state directly for immediate UI response
+        // Set session and auth state
         setSession(data.session);
         setIsAuthenticated(true);
         
+        // Map user data
         try {
           const mappedUser = await mapUserData(data.user);
           setUser(mappedUser);
@@ -272,7 +178,7 @@ export const useAuthProvider = () => {
           console.error("Error mapping user after sign in:", err);
         }
         
-        // We'll use location.href for navigation to ensure a full page reload
+        // Navigate to dashboard
         window.location.href = '/dashboard';
       }
     } catch (error) {
@@ -282,21 +188,21 @@ export const useAuthProvider = () => {
     }
   };
 
+  // Sign out function
   const signOut = async () => {
     console.log("Signing out...");
     try {
-      // Set logging out state to prevent flashing of default values
       setIsLoggingOut(true);
       
-      // First clear local state for immediate UI response
+      // Clear local state immediately for responsive UI
       setUser(null);
       setSession(null);
       setIsAuthenticated(false);
       
-      // Explicitly clear local storage before signout
+      // Explicitly clear local storage
       localStorage.removeItem('sb-qqfnokbhdzmffywksmvl-auth-token');
       
-      // Then call Supabase API to sign out
+      // Call Supabase API to sign out
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Sign out from all tabs/devices
       });
@@ -310,7 +216,7 @@ export const useAuthProvider = () => {
       toast.success("Déconnexion réussie");
       console.log("Sign out successful");
       
-      // Force navigation to login page and clear any auth state
+      // Force navigation to login page
       window.location.href = '/';
     } catch (error) {
       console.error("Sign out error:", error);
@@ -321,12 +227,12 @@ export const useAuthProvider = () => {
     }
   };
 
-  // Debug values
+  // Debug logging
   useEffect(() => {
-    console.log("Auth context state updated:", {
+    console.log("Auth state updated:", {
       isAuthenticated,
       loading,
-      userExists: !!user,
+      userEmail: user?.email || 'no user',
       sessionExists: !!session,
       isLoggingOut,
       authError

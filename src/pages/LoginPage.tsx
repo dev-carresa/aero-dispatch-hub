@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
-  const navigate = useNavigate();
   const { signIn, isAuthenticated, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("admin@example.com");
@@ -45,18 +44,15 @@ export default function LoginPage() {
     try {
       console.log("Attempting login with:", email);
       await signIn(email, password);
-      console.log("Login successful, navigating to dashboard");
-      navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
       
-      // Provide more specific error messages
+      // Provide specific error messages
       if (error?.code === "invalid_credentials") {
         setError("Invalid email or password. Make sure the demo credentials are set up correctly.");
       } else {
         setError(error?.message || "Failed to sign in. Please try again.");
       }
-    } finally {
       setIsLoading(false);
     }
   };
