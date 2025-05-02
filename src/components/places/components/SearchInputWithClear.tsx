@@ -29,7 +29,7 @@ export function SearchInputWithClear({
   inputRef
 }: SearchInputWithClearProps) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Input
         ref={inputRef}
         type="text"

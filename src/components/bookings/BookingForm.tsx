@@ -22,6 +22,7 @@ export function BookingForm({ isEditing = false, bookingId }: BookingFormProps) 
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
       customerName: "",
+      companyName: "",
       email: "",
       phone: "",
       status: "pending",
@@ -40,6 +41,7 @@ export function BookingForm({ isEditing = false, bookingId }: BookingFormProps) 
       case "details":
         const detailsValid = form.trigger([
           "customerName",
+          "companyName",
           "email",
           "phone",
           "status",

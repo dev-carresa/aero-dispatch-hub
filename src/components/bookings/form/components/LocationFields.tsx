@@ -1,7 +1,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-import CustomPlacesAutocomplete from "@/components/places/CustomPlacesAutocomplete";
+import { LocationInput } from "@/components/places/components/LocationInput";
 import type { BookingFormData } from "@/lib/schemas/bookingSchema";
 
 interface LocationFieldsProps {
@@ -10,44 +10,47 @@ interface LocationFieldsProps {
 
 export function LocationFields({ form }: LocationFieldsProps) {
   return (
-    <>
-      <FormField
-        control={form.control}
-        name="pickupLocation"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Pickup Location</FormLabel>
-            <FormControl>
-              <CustomPlacesAutocomplete
-                value={field.value}
-                onPlaceSelect={(address) => field.onChange(address)}
-                onChange={(value) => field.onChange(value)}
-                placeholder="Enter pickup location"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+    <div className="space-y-6">
+      <h3 className="text-lg font-medium">Trip Information</h3>
+      <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="pickupLocation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Pickup Location</FormLabel>
+              <FormControl>
+                <LocationInput
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  onPlaceSelect={(address) => field.onChange(address)}
+                  placeholder="Enter pickup location"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="destination"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Destination</FormLabel>
-            <FormControl>
-              <CustomPlacesAutocomplete
-                value={field.value}
-                onPlaceSelect={(address) => field.onChange(address)}
-                onChange={(value) => field.onChange(value)}
-                placeholder="Enter destination"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
+        <FormField
+          control={form.control}
+          name="destination"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Destination</FormLabel>
+              <FormControl>
+                <LocationInput
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  onPlaceSelect={(address) => field.onChange(address)}
+                  placeholder="Enter destination"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
   );
 }

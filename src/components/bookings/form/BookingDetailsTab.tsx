@@ -25,7 +25,7 @@ export function BookingDetailsTab({ form, isEditing, onNext, onCancel }: Booking
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-8">
           <CustomerInfoFields form={form} />
           <LocationFields form={form} />
           <PickupAndVehicleFields form={form} />
