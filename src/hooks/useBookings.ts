@@ -12,7 +12,7 @@ export function useBookings() {
   const [loading, setLoading] = useState(false);
 
   // Create new booking
-  const createBooking = async (data: BookingFormData) => {
+  const createBooking = async (data: any) => {
     if (!user) {
       throw new Error("You must be logged in to create a booking");
     }
@@ -43,7 +43,7 @@ export function useBookings() {
   };
 
   // Update existing booking
-  const updateBooking = async ({ id, data }: { id: string; data: BookingFormData }) => {
+  const updateBooking = async ({ id, data }: { id: string; data: any }) => {
     if (!user) {
       throw new Error("You must be logged in to update a booking");
     }
