@@ -8,6 +8,8 @@ export const bookingFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(6, "Phone number must be at least 6 characters"),
   status: z.enum(["pending", "confirmed", "cancelled", "completed"]),
+  source: z.string().optional(),
+  referenceSource: z.string().optional(),
   pickupLocation: z.string().min(3, "Pickup location must be at least 3 characters"),
   destination: z.string().min(3, "Destination must be at least 3 characters"),
   pickupDate: z.date({ required_error: "Please select a pickup date" }),

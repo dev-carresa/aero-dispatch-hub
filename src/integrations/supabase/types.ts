@@ -306,6 +306,8 @@ export type Database = {
           pickup_location: string
           pickup_time: string
           price: number
+          reference_source: string | null
+          source: string | null
           special_instructions: string | null
           status: string
           tracking_status: string | null
@@ -334,6 +336,8 @@ export type Database = {
           pickup_location: string
           pickup_time: string
           price: number
+          reference_source?: string | null
+          source?: string | null
           special_instructions?: string | null
           status: string
           tracking_status?: string | null
@@ -362,6 +366,8 @@ export type Database = {
           pickup_location?: string
           pickup_time?: string
           price?: number
+          reference_source?: string | null
+          source?: string | null
           special_instructions?: string | null
           status?: string
           tracking_status?: string | null

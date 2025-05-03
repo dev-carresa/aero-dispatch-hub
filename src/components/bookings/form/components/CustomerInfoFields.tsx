@@ -93,6 +93,34 @@ export function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="source"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Source</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Booking source (optional)" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="referenceSource"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reference Source</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Reference source (optional)" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
