@@ -1,5 +1,6 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 type SidebarContextType = {
   expanded: boolean;
@@ -8,6 +9,7 @@ type SidebarContextType = {
   setMobileOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
+  location: ReturnType<typeof useLocation>;
 };
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -17,6 +19,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     localStorage.getItem('sidebarExpanded') !== 'false'
   );
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const location = useLocation();
 
   const toggleSidebar = () => {
     const newExpanded = !expanded;
@@ -36,7 +39,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
         mobileOpen,
         setMobileOpen,
         toggleSidebar,
-        toggleMobileSidebar
+        toggleMobileSidebar,
+        location
       }}
     >
       {children}

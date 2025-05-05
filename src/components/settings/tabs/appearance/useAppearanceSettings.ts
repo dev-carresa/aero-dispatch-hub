@@ -1,157 +1,114 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "@/components/theme/ThemeProvider";
-import { 
-  useExtendedTheme, 
-  AccentColor, 
-  FontSize 
-} from "@/components/theme/ExtendedThemeProvider";
 import { useLayout, LayoutSettings } from "@/components/layout/LayoutContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Theme } from "@/components/theme/ThemeProvider";
+
+// Define theme settings type
+interface ThemeSettings {
+  theme: string;
+  fontSize: string;
+  colorScheme: string;
+}
 
 export function useAppearanceSettings() {
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const { accentColor, fontSize, setAccentColor, setFontSize } = useExtendedTheme();
-  const { layoutSettings, setLayoutSettings } = useLayout();
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [themeSettings, setThemeSettings] = useState({
-    colorMode: theme || "light",
-    accentColor: accentColor,
-    fontSize: fontSize
+  const { layoutSettings, updateLayoutSetting } = useLayout();
+  const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
+    theme: "system",
+    fontSize: "medium",
+    colorScheme: "default",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load saved settings when component mounts
+  // Load settings on component mount
   useEffect(() => {
-    fetchAppearanceSettings();
+    const loadSettings = async () => {
+      if (!user) return;
+
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        
+        if (error) throw error;
+        
+        const savedThemeSettings = data.user?.user_metadata?.theme_settings;
+        
+        if (savedThemeSettings) {
+          setThemeSettings(prev => ({
+            ...prev,
+            ...savedThemeSettings
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading theme settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
   }, [user]);
 
-  const fetchAppearanceSettings = async () => {
+  // Handle theme setting changes
+  const handleThemeSettingChange = useCallback((key: keyof ThemeSettings, value: string) => {
+    setThemeSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, []);
+
+  // Handle layout setting changes
+  const handleLayoutSettingChange = useCallback((key: keyof LayoutSettings, value: boolean) => {
+    updateLayoutSetting(key, value);
+  }, [updateLayoutSetting]);
+
+  // Save theme settings to user metadata
+  const saveAppearanceSettings = useCallback(async () => {
     if (!user) return;
 
-    try {
-      // Try to get saved settings from user metadata
-      const { data, error } = await supabase.auth.getUser();
-      
-      if (error) throw error;
-      
-      const savedThemeSettings = data.user?.user_metadata?.theme_settings;
-      const savedLayoutSettings = data.user?.user_metadata?.layout_settings;
-      
-      // Update state with saved settings or defaults
-      if (savedThemeSettings) {
-        setThemeSettings(prevSettings => ({
-          ...prevSettings,
-          ...savedThemeSettings
-        }));
-        
-        // Update theme provider state if color mode is saved
-        if (savedThemeSettings.colorMode) {
-          setTheme(savedThemeSettings.colorMode as Theme);
-        }
-        
-        // Update extended theme provider with saved accent color and font size
-        if (savedThemeSettings.accentColor) {
-          setAccentColor(savedThemeSettings.accentColor as AccentColor);
-        }
-        
-        if (savedThemeSettings.fontSize) {
-          setFontSize(savedThemeSettings.fontSize as FontSize);
-        }
-      }
-      
-      if (savedLayoutSettings) {
-        setLayoutSettings(savedLayoutSettings);
-      }
-      
-    } catch (error) {
-      console.error('Error fetching appearance settings:', error);
-    }
-  };
-
-  const handleThemeSettingChange = (setting: string, value: string) => {
-    setThemeSettings(prev => ({ ...prev, [setting]: value }));
-    
-    // If changing color mode, update theme provider immediately
-    if (setting === 'colorMode') {
-      setTheme(value as Theme);
-    }
-    
-    // If changing accent color, update extended theme provider immediately
-    if (setting === 'accentColor') {
-      setAccentColor(value as AccentColor);
-    }
-    
-    // If changing font size, update extended theme provider immediately
-    if (setting === 'fontSize') {
-      setFontSize(value as FontSize);
-    }
-  };
-
-  const handleLayoutSettingChange = (setting: string, value: boolean) => {
-    setLayoutSettings((prev: LayoutSettings) => ({ ...prev, [setting]: value }));
-  };
-
-  const saveAppearanceSettings = async () => {
-    if (!user) {
-      toast.error("You must be logged in to save settings");
-      return;
-    }
-    
     setIsLoading(true);
     try {
-      // Save theme settings to user metadata
       const { error } = await supabase.auth.updateUser({
         data: {
           theme_settings: themeSettings
         }
       });
-      
+
       if (error) throw error;
       
-      // Apply theme settings globally
-      setTheme(themeSettings.colorMode as Theme);
-      setAccentColor(themeSettings.accentColor as AccentColor);
-      setFontSize(themeSettings.fontSize as FontSize);
-      
-      toast.success("Appearance settings saved successfully!");
+      toast.success('Theme settings saved successfully');
     } catch (error) {
-      console.error('Error saving appearance settings:', error);
-      toast.error('Failed to save settings');
+      console.error('Error saving theme settings:', error);
+      toast.error('Failed to save theme settings');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, themeSettings]);
 
-  const saveLayoutOptions = async () => {
-    if (!user) {
-      toast.error("You must be logged in to save settings");
-      return;
-    }
-    
+  // Save layout settings to user metadata
+  const saveLayoutOptions = useCallback(async () => {
+    if (!user) return;
+
     setIsLoading(true);
     try {
-      // Save layout settings to user metadata
       const { error } = await supabase.auth.updateUser({
         data: {
           layout_settings: layoutSettings
         }
       });
-      
+
       if (error) throw error;
       
-      toast.success("Layout options saved successfully!");
+      toast.success('Layout settings saved successfully');
     } catch (error) {
-      console.error('Error saving layout options:', error);
-      toast.error('Failed to save settings');
+      console.error('Error saving layout settings:', error);
+      toast.error('Failed to save layout settings');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, layoutSettings]);
 
   return {
     themeSettings,
