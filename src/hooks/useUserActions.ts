@@ -11,14 +11,14 @@ export const useUserActions = (users: User[], setUsers: React.Dispatch<React.Set
 
   // Navigate to user profile
   const handleViewProfile = (user: User) => {
-    const userId = typeof user.id === 'number' ? user.id.toString() : user.id;
-    navigate(`/users/${userId}`);
+    // No conversion needed as user.id is already a string
+    navigate(`/users/${user.id}`);
   };
 
   // Navigate to edit user
   const handleEditUser = (user: User) => {
-    const userId = typeof user.id === 'number' ? user.id.toString() : user.id;
-    navigate(`/users/${userId}`);
+    // No conversion needed as user.id is already a string
+    navigate(`/users/${user.id}`);
   };
 
   // Toggle user status

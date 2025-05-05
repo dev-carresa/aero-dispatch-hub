@@ -3,7 +3,7 @@ import { User } from "../types/user";
 
 export const initialUsers: User[] = [
   {
-    id: 1,
+    id: "1",
     name: "Michael Rodriguez",
     firstName: "Michael",
     lastName: "Rodriguez",
@@ -20,7 +20,7 @@ export const initialUsers: User[] = [
     countryCode: "US"
   },
   {
-    id: 2,
+    id: "2",
     name: "Sarah Thompson",
     firstName: "Sarah",
     lastName: "Thompson",
@@ -37,7 +37,7 @@ export const initialUsers: User[] = [
     countryCode: "CA"
   },
   {
-    id: 3,
+    id: "3",
     name: "David Brown",
     firstName: "David",
     lastName: "Brown",
@@ -54,7 +54,7 @@ export const initialUsers: User[] = [
     countryCode: "UK"
   },
   {
-    id: 4,
+    id: "4",
     name: "Amanda Johnson",
     firstName: "Amanda",
     lastName: "Johnson",
@@ -65,7 +65,7 @@ export const initialUsers: User[] = [
     imageUrl: "",
   },
   {
-    id: 5,
+    id: "5",
     name: "James Wilson",
     firstName: "James",
     lastName: "Wilson",
@@ -82,7 +82,7 @@ export const initialUsers: User[] = [
     countryCode: "US"
   },
   {
-    id: 6,
+    id: "6",
     name: "Robert Fletcher",
     firstName: "Robert",
     lastName: "Fletcher",
@@ -93,7 +93,7 @@ export const initialUsers: User[] = [
     imageUrl: "",
   },
   {
-    id: 7,
+    id: "7",
     name: "Elena Santos",
     firstName: "Elena",
     lastName: "Santos",

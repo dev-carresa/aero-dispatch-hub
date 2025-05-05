@@ -59,7 +59,7 @@ export default function EditProfilePage() {
         // In a real app with Supabase, you would fetch the actual user data
         // For now, we'll use sample data
         const mockUser = {
-          id: 4,
+          id: "4",
           name: "Admin User",
           firstName: "Admin",
           lastName: "User",

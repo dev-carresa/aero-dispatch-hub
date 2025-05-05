@@ -18,7 +18,7 @@ import { FormActions } from "./form/FormActions";
 
 // Sample user data for role-based checks
 const CURRENT_USER: User = {
-  id: 1,
+  id: "1",
   name: "Admin User",
   email: "admin@example.com",
   role: "Admin" as UserRole,
