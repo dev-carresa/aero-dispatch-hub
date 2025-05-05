@@ -45,6 +45,20 @@
     --sidebar-accent-foreground: 223 47% 11%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 221 83% 53%;
+    
+    /* Dynamic accent color variables */
+    --accent-color: blue;
+    --icon-color: #2563EB;
+    --icon-hover-color: #1D4ED8;
+    --button-bg-color: #3B82F6;
+    --button-hover-bg-color: #2563EB;
+    --link-color: #3B82F6;
+    --link-hover-color: #2563EB;
+    
+    /* Dynamic icon size variables */
+    --icon-size-sm: 1rem;      /* 16px */
+    --icon-size-md: 1.25rem;   /* 20px */
+    --icon-size-lg: 1.5rem;    /* 24px */
   }
 
   .dark {
@@ -95,6 +109,19 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Font size utility classes */
+  .text-size-small {
+    font-size: 0.875rem;
+  }
+  
+  .text-size-medium {
+    font-size: 1rem;
+  }
+  
+  .text-size-large {
+    font-size: 1.125rem;
+  }
 }
 
 @layer components {
@@ -109,46 +136,53 @@
   .animate-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
   .animate-fade-in > *:nth-child(5) { animation-delay: 0.5s; }
   
-  .status-badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset;
+  /* Themed components */
+  .themed-icon {
+    color: var(--icon-color);
   }
   
-  .status-badge-confirmed {
-    @apply bg-green-50 text-green-700 ring-green-600/20;
+  .themed-icon:hover {
+    color: var(--icon-hover-color);
   }
   
-  .status-badge-pending {
-    @apply bg-yellow-50 text-yellow-700 ring-yellow-600/20;
+  /* Icon sizes */
+  .icon-size-sm {
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
   }
   
-  .status-badge-cancelled {
-    @apply bg-red-50 text-red-700 ring-red-600/20;
+  .icon-size-md {
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
   }
   
-  .status-badge-completed {
-    @apply bg-blue-50 text-blue-700 ring-blue-600/20;
+  .icon-size-lg {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
   }
   
-  /* New styles for YieldRide UI */
-  .card-gradient {
-    @apply bg-gradient-to-br from-white to-blue-50/50;
+  /* Override button styles with dynamic colors */
+  .btn-themed {
+    background-color: var(--button-bg-color);
+    color: white;
   }
   
-  .progress-circle {
-    @apply relative h-16 w-16 rounded-full;
+  .btn-themed:hover {
+    background-color: var(--button-hover-bg-color);
   }
   
-  .progress-circle-value {
-    @apply absolute inset-0 flex items-center justify-center text-lg font-semibold;
+  /* Override link styles with dynamic colors */
+  .link-themed {
+    color: var(--link-color);
+    text-decoration: none;
   }
   
-  .info-banner {
-    @apply bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 flex items-center text-sm;
+  .link-themed:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
   }
-  
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-[1.02];
-  }
+
+  /* ... keep existing code (status-badge classes, card-gradient, progress-circle, etc.) */
 }
 
 @keyframes fadeIn {

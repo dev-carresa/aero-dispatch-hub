@@ -8,15 +8,17 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { useExtendedTheme, AccentColor, FontSize } from "@/components/theme/ExtendedThemeProvider";
 
 export function AppearanceSettings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { accentColor, fontSize, setAccentColor, setFontSize } = useExtendedTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [themeSettings, setThemeSettings] = useState({
     colorMode: theme || "light",
-    accentColor: "blue",
-    fontSize: "medium"
+    accentColor: accentColor,
+    fontSize: fontSize
   });
 
   const [layoutSettings, setLayoutSettings] = useState({
@@ -54,6 +56,15 @@ export function AppearanceSettings() {
         if (savedThemeSettings.colorMode) {
           setTheme(savedThemeSettings.colorMode as "light" | "dark" | "system");
         }
+        
+        // Update extended theme provider with saved accent color and font size
+        if (savedThemeSettings.accentColor) {
+          setAccentColor(savedThemeSettings.accentColor as AccentColor);
+        }
+        
+        if (savedThemeSettings.fontSize) {
+          setFontSize(savedThemeSettings.fontSize as FontSize);
+        }
       }
       
       if (savedLayoutSettings) {
@@ -74,6 +85,16 @@ export function AppearanceSettings() {
     // If changing color mode, update theme provider immediately
     if (setting === 'colorMode') {
       setTheme(value as "light" | "dark" | "system");
+    }
+    
+    // If changing accent color, update extended theme provider immediately
+    if (setting === 'accentColor') {
+      setAccentColor(value as AccentColor);
+    }
+    
+    // If changing font size, update extended theme provider immediately
+    if (setting === 'fontSize') {
+      setFontSize(value as FontSize);
     }
   };
 
@@ -107,8 +128,10 @@ export function AppearanceSettings() {
       
       if (error) throw error;
       
-      // Apply color mode setting
+      // Apply theme settings globally
       setTheme(themeSettings.colorMode as "light" | "dark" | "system");
+      setAccentColor(themeSettings.accentColor as AccentColor);
+      setFontSize(themeSettings.fontSize as FontSize);
       
       toast.success("Appearance settings saved successfully!");
     } catch (error) {
@@ -272,7 +295,7 @@ export function AppearanceSettings() {
               </div>
             </div>
             <Button 
-              className="w-full" 
+              className="w-full btn-themed" 
               onClick={saveAppearanceSettings}
               disabled={isLoading}
             >
@@ -337,7 +360,7 @@ export function AppearanceSettings() {
             />
           </div>
           <Button 
-            className="w-full" 
+            className="w-full btn-themed" 
             onClick={saveLayoutOptions}
             disabled={isLoading}
           >

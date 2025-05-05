@@ -1,10 +1,10 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { ThemeWrapper } from "@/components/theme/ThemeWrapper";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -31,5 +31,9 @@ export default function Settings() {
     );
   }
 
-  return <SettingsLayout />;
+  return (
+    <ThemeWrapper>
+      <SettingsLayout />
+    </ThemeWrapper>
+  );
 }
