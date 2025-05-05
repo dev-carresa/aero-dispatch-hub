@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// Define extended profile schema that includes newsletter and marketing preferences
+// Define profile schema
 export const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -16,21 +16,11 @@ export const profileSchema = z.object({
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
-// Define the preferences type to match the database columns
-export type ProfilePreferences = {
-  newsletter: boolean;
-  marketing: boolean;
-};
-
 export function useProfileSettings() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [preferences, setPreferences] = useState<ProfilePreferences>({
-    newsletter: false,
-    marketing: false
-  });
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -55,7 +45,7 @@ export function useProfileSettings() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, email, phone, image_url, newsletter, marketing')
+        .select('name, email, phone, image_url')
         .eq('id', user.id)
         .single();
       
@@ -69,12 +59,6 @@ export function useProfileSettings() {
         });
         
         setAvatarUrl(data.image_url || null);
-        
-        // Set preferences from the data with fallback to false if undefined
-        setPreferences({
-          newsletter: data.newsletter ?? false,
-          marketing: data.marketing ?? false
-        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -82,10 +66,6 @@ export function useProfileSettings() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handlePreferencesChange = (key: keyof ProfilePreferences, value: boolean) => {
-    setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
   const updateProfile = async (data: ProfileFormData) => {
@@ -112,30 +92,6 @@ export function useProfileSettings() {
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updatePreferences = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          newsletter: preferences.newsletter,
-          marketing: preferences.marketing
-        })
-        .eq('id', user.id);
-        
-      if (error) throw error;
-      
-      toast.success("Preferences updated successfully!");
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-      toast.error('Failed to update preferences');
     } finally {
       setIsLoading(false);
     }
@@ -167,18 +123,6 @@ export function useProfileSettings() {
       // Create a unique file path
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      // Check if avatars bucket exists, if not create it (this is just a safeguard)
-      const { data: bucketData, error: bucketError } = await supabase
-        .storage
-        .getBucket('avatars');
-        
-      if (bucketError && bucketError.message.includes('does not exist')) {
-        // Create the bucket if it doesn't exist
-        await supabase.storage.createBucket('avatars', {
-          public: true
-        });
-      }
       
       // Upload the file
       const { error: uploadError } = await supabase.storage
@@ -216,12 +160,9 @@ export function useProfileSettings() {
 
   return {
     profileForm,
-    preferences,
     avatarUrl,
     isUploading,
-    handlePreferencesChange,
     updateProfile,
-    updatePreferences,
     uploadProfilePicture,
     isLoading,
     fetchProfileData

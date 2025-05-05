@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useProfileSettings } from "@/hooks/useProfileSettings";
 import {
   Form,
@@ -22,12 +21,9 @@ export function ProfileSettings() {
   const { user } = useAuth();
   const {
     profileForm,
-    preferences,
     avatarUrl,
     isUploading,
-    handlePreferencesChange,
     updateProfile,
-    updatePreferences,
     uploadProfilePicture,
     isLoading,
     fetchProfileData
@@ -121,8 +117,8 @@ export function ProfileSettings() {
       
       <Card className="hover-scale shadow-sm card-gradient">
         <CardHeader>
-          <CardTitle>Avatar & Preferences</CardTitle>
-          <CardDescription>Update your profile picture and preferences.</CardDescription>
+          <CardTitle>Profile Picture</CardTitle>
+          <CardDescription>Update your profile picture.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center space-y-4">
@@ -146,33 +142,6 @@ export function ProfileSettings() {
               disabled={isUploading}
             >
               {isUploading ? "Uploading..." : "Upload Photo"}
-            </Button>
-          </div>
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="newsletter">Receive Newsletter</Label>
-              <Switch 
-                id="newsletter"
-                checked={preferences.newsletter}
-                onCheckedChange={(checked) => handlePreferencesChange("newsletter", checked)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="marketing">Marketing Communications</Label>
-              <Switch 
-                id="marketing"
-                checked={preferences.marketing}
-                onCheckedChange={(checked) => handlePreferencesChange("marketing", checked)}
-                disabled={isLoading}
-              />
-            </div>
-            <Button 
-              className="w-full mt-2" 
-              onClick={updatePreferences}
-              disabled={isLoading}
-            >
-              {isLoading ? "Saving..." : "Save Preferences"}
             </Button>
           </div>
         </CardContent>
