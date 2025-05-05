@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +6,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+// Define extended profile schema that includes newsletter and marketing preferences
 export const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -15,12 +15,18 @@ export const profileSchema = z.object({
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
+// Define the preferences type to match the database columns
+export type ProfilePreferences = {
+  newsletter: boolean;
+  marketing: boolean;
+};
+
 export function useProfileSettings() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [preferences, setPreferences] = useState({
+  const [preferences, setPreferences] = useState<ProfilePreferences>({
     newsletter: false,
     marketing: false
   });
@@ -48,7 +54,7 @@ export function useProfileSettings() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, email, phone, image_url')
+        .select('name, email, phone, image_url, newsletter, marketing')
         .eq('id', user.id)
         .single();
       
@@ -62,22 +68,13 @@ export function useProfileSettings() {
         });
         
         setAvatarUrl(data.image_url || null);
-      }
-      
-      // Fetch user preferences
-      const { data: prefsData, error: prefsError } = await supabase
-        .from('profiles')
-        .select('newsletter, marketing')
-        .eq('id', user.id)
-        .single();
         
-      if (!prefsError && prefsData) {
+        // Set preferences from the data
         setPreferences({
-          newsletter: prefsData.newsletter || false,
-          marketing: prefsData.marketing || false
+          newsletter: data.newsletter || false,
+          marketing: data.marketing || false
         });
       }
-      
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile data');
@@ -86,7 +83,7 @@ export function useProfileSettings() {
     }
   };
 
-  const handlePreferencesChange = (key: string, value: boolean) => {
+  const handlePreferencesChange = (key: keyof ProfilePreferences, value: boolean) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
