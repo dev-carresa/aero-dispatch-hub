@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -69,10 +70,10 @@ export function useProfileSettings() {
         
         setAvatarUrl(data.image_url || null);
         
-        // Set preferences from the data
+        // Set preferences from the data with fallback to false if undefined
         setPreferences({
-          newsletter: data.newsletter || false,
-          marketing: data.marketing || false
+          newsletter: data.newsletter ?? false,
+          marketing: data.marketing ?? false
         });
       }
     } catch (error) {

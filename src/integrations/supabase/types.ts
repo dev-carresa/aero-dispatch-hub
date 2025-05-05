@@ -710,8 +710,10 @@ export type Database = {
           image_url: string | null
           last_active: string | null
           last_name: string | null
+          marketing: boolean | null
           name: string
           nationality: string | null
+          newsletter: boolean | null
           phone: string | null
           role: string
           role_id: string | null
@@ -731,8 +733,10 @@ export type Database = {
           image_url?: string | null
           last_active?: string | null
           last_name?: string | null
+          marketing?: boolean | null
           name: string
           nationality?: string | null
+          newsletter?: boolean | null
           phone?: string | null
           role: string
           role_id?: string | null
@@ -752,8 +756,10 @@ export type Database = {
           image_url?: string | null
           last_active?: string | null
           last_name?: string | null
+          marketing?: boolean | null
           name?: string
           nationality?: string | null
+          newsletter?: boolean | null
           phone?: string | null
           role?: string
           role_id?: string | null
