@@ -4,21 +4,23 @@ import { useAuth } from "@/context/AuthContext";
 import { useLayout, LayoutSettings } from "@/components/layout/LayoutContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Theme } from "@/components/theme/ThemeProvider";
+import { AccentColor, FontSize } from "@/components/theme/ExtendedThemeProvider";
 
-// Define theme settings type
+// Define theme settings type to match what's expected in ThemeSettingsCard
 interface ThemeSettings {
-  theme: string;
-  fontSize: string;
-  colorScheme: string;
+  colorMode: Theme;
+  accentColor: AccentColor;
+  fontSize: FontSize;
 }
 
 export function useAppearanceSettings() {
   const { user } = useAuth();
   const { layoutSettings, updateLayoutSetting } = useLayout();
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
-    theme: "system",
+    colorMode: "system",
+    accentColor: "blue",
     fontSize: "medium",
-    colorScheme: "default",
   });
   const [isLoading, setIsLoading] = useState(false);
 
