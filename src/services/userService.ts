@@ -14,10 +14,10 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Map Supabase data to User type
+    // Map Supabase data to User type, ensuring correct ID handling
     if (data) {
       const mappedUsers: User[] = data.map(profile => ({
-        id: profile.id,
+        id: profile.id, // Store the ID as a string
         name: profile.name || (profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : 'No Name'),
         firstName: profile.first_name,
         lastName: profile.last_name,
@@ -44,7 +44,7 @@ export const fetchUsers = async (): Promise<User[]> => {
   }
 };
 
-// Update driver availability
+// Update driver availability - fixed to ensure ID is properly handled
 export const updateDriverAvailability = async (
   userId: string | number, 
   newStatus: string
@@ -65,7 +65,7 @@ export const updateDriverAvailability = async (
   }
 };
 
-// Toggle user active/inactive status
+// Toggle user active/inactive status - fixed to ensure ID is properly handled
 export const toggleUserActiveStatus = async (
   userId: string | number, 
   currentStatus: UserStatus

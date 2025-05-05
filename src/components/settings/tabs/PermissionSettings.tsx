@@ -532,11 +532,14 @@ export function PermissionSettings() {
     }));
     
     try {
+      // Ensure userId is properly converted to string for Supabase
+      const userIdString = userId.toString();
+      
       // Update user role in the database
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', userId.toString()); // Convert number to string here
+        .eq('id', userIdString);
         
       if (error) throw error;
     } catch (error) {

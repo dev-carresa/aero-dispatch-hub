@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User } from "@/types/user";
-import { initialUsers } from "@/data/sampleUsers";
+import { fetchUsers } from "@/services/userService"; // Import fetchUsers to get real user data
 import { UserProfileHeader } from "@/components/users/profile/UserProfileHeader";
 import { UserProfileTabs } from "@/components/users/profile/UserProfileTabs";
 
@@ -14,11 +14,13 @@ const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would be an API call
-    const fetchUser = () => {
+    const fetchUser = async () => {
       setIsLoading(true);
       try {
-        const foundUser = initialUsers.find(u => u.id === Number(id));
+        // Get all users and find the one with matching ID
+        const users = await fetchUsers();
+        const foundUser = users.find(u => u.id === id);
+        
         if (foundUser) {
           setUser(foundUser);
         } else {
@@ -27,6 +29,7 @@ const UserProfile = () => {
         }
       } catch (error) {
         toast.error("Failed to load user profile");
+        console.error("Error loading user profile:", error);
       } finally {
         setIsLoading(false);
       }
