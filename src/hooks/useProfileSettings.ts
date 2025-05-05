@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -18,6 +18,8 @@ export type ProfileFormData = z.infer<typeof profileSchema>;
 export function useProfileSettings() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [preferences, setPreferences] = useState({
     newsletter: false,
     marketing: false
@@ -26,13 +28,19 @@ export function useProfileSettings() {
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: "John Doe",
+      fullName: "",
       email: user?.email || "",
       phone: ""
     }
   });
 
-  // Fetch profile data when the component mounts
+  // Fetch profile data when the component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
   const fetchProfileData = async () => {
     if (!user) return;
     
@@ -40,7 +48,7 @@ export function useProfileSettings() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, email, phone')
+        .select('name, email, phone, image_url')
         .eq('id', user.id)
         .single();
       
@@ -51,6 +59,22 @@ export function useProfileSettings() {
           fullName: data.name || '',
           email: data.email || '',
           phone: data.phone || ''
+        });
+        
+        setAvatarUrl(data.image_url || null);
+      }
+      
+      // Fetch user preferences
+      const { data: prefsData, error: prefsError } = await supabase
+        .from('profiles')
+        .select('newsletter, marketing')
+        .eq('id', user.id)
+        .single();
+        
+      if (!prefsError && prefsData) {
+        setPreferences({
+          newsletter: prefsData.newsletter || false,
+          marketing: prefsData.marketing || false
         });
       }
       
@@ -86,10 +110,6 @@ export function useProfileSettings() {
       
       if (error) throw error;
       
-      // Also update user preferences (would be in a separate table in a real app)
-      // For now just simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       toast.success("Profile updated successfully!");
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -104,8 +124,15 @@ export function useProfileSettings() {
     
     setIsLoading(true);
     try {
-      // In a real app, this would be an API call to update user preferences
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          newsletter: preferences.newsletter,
+          marketing: preferences.marketing
+        })
+        .eq('id', user.id);
+        
+      if (error) throw error;
       
       toast.success("Preferences updated successfully!");
     } catch (error) {
@@ -115,13 +142,89 @@ export function useProfileSettings() {
       setIsLoading(false);
     }
   };
+  
+  const uploadProfilePicture = async (file: File) => {
+    if (!user) {
+      toast.error("You must be logged in to upload a profile picture");
+      return;
+    }
+    
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      // Create a unique file path
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      // Check if avatars bucket exists, if not create it (this is just a safeguard)
+      const { data: bucketData, error: bucketError } = await supabase
+        .storage
+        .getBucket('avatars');
+        
+      if (bucketError && bucketError.message.includes('does not exist')) {
+        // Create the bucket if it doesn't exist
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+      
+      // Upload the file
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+        
+      const publicUrl = data.publicUrl;
+      
+      // Update the profile with the new image URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ image_url: publicUrl })
+        .eq('id', user.id);
+        
+      if (updateError) throw updateError;
+      
+      // Update local state
+      setAvatarUrl(publicUrl);
+      
+      toast.success("Profile picture updated successfully!");
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error('Failed to upload profile picture');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return {
     profileForm,
     preferences,
+    avatarUrl,
+    isUploading,
     handlePreferencesChange,
     updateProfile,
     updatePreferences,
+    uploadProfilePicture,
     isLoading,
     fetchProfileData
   };

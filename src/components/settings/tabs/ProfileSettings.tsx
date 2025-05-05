@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -14,21 +14,46 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 export function ProfileSettings() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   const {
     profileForm,
     preferences,
+    avatarUrl,
+    isUploading,
     handlePreferencesChange,
     updateProfile,
     updatePreferences,
+    uploadProfilePicture,
     isLoading,
     fetchProfileData
   } = useProfileSettings();
-  
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      uploadProfilePicture(e.target.files[0]);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (!user) return "?";
+    const fullName = profileForm.getValues().fullName || user.name || user.email || "";
+    return fullName
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -101,10 +126,27 @@ export function ProfileSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center space-y-4">
-            <div className="h-24 w-24 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-2xl font-semibold text-primary">AD</span>
-            </div>
-            <Button variant="outline" size="sm" disabled={isLoading}>Upload Photo</Button>
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={avatarUrl || undefined} alt="Profile" />
+              <AvatarFallback className="text-2xl font-semibold text-primary">{getInitials()}</AvatarFallback>
+            </Avatar>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileInputChange}
+            />
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleUploadClick}
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Upload Photo"}
+            </Button>
           </div>
           <div className="space-y-4 mt-4">
             <div className="flex items-center justify-between">

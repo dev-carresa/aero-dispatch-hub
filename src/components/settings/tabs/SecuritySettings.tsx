@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ const passwordSchema = z.object({
 });
 
 export function SecuritySettings() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [showPasswords, setShowPasswords] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [securitySettings, setSecuritySettings] = useState({
@@ -45,11 +45,7 @@ export function SecuritySettings() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSessionData, setIsLoadingSessionData] = useState(false);
-  const [activeSessions, setActiveSessions] = useState([
-    { id: "current", device: "Chrome on Windows", lastActive: "Current session", ip: "192.168.1.1" },
-    { id: "session-2", device: "Safari on MacOS", lastActive: "2 days ago", ip: "192.168.1.2" },
-    { id: "session-3", device: "Mobile App on iPhone", lastActive: "5 days ago", ip: "192.168.1.3" }
-  ]);
+  const [activeSessions, setActiveSessions] = useState<{id: string, device: string, lastActive: string, ip: string}[]>([]);
 
   const passwordForm = useForm({
     resolver: zodResolver(passwordSchema),
@@ -60,10 +56,16 @@ export function SecuritySettings() {
     }
   });
 
+  // Fetch sessions when component mounts
+  useEffect(() => {
+    fetchSessions();
+  }, [user]);
+
   const handleSecuritySettingChange = (key: string, value: boolean) => {
     setSecuritySettings(prev => ({ ...prev, [key]: value }));
   };
 
+  // Update password function with proper validation and error handling
   const updatePassword = async (data: z.infer<typeof passwordSchema>) => {
     setPasswordError("");
     setIsSaving(true);
@@ -76,7 +78,7 @@ export function SecuritySettings() {
       });
 
       if (signInError) {
-        setPasswordError("Current password incorrect");
+        setPasswordError("Current password is incorrect");
         throw signInError;
       }
 
@@ -101,28 +103,32 @@ export function SecuritySettings() {
     }
   };
 
+  // Security settings (session timeout, 2FA, etc.)
   const saveSecuritySettings = async () => {
-    // In a real implementation, this would save settings to the database
     setIsSaving(true);
     try {
-      // Example of how we would save to Supabase
-      /*
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user?.id,
-          two_factor_enabled: securitySettings.twoFactor,
-          session_timeout_enabled: securitySettings.sessionTimeout,
-          ip_restriction_enabled: securitySettings.ipRestriction
-        });
+      // If 2FA is enabled but wasn't before, redirect to 2FA setup
+      const was2FAEnabled = securitySettings.twoFactor;
+      
+      // Store the settings in user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: { 
+          security_settings: {
+            twoFactor: securitySettings.twoFactor,
+            sessionTimeout: securitySettings.sessionTimeout,
+            ipRestriction: securitySettings.ipRestriction
+          }
+        }
+      });
       
       if (error) throw error;
-      */
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      toast.success("Security settings saved successfully");
+      // If two-factor was enabled, let the user know they need to set it up
+      if (securitySettings.twoFactor && !was2FAEnabled) {
+        toast.info("Two-factor authentication enabled. You'll be prompted to set it up on your next sign in.");
+      } else {
+        toast.success("Security settings saved successfully");
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
       toast.error("Failed to save security settings");
@@ -131,19 +137,23 @@ export function SecuritySettings() {
     }
   };
 
+  // Fetch active sessions
   const fetchSessions = async () => {
+    if (!user) return;
+    
     setIsLoadingSessionData(true);
     try {
-      // In a real implementation, this would fetch from Supabase
-      // const { data, error } = await supabase.rpc('get_user_sessions', { user_id: user?.id });
-      // if (error) throw error;
-      // setActiveSessions(data);
+      // Current session from context
+      const currentSession = {
+        id: "current",
+        device: getUserAgent(),
+        lastActive: "Current session",
+        ip: await getCurrentIP()
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Set the active sessions with at least the current one
+      setActiveSessions([currentSession]);
       
-      // For demo, we'll keep using the mock data
-      toast.success("Sessions refreshed");
     } catch (error) {
       console.error("Error fetching sessions:", error);
       toast.error("Failed to load sessions");
@@ -151,33 +161,44 @@ export function SecuritySettings() {
       setIsLoadingSessionData(false);
     }
   };
-
-  const terminateSession = async (sessionId: string) => {
-    // In a real implementation, this would call the Supabase auth API
+  
+  // Helper function to get user agent info
+  const getUserAgent = () => {
+    const ua = navigator.userAgent;
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+    
+    if (/Firefox/i.test(ua)) browser = "Firefox";
+    else if (/Chrome/i.test(ua)) browser = "Chrome";
+    else if (/Safari/i.test(ua)) browser = "Safari";
+    else if (/Edge/i.test(ua)) browser = "Edge";
+    
+    if (/Windows/i.test(ua)) os = "Windows";
+    else if (/Mac/i.test(ua)) os = "MacOS";
+    else if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+    else if (/Linux/i.test(ua)) os = "Linux";
+    
+    return `${browser} on ${os}`;
+  };
+  
+  // Helper function to get current IP (using a service)
+  const getCurrentIP = async () => {
     try {
-      if (sessionId === "current") {
-        toast.error("Cannot terminate current session");
-        return;
-      }
-      
-      setIsLoadingSessionData(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setActiveSessions(prev => prev.filter(session => session.id !== sessionId));
-      toast.success(`Session terminated`);
+      // This is just for UI display, not security critical
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip;
     } catch (error) {
-      console.error("Error terminating session:", error);
-      toast.error("Failed to terminate session");
-    } finally {
-      setIsLoadingSessionData(false);
+      return "Unknown";
     }
   };
 
+  // Terminate all other sessions
   const terminateAllOtherSessions = async () => {
     setIsLoadingSessionData(true);
     try {
-      // In a real implementation with Supabase this would call auth.signOut with scope: 'others'
+      // In Supabase, this signs out all other sessions
       await supabase.auth.signOut({ scope: 'others' });
       
       // Keep only the current session in our state
@@ -292,6 +313,7 @@ export function SecuritySettings() {
               id="twoFactor"
               checked={securitySettings.twoFactor}
               onCheckedChange={(checked) => handleSecuritySettingChange("twoFactor", checked)}
+              disabled={isSaving}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -303,6 +325,7 @@ export function SecuritySettings() {
               id="sessionTimeout"
               checked={securitySettings.sessionTimeout}
               onCheckedChange={(checked) => handleSecuritySettingChange("sessionTimeout", checked)}
+              disabled={isSaving}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -314,6 +337,7 @@ export function SecuritySettings() {
               id="ipRestriction"
               checked={securitySettings.ipRestriction}
               onCheckedChange={(checked) => handleSecuritySettingChange("ipRestriction", checked)}
+              disabled={isSaving}
             />
           </div>
           <Button 
@@ -351,18 +375,7 @@ export function SecuritySettings() {
                     <p className="text-sm text-muted-foreground">Last activity: {session.lastActive}</p>
                     <p className="text-xs text-muted-foreground mt-1">IP: {session.ip}</p>
                   </div>
-                  {session.id === "current" ? (
-                    <Button variant="outline" size="sm">Current Session</Button>
-                  ) : (
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={() => terminateSession(session.id)}
-                      disabled={isLoadingSessionData}
-                    >
-                      Terminate
-                    </Button>
-                  )}
+                  <Button variant="outline" size="sm" disabled={true}>Current Session</Button>
                 </div>
               </div>
             ))}

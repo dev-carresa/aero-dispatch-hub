@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -6,12 +7,14 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 export function AppearanceSettings() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [themeSettings, setThemeSettings] = useState({
-    colorMode: "light",
+    colorMode: theme || "light",
     accentColor: "blue",
     fontSize: "medium"
   });
@@ -23,12 +26,68 @@ export function AppearanceSettings() {
     cardShadows: true
   });
 
+  // Load saved settings when component mounts
+  useEffect(() => {
+    fetchAppearanceSettings();
+  }, [user]);
+
+  const fetchAppearanceSettings = async () => {
+    if (!user) return;
+
+    try {
+      // Try to get saved settings from user metadata
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error) throw error;
+      
+      const savedThemeSettings = data.user?.user_metadata?.theme_settings;
+      const savedLayoutSettings = data.user?.user_metadata?.layout_settings;
+      
+      // Update state with saved settings or defaults
+      if (savedThemeSettings) {
+        setThemeSettings(prevSettings => ({
+          ...prevSettings,
+          ...savedThemeSettings
+        }));
+        
+        // Update theme provider state if color mode is saved
+        if (savedThemeSettings.colorMode) {
+          setTheme(savedThemeSettings.colorMode as "light" | "dark" | "system");
+        }
+      }
+      
+      if (savedLayoutSettings) {
+        setLayoutSettings(prevSettings => ({
+          ...prevSettings,
+          ...savedLayoutSettings
+        }));
+      }
+      
+    } catch (error) {
+      console.error('Error fetching appearance settings:', error);
+    }
+  };
+
   const handleThemeSettingChange = (setting: string, value: string) => {
     setThemeSettings(prev => ({ ...prev, [setting]: value }));
+    
+    // If changing color mode, update theme provider immediately
+    if (setting === 'colorMode') {
+      setTheme(value as "light" | "dark" | "system");
+    }
   };
 
   const handleLayoutSettingChange = (setting: string, value: boolean) => {
     setLayoutSettings(prev => ({ ...prev, [setting]: value }));
+    
+    // Apply layout changes immediately
+    if (setting === 'animations') {
+      document.documentElement.classList.toggle('reduce-motion', !value);
+    }
+    
+    if (setting === 'cardShadows') {
+      document.documentElement.classList.toggle('no-shadows', !value);
+    }
   };
 
   const saveAppearanceSettings = async () => {
@@ -39,19 +98,17 @@ export function AppearanceSettings() {
     
     setIsLoading(true);
     try {
-      // In a real app, this would save to the database
-      // Here we're simulating an API call
-      // const { error } = await supabase
-      //   .from('user_settings')
-      //   .upsert({
-      //     user_id: user.id,
-      //     theme_settings: themeSettings
-      //   });
+      // Save theme settings to user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          theme_settings: themeSettings
+        }
+      });
       
-      // if (error) throw error;
+      if (error) throw error;
       
-      // Simulate API latency
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Apply color mode setting
+      setTheme(themeSettings.colorMode as "light" | "dark" | "system");
       
       toast.success("Appearance settings saved successfully!");
     } catch (error) {
@@ -70,19 +127,18 @@ export function AppearanceSettings() {
     
     setIsLoading(true);
     try {
-      // In a real app, this would save to the database
-      // Here we're simulating an API call
-      // const { error } = await supabase
-      //   .from('user_settings')
-      //   .upsert({
-      //     user_id: user.id,
-      //     layout_settings: layoutSettings
-      //   });
+      // Save layout settings to user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          layout_settings: layoutSettings
+        }
+      });
       
-      // if (error) throw error;
+      if (error) throw error;
       
-      // Simulate API latency
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Apply relevant layout settings
+      document.documentElement.classList.toggle('reduce-motion', !layoutSettings.animations);
+      document.documentElement.classList.toggle('no-shadows', !layoutSettings.cardShadows);
       
       toast.success("Layout options saved successfully!");
     } catch (error) {
