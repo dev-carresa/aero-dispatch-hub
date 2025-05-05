@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,94 +69,94 @@ interface UserData {
 // Group permissions by category for better organization
 const permissionCategories: Record<string, { description: string; permissions: string[] }> = {
   "Dashboard": {
-    description: "Accès et contrôle du tableau de bord",
+    description: "Access and control of the dashboard",
     permissions: ["dashboard:view"]
   },
   "Bookings": {
-    description: "Gestion des réservations",
+    description: "Booking management",
     permissions: ["bookings:view", "bookings:create", "bookings:edit", "bookings:delete", "bookings:assign_driver"]
   },
   "Users": {
-    description: "Gestion des utilisateurs",
+    description: "User management",
     permissions: ["users:view", "users:create", "users:edit", "users:delete"]
   },
   "API Users": {
-    description: "Gestion des utilisateurs API",
+    description: "API user management",
     permissions: ["api_users:view", "api_users:create", "api_users:edit", "api_users:delete"]
   },
   "Vehicles": {
-    description: "Gestion des véhicules",
+    description: "Vehicle management",
     permissions: ["vehicles:view", "vehicles:create", "vehicles:edit", "vehicles:delete"]
   },
   "Airports/Meeting Points": {
-    description: "Gestion des aéroports et points de rencontre",
+    description: "Airport and meeting point management",
     permissions: ["airports:view", "airports:create", "airports:edit", "airports:delete"]
   },
   "Reports": {
-    description: "Création et visualisation des rapports",
+    description: "Report creation and visualization",
     permissions: ["reports:view", "reports:create"]
   },
   "Complaints": {
-    description: "Gestion des réclamations",
+    description: "Complaint management",
     permissions: ["complaints:view", "complaints:create", "complaints:respond"]
   },
   "Driver Comments": {
-    description: "Commentaires des conducteurs",
+    description: "Driver comments",
     permissions: ["driver_comments:view", "driver_comments:create"]
   },
   "Quality Reviews": {
-    description: "Évaluations de qualité",
+    description: "Quality reviews",
     permissions: ["quality_reviews:view"]
   },
   "Invoices": {
-    description: "Gestion des factures",
+    description: "Invoice management",
     permissions: ["invoices:view", "invoices:create", "invoices:edit"]
   },
   "Settings": {
-    description: "Configuration du système",
+    description: "System settings",
     permissions: ["settings:view", "settings:edit", "settings:permissions", "settings:api"]
   }
 };
 
 // Permission descriptions for tooltips
 const permissionDescriptions: Record<string, string> = {
-  "dashboard:view": "Voir le tableau de bord et les statistiques",
-  "bookings:view": "Voir les réservations",
-  "bookings:create": "Créer de nouvelles réservations",
-  "bookings:edit": "Modifier les réservations existantes",
-  "bookings:delete": "Supprimer des réservations",
-  "bookings:assign_driver": "Assigner des chauffeurs aux réservations",
-  "users:view": "Voir la liste des utilisateurs",
-  "users:create": "Créer de nouveaux utilisateurs",
-  "users:edit": "Modifier les utilisateurs existants",
-  "users:delete": "Supprimer des utilisateurs",
-  "api_users:view": "Voir les utilisateurs API",
-  "api_users:create": "Créer de nouveaux utilisateurs API",
-  "api_users:edit": "Modifier les utilisateurs API",
-  "api_users:delete": "Supprimer des utilisateurs API",
-  "vehicles:view": "Voir les véhicules",
-  "vehicles:create": "Ajouter de nouveaux véhicules",
-  "vehicles:edit": "Modifier les véhicules existants",
-  "vehicles:delete": "Supprimer des véhicules",
-  "airports:view": "Voir les aéroports et points de rencontre",
-  "airports:create": "Créer de nouveaux aéroports",
-  "airports:edit": "Modifier les aéroports existants",
-  "airports:delete": "Supprimer des aéroports",
-  "reports:view": "Voir les rapports",
-  "reports:create": "Créer de nouveaux rapports",
-  "complaints:view": "Voir les réclamations",
-  "complaints:create": "Créer de nouvelles réclamations",
-  "complaints:respond": "Répondre aux réclamations",
-  "driver_comments:view": "Voir les commentaires des conducteurs",
-  "driver_comments:create": "Créer des commentaires de conducteur",
-  "quality_reviews:view": "Voir les évaluations de qualité",
-  "invoices:view": "Voir les factures",
-  "invoices:create": "Créer de nouvelles factures",
-  "invoices:edit": "Modifier les factures existantes",
-  "settings:view": "Voir les paramètres",
-  "settings:edit": "Modifier les paramètres généraux",
-  "settings:permissions": "Gérer les permissions et les rôles",
-  "settings:api": "Configurer les paramètres API"
+  "dashboard:view": "View the dashboard and statistics",
+  "bookings:view": "View bookings",
+  "bookings:create": "Create new bookings",
+  "bookings:edit": "Edit existing bookings",
+  "bookings:delete": "Delete bookings",
+  "bookings:assign_driver": "Assign drivers to bookings",
+  "users:view": "View the list of users",
+  "users:create": "Create new users",
+  "users:edit": "Edit existing users",
+  "users:delete": "Delete users",
+  "api_users:view": "View API users",
+  "api_users:create": "Create new API users",
+  "api_users:edit": "Edit API users",
+  "api_users:delete": "Delete API users",
+  "vehicles:view": "View vehicles",
+  "vehicles:create": "Add new vehicles",
+  "vehicles:edit": "Edit existing vehicles",
+  "vehicles:delete": "Delete vehicles",
+  "airports:view": "View airports and meeting points",
+  "airports:create": "Create new airports",
+  "airports:edit": "Edit existing airports",
+  "airports:delete": "Delete airports",
+  "reports:view": "View reports",
+  "reports:create": "Create new reports",
+  "complaints:view": "View complaints",
+  "complaints:create": "Create new complaints",
+  "complaints:respond": "Respond to complaints",
+  "driver_comments:view": "View driver comments",
+  "driver_comments:create": "Create driver comments",
+  "quality_reviews:view": "View quality reviews",
+  "invoices:view": "View invoices",
+  "invoices:create": "Create new invoices",
+  "invoices:edit": "Edit existing invoices",
+  "settings:view": "View system settings",
+  "settings:edit": "Edit general system settings",
+  "settings:permissions": "Manage permissions and roles",
+  "settings:api": "Configure API settings"
 };
 
 // Role colors for badges
@@ -300,7 +299,7 @@ export function PermissionSettings() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching roles:", error);
-      toast.error("Impossible de charger les rôles");
+      toast.error("Unable to load roles");
       setIsLoading(false);
     }
   };
@@ -415,7 +414,7 @@ export function PermissionSettings() {
       setUsers(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error("Impossible de charger les utilisateurs");
+      toast.error("Unable to load users");
     }
   };
 
@@ -554,7 +553,7 @@ export function PermissionSettings() {
     const roleInUse = users.some(user => user.role.toLowerCase() === roleId);
     
     if (roleInUse) {
-      toast.error("Impossible de supprimer un rôle attribué à des utilisateurs");
+      toast.error("Cannot delete a role assigned to users");
       return;
     }
     
@@ -570,7 +569,7 @@ export function PermissionSettings() {
       // Update local state
       setRoles(roles.filter(role => role.id !== roleId));
       setConfirmDeleteRoleId(null);
-      toast.success("Rôle supprimé avec succès");
+      toast.success("Role successfully deleted");
     } catch (error) {
       console.error('Error deleting role:', error);
       toast.error('Failed to delete role');
@@ -579,7 +578,7 @@ export function PermissionSettings() {
 
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) {
-      toast.error("Le nom du rôle ne peut pas être vide");
+      toast.error("Role name cannot be empty");
       return;
     }
     
@@ -587,7 +586,7 @@ export function PermissionSettings() {
     
     // Check if role with this ID already exists
     if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
+      toast.error("A role with a similar name already exists");
       return;
     }
     
@@ -628,7 +627,7 @@ export function PermissionSettings() {
       setNewRoleName("");
       setNewRoleDescription("");
       setIsCreateDialogOpen(false);
-      toast.success(`Rôle "${newRoleName}" créé avec succès`);
+      toast.success(`Role "${newRoleName}" created successfully`);
     } catch (error) {
       console.error('Error creating role:', error);
       toast.error('Failed to create role');
@@ -653,7 +652,7 @@ export function PermissionSettings() {
       // Update local state
       setRoles(roles.map(role => role.id === editingRole.id ? editingRole : role));
       setEditingRole(null);
-      toast.success(`Rôle "${editingRole.name}" mis à jour avec succès`);
+      toast.success(`Role "${editingRole.name}" updated successfully`);
     } catch (error) {
       console.error('Error updating role:', error);
       toast.error('Failed to update role');
@@ -667,7 +666,7 @@ export function PermissionSettings() {
     
     // Check if role with this ID already exists
     if (roles.some(role => role.id === roleId)) {
-      toast.error("Un rôle avec un nom similaire existe déjà");
+      toast.error("A role with a similar name already exists");
       return;
     }
     
@@ -723,7 +722,7 @@ export function PermissionSettings() {
       setCopiedRoleName("");
       setSelectedRole(null);
       setIsRoleOpDialogOpen(false);
-      toast.success(`Rôle "${copiedRoleName}" créé avec succès`);
+      toast.success(`Role "${copiedRoleName}" created successfully`);
     } catch (error) {
       console.error('Error copying role:', error);
       toast.error('Failed to copy role');
@@ -734,7 +733,7 @@ export function PermissionSettings() {
     try {
       // This function is now less important since we're updating roles immediately,
       // but we can still use it to make sure all pending changes are committed
-      toast.success("Permissions des utilisateurs enregistrées avec succès");
+      toast.success("User permissions saved successfully");
     } catch (error) {
       console.error('Error saving user permissions:', error);
       toast.error('Failed to save user permissions');
@@ -745,7 +744,7 @@ export function PermissionSettings() {
     try {
       // This function is now less important since we're updating permissions immediately,
       // but we can still use it to make sure all pending changes are committed
-      toast.success(`Permissions pour le rôle "${role.name}" enregistrées avec succès`);
+      toast.success(`Role permissions for "${role.name}" saved successfully`);
     } catch (error) {
       console.error('Error saving role permissions:', error);
       toast.error('Failed to save role permissions');
@@ -789,12 +788,12 @@ export function PermissionSettings() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Chargement des permissions...</CardTitle>
+          <CardTitle>Loading permissions...</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center p-6">
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Chargement des rôles et des permissions</p>
+            <p className="text-sm text-muted-foreground">Loading roles and permissions</p>
           </div>
         </CardContent>
       </Card>
@@ -808,11 +807,11 @@ export function PermissionSettings() {
           <TabsList className="grid grid-cols-2 w-full sm:w-auto">
             <TabsTrigger value="roles" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span>Gestion des Rôles</span>
+              <span>Role Management</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>Attribution des Rôles</span>
+              <span>Role Assignment</span>
             </TabsTrigger>
           </TabsList>
           
@@ -821,7 +820,7 @@ export function PermissionSettings() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Rechercher..."
+                placeholder="Search..."
                 className="pl-9 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -832,39 +831,39 @@ export function PermissionSettings() {
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nouveau Rôle</span>
+                  <span className="hidden sm:inline">New Role</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Créer un Nouveau Rôle</DialogTitle>
+                  <DialogTitle>Create a New Role</DialogTitle>
                   <DialogDescription>
-                    Entrez les informations pour le nouveau rôle. Vous pourrez configurer les permissions après la création.
+                    Enter the information for the new role. You can configure permissions after creation.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="role-name">Nom du Rôle</Label>
+                    <Label htmlFor="role-name">Role Name</Label>
                     <Input 
                       id="role-name"
                       value={newRoleName}
                       onChange={(e) => setNewRoleName(e.target.value)}
-                      placeholder="Ex: Support Technique"
+                      placeholder="Ex: Support Technician"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="role-description">Description (optionnel)</Label>
+                    <Label htmlFor="role-description">Description (optional)</Label>
                     <Input 
                       id="role-description"
                       value={newRoleDescription}
                       onChange={(e) => setNewRoleDescription(e.target.value)}
-                      placeholder="Ex: Rôle pour l'équipe de support technique"
+                      placeholder="Ex: Role for the support technician team"
                     />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Annuler</Button>
-                  <Button onClick={handleCreateRole}>Créer Rôle</Button>
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleCreateRole}>Create Role</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -881,12 +880,12 @@ export function PermissionSettings() {
                       <CardTitle className="text-xl">{role.name}</CardTitle>
                       {role.isBuiltIn && (
                         <Badge variant="outline" className="font-normal">
-                          Système
+                          System
                         </Badge>
                       )}
                       {role.userCount !== undefined && role.userCount > 0 && (
                         <Badge variant="secondary" className="font-normal">
-                          {role.userCount} utilisateur{role.userCount > 1 ? 's' : ''}
+                          {role.userCount} user{role.userCount > 1 ? 's' : ''}
                         </Badge>
                       )}
                     </div>
@@ -907,11 +906,11 @@ export function PermissionSettings() {
                             }}
                           >
                             <Copy className="h-4 w-4" />
-                            <span className="sr-only">Dupliquer</span>
+                            <span className="sr-only">Duplicate</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Dupliquer ce rôle</p>
+                          <p>Duplicate this role</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -930,11 +929,11 @@ export function PermissionSettings() {
                             disabled={role.isBuiltIn}
                           >
                             <Settings className="h-4 w-4" />
-                            <span className="sr-only">Éditer les détails</span>
+                            <span className="sr-only">Edit details</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Éditer les détails du rôle</p>
+                          <p>Edit the role details</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -949,23 +948,23 @@ export function PermissionSettings() {
                           onClick={() => setConfirmDeleteRoleId(role.id)}
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Supprimer</span>
+                          <span className="sr-only">Delete</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Supprimer le rôle</AlertDialogTitle>
+                          <AlertDialogTitle>Delete Role</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Êtes-vous sûr de vouloir supprimer le rôle <strong>{role.name}</strong>? Cette action est irréversible.
+                            Are you sure you want to delete the role <strong>{role.name}</strong>? This action is irreversible.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction 
                             className="bg-red-500 text-white hover:bg-red-600"
                             onClick={() => handleDeleteRole(role.id)}
                           >
-                            Supprimer
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -976,7 +975,7 @@ export function PermissionSettings() {
                       size="sm"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      <span>Sauvegarder</span>
+                      <span>Save</span>
                     </Button>
                   </div>
                 </div>
@@ -1060,9 +1059,9 @@ export function PermissionSettings() {
                 <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
                   <Search className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <h3 className="font-medium text-lg">Aucun rôle trouvé</h3>
+                <h3 className="font-medium text-lg">No roles found</h3>
                 <p className="text-muted-foreground text-center mt-2">
-                  Aucun rôle ne correspond à votre recherche. Essayez de modifier vos critères de recherche ou créez un nouveau rôle.
+                  No roles match your search. Try modifying your search criteria or create a new role.
                 </p>
                 <Button 
                   variant="outline" 
@@ -1072,7 +1071,7 @@ export function PermissionSettings() {
                     setRoleFilter(null);
                   }}
                 >
-                  Effacer la recherche
+                  Clear search
                 </Button>
               </CardContent>
             </Card>
@@ -1082,8 +1081,8 @@ export function PermissionSettings() {
         <TabsContent value="users" className="space-y-6">
           <Card className="hover-scale shadow-sm">
             <CardHeader>
-              <CardTitle>Attribution des Rôles aux Utilisateurs</CardTitle>
-              <CardDescription>Attribuez des rôles spécifiques aux utilisateurs.</CardDescription>
+              <CardTitle>Role Assignment to Users</CardTitle>
+              <CardDescription>Assign specific roles to users.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1093,7 +1092,7 @@ export function PermissionSettings() {
                     size="sm"
                     onClick={() => setRoleFilter(null)}
                   >
-                    Tous
+                    All
                   </Button>
                   {roles.map((role) => (
                     <Button
@@ -1145,7 +1144,7 @@ export function PermissionSettings() {
                   
                   {filteredUsers.filter(user => roleFilter === null || user.role.toLowerCase() === roleFilter).length === 0 && (
                     <div className="text-center p-6 border rounded-md border-dashed">
-                      <p className="text-muted-foreground">Aucun utilisateur trouvé avec ces critères</p>
+                      <p className="text-muted-foreground">No users found with these criteria</p>
                       <Button 
                         variant="outline" 
                         className="mt-2"
@@ -1154,7 +1153,7 @@ export function PermissionSettings() {
                           setRoleFilter(null);
                         }}
                       >
-                        Effacer les filtres
+                        Clear filters
                       </Button>
                     </div>
                   )}
@@ -1163,7 +1162,7 @@ export function PermissionSettings() {
                 <div className="pt-4 flex justify-end">
                   <Button onClick={saveUserPermissions} className="px-8">
                     <Save className="h-4 w-4 mr-2" />
-                    Enregistrer les attributions
+                    Save role assignments
                   </Button>
                 </div>
               </div>
@@ -1177,17 +1176,17 @@ export function PermissionSettings() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {roleOpType === 'edit' ? 'Modifier le Rôle' : 'Dupliquer le Rôle'}
+              {roleOpType === 'edit' ? 'Edit Role' : 'Copy Role'}
             </DialogTitle>
             <DialogDescription>
               {roleOpType === 'edit' 
-                ? 'Modifiez les détails du rôle sélectionné.'
-                : 'Créez un nouveau rôle basé sur celui-ci.'}
+                ? 'Modify the details of the selected role.'
+                : 'Create a new role based on this one.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="role-op-name">Nom du Rôle</Label>
+              <Label htmlFor="role-op-name">Role Name</Label>
               <Input 
                 id="role-op-name"
                 value={roleOpType === 'edit' 
@@ -1200,7 +1199,7 @@ export function PermissionSettings() {
                     setCopiedRoleName(e.target.value);
                   }
                 }}
-                placeholder="Nom du rôle"
+                placeholder="Role name"
               />
             </div>
             <div className="space-y-2">
@@ -1216,17 +1215,17 @@ export function PermissionSettings() {
                   }
                   // For copy, we keep the default description
                 }}
-                placeholder="Description du rôle"
+                placeholder="Role description"
                 disabled={roleOpType === 'copy'}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRoleOpDialogOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsRoleOpDialogOpen(false)}>Cancel</Button>
             <Button 
               onClick={roleOpType === 'edit' ? handleEditRole : handleCopyRole}
             >
-              {roleOpType === 'edit' ? 'Enregistrer' : 'Dupliquer'}
+              {roleOpType === 'edit' ? 'Save' : 'Copy'}
             </Button>
           </DialogFooter>
         </DialogContent>

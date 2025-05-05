@@ -1,12 +1,15 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AppearanceSettings() {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [themeSettings, setThemeSettings] = useState({
     colorMode: "light",
     accentColor: "blue",
@@ -28,12 +31,66 @@ export function AppearanceSettings() {
     setLayoutSettings(prev => ({ ...prev, [setting]: value }));
   };
 
-  const saveAppearanceSettings = () => {
-    toast.success("Appearance settings saved successfully!");
+  const saveAppearanceSettings = async () => {
+    if (!user) {
+      toast.error("You must be logged in to save settings");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // In a real app, this would save to the database
+      // Here we're simulating an API call
+      // const { error } = await supabase
+      //   .from('user_settings')
+      //   .upsert({
+      //     user_id: user.id,
+      //     theme_settings: themeSettings
+      //   });
+      
+      // if (error) throw error;
+      
+      // Simulate API latency
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      toast.success("Appearance settings saved successfully!");
+    } catch (error) {
+      console.error('Error saving appearance settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const saveLayoutOptions = () => {
-    toast.success("Layout options saved successfully!");
+  const saveLayoutOptions = async () => {
+    if (!user) {
+      toast.error("You must be logged in to save settings");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // In a real app, this would save to the database
+      // Here we're simulating an API call
+      // const { error } = await supabase
+      //   .from('user_settings')
+      //   .upsert({
+      //     user_id: user.id,
+      //     layout_settings: layoutSettings
+      //   });
+      
+      // if (error) throw error;
+      
+      // Simulate API latency
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      toast.success("Layout options saved successfully!");
+    } catch (error) {
+      console.error('Error saving layout options:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,6 +113,7 @@ export function AppearanceSettings() {
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.colorMode === "light"}
                     onChange={() => handleThemeSettingChange("colorMode", "light")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="light-mode">Light</Label>
                 </div>
@@ -67,6 +125,7 @@ export function AppearanceSettings() {
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.colorMode === "dark"} 
                     onChange={() => handleThemeSettingChange("colorMode", "dark")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="dark-mode">Dark</Label>
                 </div>
@@ -77,7 +136,8 @@ export function AppearanceSettings() {
                     name="color-mode" 
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.colorMode === "system"}
-                    onChange={() => handleThemeSettingChange("colorMode", "system")} 
+                    onChange={() => handleThemeSettingChange("colorMode", "system")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="system-mode">System</Label>
                 </div>
@@ -89,27 +149,27 @@ export function AppearanceSettings() {
               <div className="grid grid-cols-6 gap-2">
                 <div 
                   className={`h-8 w-8 rounded-full bg-blue-600 cursor-pointer ${themeSettings.accentColor === 'blue' ? 'ring-2 ring-offset-2 ring-blue-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "blue")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "blue")}
                 ></div>
                 <div 
                   className={`h-8 w-8 rounded-full bg-purple-600 cursor-pointer ${themeSettings.accentColor === 'purple' ? 'ring-2 ring-offset-2 ring-purple-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "purple")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "purple")}
                 ></div>
                 <div 
                   className={`h-8 w-8 rounded-full bg-pink-600 cursor-pointer ${themeSettings.accentColor === 'pink' ? 'ring-2 ring-offset-2 ring-pink-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "pink")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "pink")}
                 ></div>
                 <div 
                   className={`h-8 w-8 rounded-full bg-orange-600 cursor-pointer ${themeSettings.accentColor === 'orange' ? 'ring-2 ring-offset-2 ring-orange-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "orange")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "orange")}
                 ></div>
                 <div 
                   className={`h-8 w-8 rounded-full bg-green-600 cursor-pointer ${themeSettings.accentColor === 'green' ? 'ring-2 ring-offset-2 ring-green-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "green")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "green")}
                 ></div>
                 <div 
                   className={`h-8 w-8 rounded-full bg-gray-600 cursor-pointer ${themeSettings.accentColor === 'gray' ? 'ring-2 ring-offset-2 ring-gray-600' : ''}`}
-                  onClick={() => handleThemeSettingChange("accentColor", "gray")}
+                  onClick={() => !isLoading && handleThemeSettingChange("accentColor", "gray")}
                 ></div>
               </div>
             </div>
@@ -125,6 +185,7 @@ export function AppearanceSettings() {
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.fontSize === "small"}
                     onChange={() => handleThemeSettingChange("fontSize", "small")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="font-small" className="text-sm">Small</Label>
                 </div>
@@ -136,6 +197,7 @@ export function AppearanceSettings() {
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.fontSize === "medium"}
                     onChange={() => handleThemeSettingChange("fontSize", "medium")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="font-medium">Medium</Label>
                 </div>
@@ -147,12 +209,19 @@ export function AppearanceSettings() {
                     className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
                     checked={themeSettings.fontSize === "large"}
                     onChange={() => handleThemeSettingChange("fontSize", "large")}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="font-large" className="text-lg">Large</Label>
                 </div>
               </div>
             </div>
-            <Button className="w-full" onClick={saveAppearanceSettings}>Save Appearance Settings</Button>
+            <Button 
+              className="w-full" 
+              onClick={saveAppearanceSettings}
+              disabled={isLoading}
+            >
+              {isLoading ? "Saving..." : "Save Appearance Settings"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -172,6 +241,7 @@ export function AppearanceSettings() {
               id="fixedHeader" 
               checked={layoutSettings.fixedHeader}
               onCheckedChange={(checked) => handleLayoutSettingChange("fixedHeader", checked)}
+              disabled={isLoading}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -183,6 +253,7 @@ export function AppearanceSettings() {
               id="compactSidebar"
               checked={layoutSettings.compactSidebar}
               onCheckedChange={(checked) => handleLayoutSettingChange("compactSidebar", checked)}
+              disabled={isLoading}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -194,6 +265,7 @@ export function AppearanceSettings() {
               id="animations"
               checked={layoutSettings.animations}
               onCheckedChange={(checked) => handleLayoutSettingChange("animations", checked)}
+              disabled={isLoading}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -205,9 +277,16 @@ export function AppearanceSettings() {
               id="cardShadows"
               checked={layoutSettings.cardShadows}
               onCheckedChange={(checked) => handleLayoutSettingChange("cardShadows", checked)}
+              disabled={isLoading}
             />
           </div>
-          <Button className="w-full" onClick={saveLayoutOptions}>Save Layout Options</Button>
+          <Button 
+            className="w-full" 
+            onClick={saveLayoutOptions}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save Layout Options"}
+          </Button>
         </CardContent>
       </Card>
     </div>

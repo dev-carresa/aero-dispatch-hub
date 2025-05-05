@@ -5,8 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export function NotificationSettings() {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState({
     bookings: true,
     cancellations: true,
@@ -29,9 +33,36 @@ export function NotificationSettings() {
     setPushNotifications(prev => ({ ...prev, [key]: value }));
   };
 
-  const saveNotificationPreferences = () => {
-    // Save notification preferences logic here
-    toast.success("Notification preferences saved successfully!");
+  const saveNotificationPreferences = async () => {
+    if (!user) {
+      toast.error("You must be logged in to update notification preferences");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // In a real app, this would save to the database
+      // Here we're simulating an API call
+      // const { error } = await supabase
+      //   .from('notification_preferences')
+      //   .upsert({
+      //     user_id: user.id,
+      //     email_notifications: emailNotifications,
+      //     push_notifications: pushNotifications
+      //   });
+      
+      // if (error) throw error;
+      
+      // Simulate API latency
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      toast.success("Notification preferences saved successfully!");
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      toast.error('Failed to save notification preferences');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,6 +81,7 @@ export function NotificationSettings() {
                 id="emailBookings" 
                 checked={emailNotifications.bookings}
                 onCheckedChange={(checked) => handleEmailNotificationChange("bookings", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -58,6 +90,7 @@ export function NotificationSettings() {
                 id="emailCancellations" 
                 checked={emailNotifications.cancellations}
                 onCheckedChange={(checked) => handleEmailNotificationChange("cancellations", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -66,6 +99,7 @@ export function NotificationSettings() {
                 id="emailPayments"
                 checked={emailNotifications.payments}
                 onCheckedChange={(checked) => handleEmailNotificationChange("payments", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -74,6 +108,7 @@ export function NotificationSettings() {
                 id="emailReviews"
                 checked={emailNotifications.reviews}
                 onCheckedChange={(checked) => handleEmailNotificationChange("reviews", checked)}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -88,6 +123,7 @@ export function NotificationSettings() {
                 id="pushBookings"
                 checked={pushNotifications.bookings}
                 onCheckedChange={(checked) => handlePushNotificationChange("bookings", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -96,6 +132,7 @@ export function NotificationSettings() {
                 id="pushCancellations"
                 checked={pushNotifications.cancellations}
                 onCheckedChange={(checked) => handlePushNotificationChange("cancellations", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -104,6 +141,7 @@ export function NotificationSettings() {
                 id="pushPayments"
                 checked={pushNotifications.payments}
                 onCheckedChange={(checked) => handlePushNotificationChange("payments", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -112,11 +150,18 @@ export function NotificationSettings() {
                 id="pushReviews"
                 checked={pushNotifications.reviews}
                 onCheckedChange={(checked) => handlePushNotificationChange("reviews", checked)}
+                disabled={isLoading}
               />
             </div>
           </div>
         </div>
-        <Button className="w-full" onClick={saveNotificationPreferences}>Save Notification Preferences</Button>
+        <Button 
+          className="w-full" 
+          onClick={saveNotificationPreferences}
+          disabled={isLoading}
+        >
+          {isLoading ? "Saving..." : "Save Notification Preferences"}
+        </Button>
       </CardContent>
     </Card>
   );

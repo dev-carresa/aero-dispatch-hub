@@ -1,36 +1,34 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useProfileSettings } from "@/hooks/useProfileSettings";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 export function ProfileSettings() {
-  const [profileInfo, setProfileInfo] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    phone: "+1 (555) 000-0000"
-  });
+  const {
+    profileForm,
+    preferences,
+    handlePreferencesChange,
+    updateProfile,
+    updatePreferences,
+    isLoading,
+    fetchProfileData
+  } = useProfileSettings();
   
-  const [preferences, setPreferences] = useState({
-    newsletter: false,
-    marketing: false
-  });
-
-  const handleProfileInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfileInfo(prev => ({ ...prev, [e.target.id]: e.target.value }));
-  };
-
-  const handlePreferencesChange = (key: string, value: boolean) => {
-    setPreferences(prev => ({ ...prev, [key]: value }));
-  };
-
-  const updateProfile = () => {
-    // Update profile logic here
-    toast.success("Profile updated successfully!");
-  };
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -40,35 +38,59 @@ export function ProfileSettings() {
           <CardDescription>Update your account information.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input 
-              id="fullName" 
-              placeholder="John Doe" 
-              value={profileInfo.fullName}
-              onChange={handleProfileInfoChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="john@example.com" 
-              value={profileInfo.email}
-              onChange={handleProfileInfoChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input 
-              id="phone" 
-              placeholder="+1 (555) 000-0000" 
-              value={profileInfo.phone}
-              onChange={handleProfileInfoChange}
-            />
-          </div>
-          <Button className="w-full" onClick={updateProfile}>Update Profile</Button>
+          <Form {...profileForm}>
+            <form onSubmit={profileForm.handleSubmit(updateProfile)} className="space-y-4">
+              <FormField
+                control={profileForm.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="John Doe" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={profileForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="john@example.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={profileForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="+1 (555) 000-0000" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                className="w-full" 
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? "Updating..." : "Update Profile"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
       
@@ -82,7 +104,7 @@ export function ProfileSettings() {
             <div className="h-24 w-24 rounded-full bg-primary/20 flex items-center justify-center">
               <span className="text-2xl font-semibold text-primary">AD</span>
             </div>
-            <Button variant="outline" size="sm">Upload Photo</Button>
+            <Button variant="outline" size="sm" disabled={isLoading}>Upload Photo</Button>
           </div>
           <div className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
@@ -91,6 +113,7 @@ export function ProfileSettings() {
                 id="newsletter"
                 checked={preferences.newsletter}
                 onCheckedChange={(checked) => handlePreferencesChange("newsletter", checked)}
+                disabled={isLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -99,8 +122,16 @@ export function ProfileSettings() {
                 id="marketing"
                 checked={preferences.marketing}
                 onCheckedChange={(checked) => handlePreferencesChange("marketing", checked)}
+                disabled={isLoading}
               />
             </div>
+            <Button 
+              className="w-full mt-2" 
+              onClick={updatePreferences}
+              disabled={isLoading}
+            >
+              {isLoading ? "Saving..." : "Save Preferences"}
+            </Button>
           </div>
         </CardContent>
       </Card>

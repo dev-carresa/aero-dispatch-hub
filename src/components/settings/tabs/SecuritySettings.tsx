@@ -13,14 +13,29 @@ import {
   AlertDescription,
   AlertTitle
 } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string()
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 export function SecuritySettings() {
   const { user } = useAuth();
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
   const [showPasswords, setShowPasswords] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [securitySettings, setSecuritySettings] = useState({
@@ -36,87 +51,127 @@ export function SecuritySettings() {
     { id: "session-3", device: "Mobile App on iPhone", lastActive: "5 days ago", ip: "192.168.1.3" }
   ]);
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPasswordData(prev => ({ ...prev, [e.target.id]: e.target.value }));
-    setPasswordError("");
-  };
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    }
+  });
 
   const handleSecuritySettingChange = (key: string, value: boolean) => {
     setSecuritySettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const updatePassword = async () => {
-    const { currentPassword, newPassword, confirmPassword } = passwordData;
-    
-    // Basic validation
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError("Tous les champs sont requis");
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setPasswordError("Le nouveau mot de passe doit comporter au moins 8 caractères");
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setPasswordError("Les nouveaux mots de passe ne correspondent pas");
-      return;
-    }
-    
+  const updatePassword = async (data: z.infer<typeof passwordSchema>) => {
+    setPasswordError("");
     setIsSaving(true);
     
     try {
       // First verify the current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user?.email || "",
-        password: currentPassword
+        password: data.currentPassword
       });
 
       if (signInError) {
-        setPasswordError("Mot de passe actuel incorrect");
+        setPasswordError("Current password incorrect");
         throw signInError;
       }
 
       // If sign-in successful, update the password
       const { error: updateError } = await supabase.auth.updateUser({ 
-        password: newPassword 
+        password: data.newPassword 
       });
 
       if (updateError) {
         throw updateError;
       }
 
-      toast.success("Mot de passe mis à jour avec succès");
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
-      });
+      toast.success("Password updated successfully");
+      passwordForm.reset();
     } catch (error) {
       console.error("Error updating password:", error);
       if (!passwordError) {
-        setPasswordError("Une erreur est survenue lors de la mise à jour du mot de passe");
+        setPasswordError("An error occurred while updating the password");
       }
     } finally {
       setIsSaving(false);
     }
   };
 
-  const saveSecuritySettings = () => {
-    // Save security settings logic here
+  const saveSecuritySettings = async () => {
+    // In a real implementation, this would save settings to the database
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      // Example of how we would save to Supabase
+      /*
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user?.id,
+          two_factor_enabled: securitySettings.twoFactor,
+          session_timeout_enabled: securitySettings.sessionTimeout,
+          ip_restriction_enabled: securitySettings.ipRestriction
+        });
+      
+      if (error) throw error;
+      */
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      toast.success("Security settings saved successfully");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save security settings");
+    } finally {
       setIsSaving(false);
-      toast.success("Paramètres de sécurité enregistrés avec succès");
-    }, 800);
+    }
   };
 
-  const terminateSession = (sessionId: string) => {
+  const fetchSessions = async () => {
+    setIsLoadingSessionData(true);
+    try {
+      // In a real implementation, this would fetch from Supabase
+      // const { data, error } = await supabase.rpc('get_user_sessions', { user_id: user?.id });
+      // if (error) throw error;
+      // setActiveSessions(data);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // For demo, we'll keep using the mock data
+      toast.success("Sessions refreshed");
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      toast.error("Failed to load sessions");
+    } finally {
+      setIsLoadingSessionData(false);
+    }
+  };
+
+  const terminateSession = async (sessionId: string) => {
     // In a real implementation, this would call the Supabase auth API
-    // For now, we'll just simulate by removing from our local state
-    setActiveSessions(prev => prev.filter(session => session.id !== sessionId));
-    toast.success(`Session terminée: ${sessionId}`);
+    try {
+      if (sessionId === "current") {
+        toast.error("Cannot terminate current session");
+        return;
+      }
+      
+      setIsLoadingSessionData(true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setActiveSessions(prev => prev.filter(session => session.id !== sessionId));
+      toast.success(`Session terminated`);
+    } catch (error) {
+      console.error("Error terminating session:", error);
+      toast.error("Failed to terminate session");
+    } finally {
+      setIsLoadingSessionData(false);
+    }
   };
 
   const terminateAllOtherSessions = async () => {
@@ -127,10 +182,10 @@ export function SecuritySettings() {
       
       // Keep only the current session in our state
       setActiveSessions(prev => prev.filter(session => session.id === "current"));
-      toast.success("Toutes les autres sessions ont été terminées");
+      toast.success("All other sessions have been terminated");
     } catch (error) {
       console.error("Error terminating sessions:", error);
-      toast.error("Erreur lors de la fermeture des sessions");
+      toast.error("Failed to close sessions");
     } finally {
       setIsLoadingSessionData(false);
     }
@@ -140,82 +195,98 @@ export function SecuritySettings() {
     <div className="grid gap-6">
       <Card className="hover-scale shadow-sm card-gradient">
         <CardHeader>
-          <CardTitle>Mot de passe</CardTitle>
-          <CardDescription>Mettez à jour votre mot de passe.</CardDescription>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>Update your password.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {passwordError && (
             <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Erreur</AlertTitle>
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>{passwordError}</AlertDescription>
             </Alert>
           )}
           
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-            <div className="relative">
-              <Input 
-                id="currentPassword" 
-                type={showPasswords ? "text" : "password"}
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full"
-                onClick={() => setShowPasswords(!showPasswords)}
-              >
-                {showPasswords ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(updatePassword)} className="space-y-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Current Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type={showPasswords ? "text" : "password"}
+                          autoComplete="current-password"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full"
+                        onClick={() => setShowPasswords(!showPasswords)}
+                      >
+                        {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
+              
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input {...field} type={showPasswords ? "text" : "password"} autoComplete="new-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <Input {...field} type={showPasswords ? "text" : "password"} autoComplete="new-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                className="w-full" 
+                type="submit"
+                disabled={isSaving}
+              >
+                {isSaving ? "Updating..." : "Update Password"}
               </Button>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-            <Input 
-              id="newPassword" 
-              type={showPasswords ? "text" : "password"}
-              value={passwordData.newPassword}
-              onChange={handlePasswordChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
-            <Input 
-              id="confirmPassword" 
-              type={showPasswords ? "text" : "password"}
-              value={passwordData.confirmPassword}
-              onChange={handlePasswordChange}
-            />
-          </div>
-          
-          <Button 
-            className="w-full" 
-            onClick={updatePassword} 
-            disabled={isSaving}
-          >
-            {isSaving ? "Mise à jour..." : "Mettre à jour le mot de passe"}
-          </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
       <Card className="hover-scale shadow-sm card-gradient">
         <CardHeader>
-          <CardTitle>Paramètres de sécurité</CardTitle>
-          <CardDescription>Configurez les options de sécurité de votre compte.</CardDescription>
+          <CardTitle>Security Settings</CardTitle>
+          <CardDescription>Configure your account security options.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="twoFactor">Authentification à deux facteurs</Label>
-              <p className="text-sm text-muted-foreground">Ajoutez une couche de sécurité supplémentaire à votre compte.</p>
+              <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
+              <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
             </div>
             <Switch 
               id="twoFactor"
@@ -225,8 +296,8 @@ export function SecuritySettings() {
           </div>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="sessionTimeout">Expiration de session</Label>
-              <p className="text-sm text-muted-foreground">Déconnexion automatique après 2 heures d'inactivité.</p>
+              <Label htmlFor="sessionTimeout">Session Timeout</Label>
+              <p className="text-sm text-muted-foreground">Automatically log out after 2 hours of inactivity.</p>
             </div>
             <Switch 
               id="sessionTimeout"
@@ -236,8 +307,8 @@ export function SecuritySettings() {
           </div>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="ipRestriction">Restriction d'IP</Label>
-              <p className="text-sm text-muted-foreground">Limiter la connexion à des adresses IP spécifiques.</p>
+              <Label htmlFor="ipRestriction">IP Restriction</Label>
+              <p className="text-sm text-muted-foreground">Limit login to specific IP addresses.</p>
             </div>
             <Switch 
               id="ipRestriction"
@@ -250,35 +321,46 @@ export function SecuritySettings() {
             onClick={saveSecuritySettings}
             disabled={isSaving}
           >
-            {isSaving ? "Enregistrement..." : "Enregistrer les paramètres de sécurité"}
+            {isSaving ? "Saving..." : "Save Security Settings"}
           </Button>
         </CardContent>
       </Card>
 
       <Card className="hover-scale shadow-sm card-gradient md:col-span-2">
         <CardHeader>
-          <CardTitle>Sessions actives</CardTitle>
-          <CardDescription>Gérez vos sessions de connexion actives.</CardDescription>
+          <CardTitle>Active Sessions</CardTitle>
+          <CardDescription>Manage your active login sessions.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fetchSessions}
+                disabled={isLoadingSessionData}
+              >
+                {isLoadingSessionData ? "Refreshing..." : "Refresh"}
+              </Button>
+            </div>
             {activeSessions.map(session => (
               <div key={session.id} className="border rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{session.device}</p>
-                    <p className="text-sm text-muted-foreground">Dernière activité: {session.lastActive}</p>
+                    <p className="text-sm text-muted-foreground">Last activity: {session.lastActive}</p>
                     <p className="text-xs text-muted-foreground mt-1">IP: {session.ip}</p>
                   </div>
                   {session.id === "current" ? (
-                    <Button variant="outline" size="sm">Session actuelle</Button>
+                    <Button variant="outline" size="sm">Current Session</Button>
                   ) : (
                     <Button 
                       variant="destructive" 
                       size="sm" 
                       onClick={() => terminateSession(session.id)}
+                      disabled={isLoadingSessionData}
                     >
-                      Terminer
+                      Terminate
                     </Button>
                   )}
                 </div>
@@ -290,7 +372,7 @@ export function SecuritySettings() {
               onClick={terminateAllOtherSessions}
               disabled={isLoadingSessionData || activeSessions.length <= 1}
             >
-              {isLoadingSessionData ? "Fermeture des sessions..." : "Fermer toutes les autres sessions"}
+              {isLoadingSessionData ? "Terminating sessions..." : "Terminate All Other Sessions"}
             </Button>
           </div>
         </CardContent>
