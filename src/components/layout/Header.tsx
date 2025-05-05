@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
@@ -19,9 +20,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { useLayout } from './LayoutContext';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const { user, signOut, isLoggingOut } = useAuth();
+  const { layoutSettings } = useLayout();
   
   // Helper function to get initials from a name
   const getInitials = () => {
@@ -45,7 +49,10 @@ export function Header() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className={cn(
+      "flex flex-col",
+      layoutSettings.fixedHeader && "fixed-header"
+    )}>
       <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-900">
         <div className="container mx-auto flex items-center">
           <p>Welcome to the new interface! Check out our updated features and improved navigation.</p>

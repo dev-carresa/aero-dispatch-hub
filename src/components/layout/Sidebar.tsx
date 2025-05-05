@@ -5,10 +5,20 @@ import { navigation } from './sidebarNavigation';
 import { SidebarItem } from './SidebarItem';
 import { SidebarLogo } from './SidebarLogo';
 import { MobileToggle, SidebarToggle } from './SidebarToggle';
+import { useLayout } from './LayoutContext';
+import { useEffect } from 'react';
 
 function SidebarContent() {
-  const { expanded, mobileOpen, toggleMobileSidebar } = useSidebar();
+  const { expanded, mobileOpen, toggleMobileSidebar, setExpanded } = useSidebar();
+  const { layoutSettings } = useLayout();
   
+  // Apply compact sidebar setting when it changes
+  useEffect(() => {
+    if (layoutSettings.compactSidebar && expanded) {
+      setExpanded(false);
+    }
+  }, [layoutSettings.compactSidebar, expanded, setExpanded]);
+
   return (
     <>
       {/* Mobile menu button */}
@@ -29,7 +39,8 @@ function SidebarContent() {
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform duration-300 md:relative md:z-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          !expanded && 'md:w-16'
+          !expanded && 'md:w-16',
+          layoutSettings.compactSidebar && 'md:w-16'
         )}
       >
         <div className="flex h-16 items-center justify-between border-b px-4">

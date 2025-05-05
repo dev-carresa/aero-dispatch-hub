@@ -1,34 +1,27 @@
 
-import { createContext, useContext, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
-interface SidebarContextType {
+type SidebarContextType = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   toggleMobileSidebar: () => void;
-  location: ReturnType<typeof useLocation>;
-}
+};
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-export const useSidebar = (): SidebarContextType => {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error('useSidebar must be used within a SidebarProvider');
-  }
-  return context;
-};
-
-export const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
+export function SidebarProvider({ children }: { children: ReactNode }) {
+  const [expanded, setExpanded] = useState<boolean>(
+    localStorage.getItem('sidebarExpanded') !== 'false'
+  );
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
   const toggleSidebar = () => {
-    setExpanded(!expanded);
+    const newExpanded = !expanded;
+    setExpanded(newExpanded);
+    localStorage.setItem('sidebarExpanded', String(newExpanded));
   };
 
   const toggleMobileSidebar = () => {
@@ -43,11 +36,18 @@ export const SidebarProvider = ({ children }: { children: React.ReactNode }) => 
         mobileOpen,
         setMobileOpen,
         toggleSidebar,
-        toggleMobileSidebar,
-        location,
+        toggleMobileSidebar
       }}
     >
       {children}
     </SidebarContext.Provider>
   );
-};
+}
+
+export function useSidebar() {
+  const context = useContext(SidebarContext);
+  if (context === undefined) {
+    throw new Error('useSidebar must be used within a SidebarProvider');
+  }
+  return context;
+}

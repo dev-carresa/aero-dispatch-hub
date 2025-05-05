@@ -122,6 +122,40 @@
   .text-size-large {
     font-size: 1.125rem;
   }
+
+  /* Layout settings classes */
+  .fixed-header {
+    @apply sticky top-0 z-30 w-full;
+  }
+
+  .fixed-header-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html:not(.reduce-motion) * {
+    transition-duration: 0.3s;
+  }
+
+  html.reduce-motion * {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+
+  html:not(.no-shadows) .shadow-sm,
+  html:not(.no-shadows) .shadow,
+  html:not(.no-shadows) .shadow-md,
+  html:not(.no-shadows) .shadow-lg {
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+
+  html.no-shadows .shadow-sm,
+  html.no-shadows .shadow,
+  html.no-shadows .shadow-md,
+  html.no-shadows .shadow-lg {
+    box-shadow: none !important;
+  }
 }
 
 @layer components {

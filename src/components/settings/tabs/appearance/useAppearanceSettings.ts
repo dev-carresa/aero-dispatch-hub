@@ -8,6 +8,7 @@ import {
   AccentColor, 
   FontSize 
 } from "@/components/theme/ExtendedThemeProvider";
+import { useLayout, LayoutSettings } from "@/components/layout/LayoutContext";
 import { toast } from "sonner";
 import { Theme } from "@/components/theme/ThemeProvider";
 
@@ -15,19 +16,13 @@ export function useAppearanceSettings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { accentColor, fontSize, setAccentColor, setFontSize } = useExtendedTheme();
+  const { layoutSettings, setLayoutSettings } = useLayout();
   const [isLoading, setIsLoading] = useState(false);
   
   const [themeSettings, setThemeSettings] = useState({
     colorMode: theme || "light",
     accentColor: accentColor,
     fontSize: fontSize
-  });
-
-  const [layoutSettings, setLayoutSettings] = useState({
-    fixedHeader: true,
-    compactSidebar: false,
-    animations: true,
-    cardShadows: true
   });
 
   // Load saved settings when component mounts
@@ -70,10 +65,7 @@ export function useAppearanceSettings() {
       }
       
       if (savedLayoutSettings) {
-        setLayoutSettings(prevSettings => ({
-          ...prevSettings,
-          ...savedLayoutSettings
-        }));
+        setLayoutSettings(savedLayoutSettings);
       }
       
     } catch (error) {
@@ -101,16 +93,7 @@ export function useAppearanceSettings() {
   };
 
   const handleLayoutSettingChange = (setting: string, value: boolean) => {
-    setLayoutSettings(prev => ({ ...prev, [setting]: value }));
-    
-    // Apply layout changes immediately
-    if (setting === 'animations') {
-      document.documentElement.classList.toggle('reduce-motion', !value);
-    }
-    
-    if (setting === 'cardShadows') {
-      document.documentElement.classList.toggle('no-shadows', !value);
-    }
+    setLayoutSettings((prev: LayoutSettings) => ({ ...prev, [setting]: value }));
   };
 
   const saveAppearanceSettings = async () => {
@@ -160,10 +143,6 @@ export function useAppearanceSettings() {
       });
       
       if (error) throw error;
-      
-      // Apply relevant layout settings
-      document.documentElement.classList.toggle('reduce-motion', !layoutSettings.animations);
-      document.documentElement.classList.toggle('no-shadows', !layoutSettings.cardShadows);
       
       toast.success("Layout options saved successfully!");
     } catch (error) {
