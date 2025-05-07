@@ -52,7 +52,7 @@ import { Toaster as SonnerToaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
 import { AuthenticationCheck } from "./components/auth/AuthenticationCheck";
-import { useEffect } from "react";
+import { Outlet } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +68,7 @@ function App() {
                   <Route path="/login" element={<AuthRedirect><LoginPage /></AuthRedirect>} />
                   <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
                   <Route path="/reset-password" element={<AuthRedirect><ResetPasswordPage /></AuthRedirect>} />
-                  <Route element={<Layout />}>
+                  <Route element={<Layout><Outlet /></Layout>}>
                     <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" /></ProtectedRoute>} />
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/users" element={<ProtectedRoute permission="users:view"><Users /></ProtectedRoute>} />

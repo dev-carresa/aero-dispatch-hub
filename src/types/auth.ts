@@ -18,4 +18,5 @@ export interface AuthContextType {
   session: Session | null;
   isLoggingOut: boolean;
   authError: string | null;
+  hasPermission: (permission: string) => boolean;
 }
