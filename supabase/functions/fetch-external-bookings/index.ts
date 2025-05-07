@@ -10,8 +10,13 @@ interface RequestBody {
     endDate?: string;
     status?: string;
     page?: number;
+    limit?: number;
   };
+  token?: string;
 }
+
+// Booking.com API endpoints
+const BOOKING_API_URL = "https://dispatchapi.taxi.booking.com/v1/bookings";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -20,7 +25,7 @@ serve(async (req) => {
   }
   
   try {
-    const { source, params } = await req.json() as RequestBody;
+    const { source, params, token } = await req.json() as RequestBody;
     
     if (!source) {
       return new Response(
@@ -29,29 +34,60 @@ serve(async (req) => {
       );
     }
     
-    // Get the API key from Supabase
-    const { data: apiIntegration, error: apiError } = await supabaseClient
-      .from('api_integrations')
-      .select('key_value')
-      .eq('key_name', `${source.toUpperCase()}_API_KEY`)
-      .maybeSingle();
+    // For Booking.com API with OAuth
+    if (source.toLowerCase() === 'booking.com') {
+      // Check if token is provided
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: "Authentication token is required for Booking.com API" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+        );
+      }
       
-    if (apiError) {
-      throw apiError;
-    }
-    
-    if (!apiIntegration || !apiIntegration.key_value) {
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      
+      if (params.startDate) queryParams.append('start_date', params.startDate);
+      if (params.endDate) queryParams.append('end_date', params.endDate);
+      if (params.status) queryParams.append('status', params.status);
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      
+      const apiUrl = `${BOOKING_API_URL}?${queryParams.toString()}`;
+      
+      // Make request to Booking.com API with the provided OAuth token
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Booking.com API error:", errorData);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: errorData.message || `Error fetching bookings: ${response.status} ${response.statusText}`
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: response.status }
+        );
+      }
+      
+      // Process the successful response
+      const bookingData = await response.json();
+      
       return new Response(
-        JSON.stringify({ error: `API key for ${source} is not configured` }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+        JSON.stringify(bookingData),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
-    const apiKey = apiIntegration.key_value;
-    
-    // In a real implementation, you would call the actual Booking.com API
-    // For this demo, we'll return mock data that matches the expected structure
-    if (source.toLowerCase() === 'booking.com') {
+    // For other sources or when testing (using mock data)
+    if (source.toLowerCase() === 'booking.com.mock') {
       // This is mock data, in a real implementation you'd call the Booking.com API
       const mockBookings = Array(10).fill(null).map((_, index) => ({
         id: `booking-${index + 1}-${Date.now()}`,

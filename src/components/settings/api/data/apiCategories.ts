@@ -1,4 +1,3 @@
-
 import { ApiCategory } from "../models/apiSettings";
 
 export const apiCategories: ApiCategory[] = [
@@ -103,6 +102,25 @@ export const apiCategories: ApiCategory[] = [
             label: "API Key",
             placeholder: "Enter flight tracking API key",
             sensitive: true
+          }
+        }
+      },
+      {
+        title: "Booking.com API",
+        description: "Connect to Booking.com dispatch API for bookings",
+        keys: {
+          bookingComClientId: {
+            label: "Client ID",
+            placeholder: "Enter Booking.com client ID",
+            info: "Required for OAuth authentication",
+            required: true
+          },
+          bookingComClientSecret: {
+            label: "Client Secret",
+            placeholder: "Enter Booking.com client secret",
+            info: "Required for OAuth authentication",
+            sensitive: true,
+            required: true
           }
         }
       }
