@@ -13,6 +13,7 @@ export interface ExternalBooking {
   created_at: string;
   updated_at: string;
   error_message?: string;
+  user_id?: string;
 }
 
 // Simplified structure of what we expect from Booking.com API

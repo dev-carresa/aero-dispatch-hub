@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { BookingComBooking, BookingComResponse, ExternalBooking } from "@/types/externalBooking";
+import { BookingComBooking, BookingComResponse, ExternalBooking, ExternalBookingSource } from "@/types/externalBooking";
 import { toast } from "sonner";
 
 /**
@@ -90,7 +90,12 @@ export const externalBookingService = {
       
       if (error) throw error;
       
-      return data || [];
+      // Transform the data to ensure it matches the ExternalBooking type
+      return (data || []).map(item => ({
+        ...item,
+        external_source: item.external_source as ExternalBookingSource,
+        status: item.status as ExternalBooking['status'],
+      }));
     } catch (error: any) {
       console.error("Error fetching external bookings:", error);
       throw new Error("Failed to fetch external bookings");
@@ -108,7 +113,15 @@ export const externalBookingService = {
         
       if (error) throw error;
       
-      return data;
+      if (data) {
+        return {
+          ...data,
+          external_source: data.external_source as ExternalBookingSource,
+          status: data.status as ExternalBooking['status'],
+        };
+      }
+      
+      return null;
     } catch (error: any) {
       console.error(`Error fetching external booking with ID ${id}:`, error);
       throw new Error("Failed to fetch the external booking");
@@ -118,7 +131,7 @@ export const externalBookingService = {
   // Update external booking status
   async updateExternalBookingStatus(
     id: string, 
-    status: string, 
+    status: ExternalBooking['status'], 
     mapped_booking_id?: string, 
     error_message?: string
   ): Promise<void> {

@@ -49,7 +49,7 @@ export function FetchControlsForm({ onFetch, isLoading = false }: FetchControlsF
       startDate: data.startDate ? format(data.startDate, "yyyy-MM-dd") : undefined,
       endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
       status: data.status !== "all" ? data.status : undefined,
-      limit: data.limit,
+      limit: data.limit ? Number(data.limit) : 10, // Ensure this is a number
     });
   };
   
