@@ -11,7 +11,8 @@ import {
   MessageCircle,
   ThumbsUp,
   Plane,
-  Key
+  Key,
+  Globe
 } from 'lucide-react';
 import { Permission } from '@/lib/permissions';
 
@@ -30,7 +31,17 @@ interface NavigationItem {
 
 export const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
-  { name: 'Bookings', href: '/bookings', icon: CalendarCheck, permission: 'bookings:view' },
+  { 
+    name: 'Bookings', 
+    href: '/bookings', 
+    icon: CalendarCheck, 
+    permission: 'bookings:view',
+    children: [
+      { name: 'All Bookings', href: '/bookings', permission: 'bookings:view' },
+      { name: 'New Booking', href: '/bookings/new', permission: 'bookings:create' },
+      { name: 'API Test', href: '/bookings/api-test', permission: 'bookings:api_integration' }
+    ]
+  },
   { name: 'Users', href: '/users', icon: Users, permission: 'users:view' },
   { name: 'API Users', href: '/api-users', icon: Key, permission: 'api_users:view' },
   { name: 'Vehicles', href: '/vehicles', icon: Car, permission: 'vehicles:view' },

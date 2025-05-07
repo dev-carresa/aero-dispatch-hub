@@ -496,6 +496,53 @@ export type Database = {
         }
         Relationships: []
       }
+      external_bookings: {
+        Row: {
+          booking_data: Json
+          created_at: string | null
+          error_message: string | null
+          external_id: string
+          external_source: string
+          id: string
+          mapped_booking_id: string | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_data: Json
+          created_at?: string | null
+          error_message?: string | null
+          external_id: string
+          external_source: string
+          id?: string
+          mapped_booking_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_data?: Json
+          created_at?: string | null
+          error_message?: string | null
+          external_id?: string
+          external_source?: string
+          id?: string
+          mapped_booking_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_bookings_mapped_booking_id_fkey"
+            columns: ["mapped_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount: number

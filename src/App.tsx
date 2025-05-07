@@ -1,162 +1,124 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { Layout } from "./components/layout/Layout";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
+import Users from "./pages/Users";
+import ApiUsers from "./pages/ApiUsers";
+import ApiUserDetails from "./pages/ApiUserDetails";
+import EditApiUser from "./pages/EditApiUser";
+import NewApiUser from "./pages/NewApiUser";
 import BookingsIndex from "./pages/BookingsIndex";
 import BookingDetails from "./pages/BookingDetails";
 import NewBooking from "./pages/NewBooking";
 import EditBooking from "./pages/EditBooking";
-import Users from "./pages/Users";
-import UserProfile from "./pages/UserProfile";
-import NewUser from "./pages/NewUser";
-import Invoices from "./pages/Invoices";
-import InvoiceDetails from "./pages/InvoiceDetails";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import { ThemeProvider } from "./components/theme/ThemeProvider";
-import ProfilePage from "./pages/ProfilePage";
-import EditProfilePage from "./pages/EditProfilePage";
-import LoginPage from "./pages/LoginPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import { AuthProvider } from "./context/AuthContext";
-import { PermissionProvider } from "./context/PermissionContext";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-
-// Vehicle pages
+import BookingApiTest from "./pages/BookingApiTest";
 import Vehicles from "./pages/Vehicles";
 import NewVehicle from "./pages/NewVehicle";
 import EditVehicle from "./pages/EditVehicle";
-
-// Report pages
-import Reports from "./pages/Reports";
-import GenerateReport from "./pages/GenerateReport";
-import SavedReports from "./pages/SavedReports";
-import ReportDetails from "./pages/ReportDetails";
-
-// Invoice pages
-import GenerateInvoice from "./pages/GenerateInvoice";
-
-// Complaint pages
-import Complaints from "./pages/Complaints";
-import NewComplaint from "./pages/NewComplaint";
-import ComplaintDetails from "./pages/ComplaintDetails";
-
-// Driver Comment pages
-import DriverComments from "./pages/DriverComments";
-import DriverCommentDetails from "./pages/DriverCommentDetails";
-
-// Quality Reviews pages
-import QualityReviews from "./pages/QualityReviews";
-
-// Airport and Meeting Point pages
 import Airports from "./pages/Airports";
 import AirportDetails from "./pages/AirportDetails";
 import NewAirport from "./pages/NewAirport";
 import EditAirport from "./pages/EditAirport";
 import NewMeetingPoint from "./pages/NewMeetingPoint";
 import EditMeetingPoint from "./pages/EditMeetingPoint";
-
-// API Users pages
-import ApiUsers from "./pages/ApiUsers";
-import NewApiUser from "./pages/NewApiUser";
-import EditApiUser from "./pages/EditApiUser";
-import ApiUserDetails from "./pages/ApiUserDetails";
+import Reports from "./pages/Reports";
+import GenerateReport from "./pages/GenerateReport";
+import SavedReports from "./pages/SavedReports";
+import ReportDetails from "./pages/ReportDetails";
+import Invoices from "./pages/Invoices";
+import InvoiceDetails from "./pages/InvoiceDetails";
+import GenerateInvoice from "./pages/GenerateInvoice";
+import Complaints from "./pages/Complaints";
+import ComplaintDetails from "./pages/ComplaintDetails";
+import NewComplaint from "./pages/NewComplaint";
+import DriverComments from "./pages/DriverComments";
+import DriverCommentDetails from "./pages/DriverCommentDetails";
+import QualityReviews from "./pages/QualityReviews";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import NewUser from "./pages/NewUser";
+import UserProfile from "./pages/UserProfile";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
+import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
+import Layout from "./components/layout/Layout";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { PermissionProvider } from "./context/PermissionContext";
+import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthRedirect } from "./components/auth/AuthRedirect";
+import { AuthenticationCheck } from "./components/auth/AuthenticationCheck";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <ThemeProvider defaultTheme="light">
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <BrowserRouter>
         <AuthProvider>
-          <PermissionProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              
-              {/* Application routes - protected */}
-              <Route element={<ProtectedRoute />}>
-                {/* Dashboard */}
-                <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-                
-                {/* Bookings */}
-                <Route path="/bookings" element={<Layout><BookingsIndex /></Layout>} />
-                <Route path="/bookings/:id" element={<Layout><BookingDetails /></Layout>} />
-                <Route path="/bookings/:id/edit" element={<Layout><EditBooking /></Layout>} />
-                <Route path="/bookings/new" element={<Layout><NewBooking /></Layout>} />
-                
-                {/* Users */}
-                <Route path="/users" element={<Layout><Users /></Layout>} />
-                <Route path="/users/:id" element={<Layout><UserProfile /></Layout>} />
-                <Route path="/users/new" element={<Layout><NewUser /></Layout>} />
-                
-                {/* API Users */}
-                <Route path="/api-users" element={<Layout><ApiUsers /></Layout>} />
-                <Route path="/api-users/new" element={<Layout><NewApiUser /></Layout>} />
-                <Route path="/api-users/:id" element={<Layout><ApiUserDetails /></Layout>} />
-                <Route path="/api-users/:id/edit" element={<Layout><EditApiUser /></Layout>} />
-
-                {/* Invoices */}
-                <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
-                <Route path="/invoices/generate" element={<Layout><GenerateInvoice /></Layout>} />
-                <Route path="/invoices/:id" element={<Layout><InvoiceDetails /></Layout>} />
-                
-                {/* Settings */}
-                <Route path="/settings" element={<Layout><Settings /></Layout>} />
-                
-                {/* Profile pages */}
-                <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
-                <Route path="/profile/edit" element={<Layout><EditProfilePage /></Layout>} />
-                
-                {/* Vehicle routes */}
-                <Route path="/vehicles" element={<Layout><Vehicles /></Layout>} />
-                <Route path="/vehicles/new" element={<Layout><NewVehicle /></Layout>} />
-                <Route path="/vehicles/:id/edit" element={<Layout><EditVehicle /></Layout>} />
-                
-                {/* Report routes */}
-                <Route path="/reports" element={<Layout><Reports /></Layout>} />
-                <Route path="/reports/generate" element={<Layout><GenerateReport /></Layout>} />
-                <Route path="/reports/saved" element={<Layout><SavedReports /></Layout>} />
-                <Route path="/reports/view/:id" element={<Layout><ReportDetails /></Layout>} />
-                
-                {/* Complaint routes */}
-                <Route path="/complaints" element={<Layout><Complaints /></Layout>} />
-                <Route path="/complaints/new" element={<Layout><NewComplaint /></Layout>} />
-                <Route path="/complaints/:id" element={<Layout><ComplaintDetails /></Layout>} />
-                
-                {/* Driver Comment routes */}
-                <Route path="/driver-comments" element={<Layout><DriverComments /></Layout>} />
-                <Route path="/driver-comments/:id" element={<Layout><DriverCommentDetails /></Layout>} />
-                
-                {/* Quality Reviews routes */}
-                <Route path="/quality-reviews" element={<Layout><QualityReviews /></Layout>} />
-                
-                {/* Airport and Meeting Point routes */}
-                <Route path="/airports" element={<Layout><Airports /></Layout>} />
-                <Route path="/airports/:id" element={<Layout><AirportDetails /></Layout>} />
-                <Route path="/airports/new" element={<Layout><NewAirport /></Layout>} />
-                <Route path="/airports/:id/edit" element={<Layout><EditAirport /></Layout>} />
-                <Route path="/airports/meeting-points/new" element={<Layout><NewMeetingPoint /></Layout>} />
-                <Route path="/airports/meeting-points/:id/edit" element={<Layout><EditMeetingPoint /></Layout>} />
-              </Route>
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </PermissionProvider>
+          <AuthenticationCheck>
+            <PermissionProvider>
+              <ThemeProvider>
+                <Routes>
+                  <Route path="/login" element={<AuthRedirect><LoginPage /></AuthRedirect>} />
+                  <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
+                  <Route path="/reset-password" element={<AuthRedirect><ResetPasswordPage /></AuthRedirect>} />
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/users" element={<ProtectedRoute permission="users:view"><Users /></ProtectedRoute>} />
+                    <Route path="/users/new" element={<ProtectedRoute permission="users:create"><NewUser /></ProtectedRoute>} />
+                    <Route path="/users/:id" element={<ProtectedRoute permission="users:view"><UserProfile /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+                    <Route path="/api-users" element={<ProtectedRoute permission="api_users:view"><ApiUsers /></ProtectedRoute>} />
+                    <Route path="/api-users/new" element={<ProtectedRoute permission="api_users:create"><NewApiUser /></ProtectedRoute>} />
+                    <Route path="/api-users/:id" element={<ProtectedRoute permission="api_users:view"><ApiUserDetails /></ProtectedRoute>} />
+                    <Route path="/api-users/:id/edit" element={<ProtectedRoute permission="api_users:edit"><EditApiUser /></ProtectedRoute>} />
+                    <Route path="/bookings" element={<ProtectedRoute permission="bookings:view"><BookingsIndex /></ProtectedRoute>} />
+                    <Route path="/bookings/new" element={<ProtectedRoute permission="bookings:create"><NewBooking /></ProtectedRoute>} />
+                    <Route path="/bookings/:id" element={<ProtectedRoute permission="bookings:view"><BookingDetails /></ProtectedRoute>} />
+                    <Route path="/bookings/:id/edit" element={<ProtectedRoute permission="bookings:edit"><EditBooking /></ProtectedRoute>} />
+                    <Route path="/bookings/api-test" element={<ProtectedRoute permission="bookings:api_integration"><BookingApiTest /></ProtectedRoute>} />
+                    <Route path="/vehicles" element={<ProtectedRoute permission="vehicles:view"><Vehicles /></ProtectedRoute>} />
+                    <Route path="/vehicles/new" element={<ProtectedRoute permission="vehicles:create"><NewVehicle /></ProtectedRoute>} />
+                    <Route path="/vehicles/:id/edit" element={<ProtectedRoute permission="vehicles:edit"><EditVehicle /></ProtectedRoute>} />
+                    <Route path="/airports" element={<ProtectedRoute permission="airports:view"><Airports /></ProtectedRoute>} />
+                    <Route path="/airports/new" element={<ProtectedRoute permission="airports:create"><NewAirport /></ProtectedRoute>} />
+                    <Route path="/airports/:id" element={<ProtectedRoute permission="airports:view"><AirportDetails /></ProtectedRoute>} />
+                    <Route path="/airports/:id/edit" element={<ProtectedRoute permission="airports:edit"><EditAirport /></ProtectedRoute>} />
+                    <Route path="/airports/:airportId/meeting-points/new" element={<ProtectedRoute permission="airports:create"><NewMeetingPoint /></ProtectedRoute>} />
+                    <Route path="/airports/meeting-points/:id/edit" element={<ProtectedRoute permission="airports:edit"><EditMeetingPoint /></ProtectedRoute>} />
+                    <Route path="/reports" element={<ProtectedRoute permission="reports:view"><Reports /></ProtectedRoute>} />
+                    <Route path="/reports/generate" element={<ProtectedRoute permission="reports:create"><GenerateReport /></ProtectedRoute>} />
+                    <Route path="/reports/saved" element={<ProtectedRoute permission="reports:view"><SavedReports /></ProtectedRoute>} />
+                    <Route path="/reports/:id" element={<ProtectedRoute permission="reports:view"><ReportDetails /></ProtectedRoute>} />
+                    <Route path="/invoices" element={<ProtectedRoute permission="invoices:view"><Invoices /></ProtectedRoute>} />
+                    <Route path="/invoices/new" element={<ProtectedRoute permission="invoices:create"><GenerateInvoice /></ProtectedRoute>} />
+                    <Route path="/invoices/:id" element={<ProtectedRoute permission="invoices:view"><InvoiceDetails /></ProtectedRoute>} />
+                    <Route path="/complaints" element={<ProtectedRoute permission="complaints:view"><Complaints /></ProtectedRoute>} />
+                    <Route path="/complaints/new" element={<ProtectedRoute permission="complaints:create"><NewComplaint /></ProtectedRoute>} />
+                    <Route path="/complaints/:id" element={<ProtectedRoute permission="complaints:view"><ComplaintDetails /></ProtectedRoute>} />
+                    <Route path="/driver-comments" element={<ProtectedRoute permission="driver_comments:view"><DriverComments /></ProtectedRoute>} />
+                    <Route path="/driver-comments/:id" element={<ProtectedRoute permission="driver_comments:view"><DriverCommentDetails /></ProtectedRoute>} />
+                    <Route path="/quality-reviews" element={<ProtectedRoute permission="quality_reviews:view"><QualityReviews /></ProtectedRoute>} />
+                    <Route path="/settings/*" element={<ProtectedRoute permission="settings:view"><Settings /></ProtectedRoute>} />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+                <Toaster />
+                <SonnerToaster richColors position="top-right" />
+              </ThemeProvider>
+            </PermissionProvider>
+          </AuthenticationCheck>
         </AuthProvider>
-      </TooltipProvider>
+      </BrowserRouter>
     </QueryClientProvider>
-  </ThemeProvider>
-);
+  );
+}
 
 export default App;

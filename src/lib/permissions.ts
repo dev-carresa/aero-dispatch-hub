@@ -12,6 +12,7 @@ export const rolePermissions: Record<string, Permission[]> = {
     'bookings:edit', 
     'bookings:delete',
     'bookings:assign_driver',
+    'bookings:api_integration',
     
     // Users permissions
     'users:view', 
