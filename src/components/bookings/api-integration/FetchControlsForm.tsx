@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -19,7 +18,7 @@ const fetchControlsSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   status: z.string().optional(),
-  limit: z.string().transform((val) => parseInt(val) || 10).optional(),
+  limit: z.coerce.number().min(1).max(100).default(10),
 });
 
 type FetchControlsFormValues = z.infer<typeof fetchControlsSchema>;
@@ -33,7 +32,7 @@ export function FetchControlsForm({ onFetch, isLoading = false }: FetchControlsF
   const form = useForm<FetchControlsFormValues>({
     resolver: zodResolver(fetchControlsSchema),
     defaultValues: {
-      limit: "10",
+      limit: 10,
       status: "all",
     },
   });
@@ -49,7 +48,7 @@ export function FetchControlsForm({ onFetch, isLoading = false }: FetchControlsF
       startDate: data.startDate ? format(data.startDate, "yyyy-MM-dd") : undefined,
       endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
       status: data.status !== "all" ? data.status : undefined,
-      limit: data.limit ? Number(data.limit) : 10, // Ensure this is a number
+      limit: data.limit, // This is now guaranteed to be a number
     });
   };
   
