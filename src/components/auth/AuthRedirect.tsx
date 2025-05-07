@@ -10,23 +10,23 @@ export const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
-  // Show toast when user is not authenticated
+  // Show toast when user is already authenticated trying to access login pages
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      toast.error("Vous devez être connecté pour accéder à cette page");
-      console.log("Not authenticated, redirecting to login page");
+    if (!loading && isAuthenticated && user) {
+      toast.info("Vous êtes déjà connecté");
+      console.log("Already authenticated, redirecting to dashboard");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, user]);
 
   // Don't redirect while still loading - this prevents flashing to login page
   if (loading) {
     return null;
   }
 
-  // If authenticated, render children, otherwise redirect to login
+  // If authenticated, redirect to dashboard, otherwise render children
   return (isAuthenticated && user) ? (
-    <>{children}</> 
+    <Navigate to="/dashboard" state={{ from: location }} replace />
   ) : (
-    <Navigate to="/" state={{ from: location }} replace />
+    <>{children}</> 
   );
 };

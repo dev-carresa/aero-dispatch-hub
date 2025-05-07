@@ -64,9 +64,10 @@ function App() {
           <PermissionProvider>
             <ThemeProvider>
               <Routes>
-                <Route path="/login" element={<AuthRedirect><LoginPage /></AuthRedirect>} />
-                <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
-                <Route path="/reset-password" element={<AuthRedirect><ResetPasswordPage /></AuthRedirect>} />
+                {/* Remove AuthRedirect from authentication routes to prevent infinite redirects */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route element={<Layout><Outlet /></Layout>}>
                   <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
