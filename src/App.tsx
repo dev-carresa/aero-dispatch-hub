@@ -52,6 +52,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
 import { AuthenticationCheck } from "./components/auth/AuthenticationCheck";
 import { Outlet } from "react-router-dom";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
