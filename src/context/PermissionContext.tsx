@@ -134,6 +134,13 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (isAdmin) return true; // Admin has all permissions
     return permissions.some(permission => currentUserPermissions.includes(permission as Permission));
   };
+  
+  // Log permissions for debugging
+  useEffect(() => {
+    console.log('Current user role:', userRole);
+    console.log('Is admin:', isAdmin);
+    console.log('User permissions:', currentUserPermissions);
+  }, [userRole, isAdmin, currentUserPermissions]);
 
   return (
     <PermissionContext.Provider

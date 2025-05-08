@@ -10,10 +10,13 @@ import { ApiDocumentation } from "../api/components/ApiDocumentation";
 import { useApiSettings } from "../api/hooks/useApiSettings";
 import { apiCategories } from "../api/data/apiCategories";
 import { useAuth } from "@/context/AuthContext";
+import { usePermission } from "@/context/PermissionContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ApiSettings() {
   const { isAuthenticated } = useAuth();
+  const { hasPermission, isAdmin } = usePermission();
+  const canEditApiSettings = isAdmin || hasPermission('settings:api');
   
   const {
     apiKeysState,
@@ -47,6 +50,16 @@ export function ApiSettings() {
       <Alert>
         <AlertDescription>
           Vous devez être connecté pour gérer les configurations API.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (!canEditApiSettings) {
+    return (
+      <Alert>
+        <AlertDescription>
+          Vous n'avez pas les permissions nécessaires pour gérer les configurations API.
         </AlertDescription>
       </Alert>
     );
