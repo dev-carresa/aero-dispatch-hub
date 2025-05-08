@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConfigureTab } from "./tabs/ConfigureTab";
 import { TestTab } from "./tabs/TestTab";
 import { ImportTab } from "./tabs/ImportTab";
+import { bookingConverter } from "./utils/bookingConverter";
 
 export function BookingApiTestTabs() {
   const [activeTab, setActiveTab] = useState("configure");
@@ -21,20 +23,20 @@ export function BookingApiTestTabs() {
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   
   // Load existing external bookings
+  const loadExternalBookings = async () => {
+    try {
+      setIsLoading(true);
+      const bookings = await externalBookingService.getExternalBookings('booking.com');
+      setExternalBookings(bookings);
+    } catch (error) {
+      console.error('Error loading external bookings:', error);
+      toast.error('Failed to load external bookings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const loadExternalBookings = async () => {
-      try {
-        setIsLoading(true);
-        const bookings = await externalBookingService.getExternalBookings('booking.com');
-        setExternalBookings(bookings);
-      } catch (error) {
-        console.error('Error loading external bookings:', error);
-        toast.error('Failed to load external bookings');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     loadExternalBookings();
   }, []);
   
@@ -116,8 +118,7 @@ export function BookingApiTestTabs() {
         }
         
         // Refresh the external bookings list
-        const updatedBookings = await externalBookingService.getExternalBookings('booking.com');
-        setExternalBookings(updatedBookings);
+        await loadExternalBookings();
         
         // Switch to the import tab
         setActiveTab('import');
@@ -133,14 +134,32 @@ export function BookingApiTestTabs() {
     }
   };
   
-  // Handle save single booking
-  const handleSaveBooking = async (booking: ExternalBooking) => {
-    toast.info('This functionality will be implemented in a future update');
+  // Handle import external booking to internal system
+  const handleImportBooking = async (booking: ExternalBooking) => {
+    try {
+      toast.info(`Starting import of booking ${booking.external_id}`);
+      
+      const result = await bookingConverter.convertExternalBooking(booking.id);
+      
+      if (result.success) {
+        toast.success(`Successfully imported booking ${booking.external_id}`);
+        await loadExternalBookings();
+      } else {
+        toast.error(`Failed to import booking: ${result.message}`);
+      }
+    } catch (error: any) {
+      console.error('Error importing booking:', error);
+      toast.error(error.message || 'Failed to import booking');
+    }
   };
   
   // Handle view booking details
   const handleViewBookingDetails = (booking: ExternalBooking) => {
-    toast.info('This functionality will be implemented in a future update');
+    // Display booking details in a toast for now
+    toast.info('Viewing booking details', {
+      description: `Booking ID: ${booking.external_id} from ${booking.external_source}`,
+      duration: 5000,
+    });
   };
 
   return (
@@ -177,8 +196,9 @@ export function BookingApiTestTabs() {
         <ImportTab 
           bookings={externalBookings}
           isLoading={isLoading}
-          onSaveBooking={handleSaveBooking}
+          onSaveBooking={handleImportBooking}
           onViewDetails={handleViewBookingDetails}
+          refreshBookings={loadExternalBookings}
         />
       </TabsContent>
     </Tabs>

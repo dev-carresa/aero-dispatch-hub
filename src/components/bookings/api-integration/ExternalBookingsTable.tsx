@@ -4,9 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Check, Download, Inbox, X } from "lucide-react";
+import { AlertCircle, Check, Download, Inbox, X, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ExternalBooking } from "@/types/externalBooking";
+import { bookingConverter } from "./utils/bookingConverter";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 interface ExternalBookingsTableProps {
   bookings: ExternalBooking[];
@@ -21,6 +25,8 @@ export function ExternalBookingsTable({
   onSaveBooking,
   onViewDetails
 }: ExternalBookingsTableProps) {
+  const [importingBookings, setImportingBookings] = useState<Record<string, boolean>>({});
+  
   // Return status badge based on booking status
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -93,7 +99,23 @@ export function ExternalBookingsTable({
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">{booking.external_id}</TableCell>
                   <TableCell>{booking.external_source}</TableCell>
-                  <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {getStatusBadge(booking.status)}
+                      {booking.status === "error" && booking.error_message && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <AlertCircle className="h-4 w-4 text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">{booking.error_message}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {format(new Date(booking.created_at), "MMM d, yyyy h:mm a")}
                   </TableCell>
@@ -106,15 +128,40 @@ export function ExternalBookingsTable({
                       >
                         View
                       </Button>
-                      {booking.status === "pending" && (
+                      
+                      {booking.status === "imported" && booking.mapped_booking_id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="flex items-center gap-1"
+                        >
+                          <Link to={`/bookings/${booking.mapped_booking_id}`}>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span>Open Booking</span>
+                          </Link>
+                        </Button>
+                      )}
+                      
+                      {bookingConverter.canImportBooking(booking) && (
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex items-center gap-1"
                           onClick={() => onSaveBooking(booking)}
+                          disabled={importingBookings[booking.id]}
                         >
-                          <Download className="h-3.5 w-3.5" />
-                          <span>Save</span>
+                          {importingBookings[booking.id] ? (
+                            <>
+                              <Spinner size="sm" />
+                              <span>Importing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-3.5 w-3.5" />
+                              <span>Import</span>
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
