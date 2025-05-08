@@ -14,16 +14,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { externalBookingService } from "@/services/externalBookingService";
 import { BookingComBooking, ExternalBooking } from "@/types/externalBooking";
-import { usePermission } from "@/context/PermissionContext";
-import { useNavigate } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 const BookingApiTest = () => {
-  const { hasPermission } = usePermission();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("configure");
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "error" | "loading">("loading");
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -34,14 +29,6 @@ const BookingApiTest = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
-  
-  // Check if user has permission to access this page
-  useEffect(() => {
-    if (!hasPermission('bookings:api_integration')) {
-      toast.error("You don't have permission to access this page");
-      navigate('/dashboard');
-    }
-  }, [hasPermission, navigate]);
   
   // Load API configuration and check connection status
   useEffect(() => {
@@ -242,14 +229,6 @@ const BookingApiTest = () => {
     // Logic to view booking details will be implemented in a future update
     toast.info('This functionality will be implemented in a future update');
   };
-  
-  if (!hasPermission('bookings:api_integration')) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-300">

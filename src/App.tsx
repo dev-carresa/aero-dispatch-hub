@@ -84,7 +84,8 @@ function App() {
                   <Route path="/bookings/new" element={<ProtectedRoute permission="bookings:create"><NewBooking /></ProtectedRoute>} />
                   <Route path="/bookings/:id" element={<ProtectedRoute permission="bookings:view"><BookingDetails /></ProtectedRoute>} />
                   <Route path="/bookings/:id/edit" element={<ProtectedRoute permission="bookings:edit"><EditBooking /></ProtectedRoute>} />
-                  <Route path="/bookings/api-test" element={<ProtectedRoute permission="bookings:api_integration"><BookingApiTest /></ProtectedRoute>} />
+                  {/* Changed this route to not require any permission */}
+                  <Route path="/bookings/api-test" element={<ProtectedRoute><BookingApiTest /></ProtectedRoute>} />
                   <Route path="/vehicles" element={<ProtectedRoute permission="vehicles:view"><Vehicles /></ProtectedRoute>} />
                   <Route path="/vehicles/new" element={<ProtectedRoute permission="vehicles:create"><NewVehicle /></ProtectedRoute>} />
                   <Route path="/vehicles/:id/edit" element={<ProtectedRoute permission="vehicles:edit"><EditVehicle /></ProtectedRoute>} />

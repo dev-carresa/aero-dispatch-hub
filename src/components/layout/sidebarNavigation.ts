@@ -39,7 +39,8 @@ export const navigation: NavigationItem[] = [
     children: [
       { name: 'All Bookings', href: '/bookings', permission: 'bookings:view' },
       { name: 'New Booking', href: '/bookings/new', permission: 'bookings:create' },
-      { name: 'API Test', href: '/bookings/api-test', permission: 'bookings:api_integration' }
+      // Removed permission requirement from API Test link
+      { name: 'API Test', href: '/bookings/api-test' }
     ]
   },
   { name: 'Users', href: '/users', icon: Users, permission: 'users:view' },
