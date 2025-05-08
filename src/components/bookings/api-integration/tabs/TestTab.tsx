@@ -3,21 +3,18 @@ import { FetchControlsForm } from "@/components/bookings/api-integration/FetchCo
 import { BookingDataPreview } from "@/components/bookings/api-integration/BookingDataPreview";
 import { BookingComBooking } from "@/types/externalBooking";
 import { OAuthTokenHandler } from "@/components/bookings/api-integration/OAuthTokenHandler";
-
-// Static credentials for authentication
-const STATIC_CREDENTIALS = {
-  username: "1ej3odu98odoamfpml0lupclbo",
-  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
-};
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoCircle } from "lucide-react";
 
 interface TestTabProps {
-  onFetch: (params: any) => Promise<void>;
+  onFetch: () => Promise<void>;
   isFetching: boolean;
   fetchedBookings: BookingComBooking[];
   isSaving: boolean;
   onSaveAll: () => Promise<void>;
   saveProgress: { current: number; total: number };
   onTokenReceived?: (token: string) => void;
+  hasValidToken: boolean;
 }
 
 export function TestTab({ 
@@ -27,12 +24,23 @@ export function TestTab({
   isSaving, 
   onSaveAll, 
   saveProgress,
-  onTokenReceived
+  onTokenReceived,
+  hasValidToken
 }: TestTabProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
+          {!hasValidToken ? (
+            <Alert className="mb-4">
+              <InfoCircle className="h-4 w-4" />
+              <AlertTitle>Authentication Required</AlertTitle>
+              <AlertDescription>
+                Please get an OAuth token first to fetch bookings from Booking.com API
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          
           <FetchControlsForm
             onFetch={onFetch}
             isLoading={isFetching}

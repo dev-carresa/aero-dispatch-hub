@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -8,16 +9,9 @@ import { ConfigureTab } from "./tabs/ConfigureTab";
 import { TestTab } from "./tabs/TestTab";
 import { ImportTab } from "./tabs/ImportTab";
 
-// Static credentials for authentication
-const STATIC_CREDENTIALS = {
-  username: "1ej3odu98odoamfpml0lupclbo",
-  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
-};
-
 export function BookingApiTestTabs() {
   const [activeTab, setActiveTab] = useState("configure");
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "error" | "loading">("loading");
-  const [apiKey, setApiKey] = useState<string | null>(null);
   const [oauthToken, setOauthToken] = useState<string>("");
   const [fetchedBookings, setFetchedBookings] = useState<BookingComBooking[]>([]);
   const [externalBookings, setExternalBookings] = useState<ExternalBooking[]>([]);
@@ -25,24 +19,6 @@ export function BookingApiTestTabs() {
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
-  
-  // Load API configuration and check connection status
-  useEffect(() => {
-    const loadApiConfig = async () => {
-      try {
-        setConnectionStatus("loading");
-        
-        // Since we're using static credentials, we can set connected status directly
-        setApiKey(STATIC_CREDENTIALS.username);
-        setConnectionStatus('connected');
-      } catch (error) {
-        console.error('Error loading API configuration:', error);
-        setConnectionStatus('error');
-      }
-    };
-    
-    loadApiConfig();
-  }, []);
   
   // Load existing external bookings
   useEffect(() => {
@@ -62,46 +38,31 @@ export function BookingApiTestTabs() {
     loadExternalBookings();
   }, []);
   
-  // Handle API configuration update
-  const handleConfigSaved = () => {
-    // Use static credentials instead of loading from database
-    setApiKey(STATIC_CREDENTIALS.username);
-    setConnectionStatus('connected');
-  };
-  
-  // Handle connection status change
-  const handleConnectionChange = (status: "connected" | "disconnected" | "error") => {
-    setConnectionStatus(status);
-  };
-  
   // Handle OAuth token received
   const handleTokenReceived = (token: string) => {
     setOauthToken(token);
     setConnectionStatus('connected');
+    toast.success("OAuth token saved and ready to use");
+    // Auto-switch to the test tab when a token is received
+    setActiveTab('test');
   };
   
-  // Handle fetch bookings with OAuth token or static credentials
-  const handleFetchBookings = async (params: any) => {
+  // Handle fetch bookings with OAuth token
+  const handleFetchBookings = async () => {
+    if (!oauthToken) {
+      toast.error("Please get an OAuth token before fetching bookings");
+      return;
+    }
+
     try {
       setIsFetching(true);
       
-      // Prepare the request body with parameters
-      const requestBody: any = { 
+      // Prepare the request with OAuth token
+      const requestBody = { 
         source: 'booking.com',
-        params,
+        oauthToken: oauthToken
       };
       
-      // Use OAuth token if available, otherwise use static credentials
-      if (oauthToken) {
-        requestBody.oauthToken = oauthToken;
-      } else {
-        requestBody.credentials = {
-          username: STATIC_CREDENTIALS.username,
-          password: STATIC_CREDENTIALS.password
-        };
-      }
-      
-      // Use the external booking service with OAuth token or static credentials
       const response = await supabase.functions.invoke('fetch-external-bookings', {
         body: requestBody
       });
@@ -114,12 +75,11 @@ export function BookingApiTestTabs() {
       
       if (data.bookings && Array.isArray(data.bookings)) {
         setFetchedBookings(data.bookings);
-        setActiveTab('test');
         toast.success(`Retrieved ${data.bookings.length} bookings from Booking.com`);
       } else if (data.error) {
         throw new Error(data.error);
       } else {
-        toast.warning('No bookings found matching your criteria');
+        toast.warning('No bookings found');
         setFetchedBookings([]);
       }
     } catch (error: any) {
@@ -171,13 +131,11 @@ export function BookingApiTestTabs() {
   
   // Handle save single booking
   const handleSaveBooking = async (booking: ExternalBooking) => {
-    // Logic to save a single booking to our system will be implemented in a future update
     toast.info('This functionality will be implemented in a future update');
   };
   
   // Handle view booking details
   const handleViewBookingDetails = (booking: ExternalBooking) => {
-    // Logic to view booking details will be implemented in a future update
     toast.info('This functionality will be implemented in a future update');
   };
 
@@ -192,8 +150,8 @@ export function BookingApiTestTabs() {
       <TabsContent value="configure">
         <ConfigureTab 
           connectionStatus={connectionStatus} 
-          onConnectionChange={handleConnectionChange}
-          onConfigSaved={handleConfigSaved}
+          onConnectionChange={(status) => setConnectionStatus(status)}
+          onConfigSaved={() => setConnectionStatus('connected')}
         />
       </TabsContent>
 
@@ -206,6 +164,7 @@ export function BookingApiTestTabs() {
           onSaveAll={handleSaveAllBookings}
           saveProgress={saveProgress}
           onTokenReceived={handleTokenReceived}
+          hasValidToken={!!oauthToken}
         />
       </TabsContent>
 
