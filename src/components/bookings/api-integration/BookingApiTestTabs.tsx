@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -19,6 +18,7 @@ export function BookingApiTestTabs() {
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
+  const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   
   // Load existing external bookings
   useEffect(() => {
@@ -73,6 +73,9 @@ export function BookingApiTestTabs() {
       
       const data = response.data;
       console.log("Received data from API:", data);
+      
+      // Store the raw API response
+      setRawApiResponse(data);
       
       if (data.bookings && Array.isArray(data.bookings)) {
         setFetchedBookings(data.bookings);
@@ -166,6 +169,7 @@ export function BookingApiTestTabs() {
           saveProgress={saveProgress}
           onTokenReceived={handleTokenReceived}
           hasValidToken={!!oauthToken}
+          rawApiResponse={rawApiResponse}
         />
       </TabsContent>
 
