@@ -4,7 +4,7 @@ import { BookingDataPreview } from "@/components/bookings/api-integration/Bookin
 import { BookingComBooking } from "@/types/externalBooking";
 import { OAuthTokenHandler } from "@/components/bookings/api-integration/OAuthTokenHandler";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoCircle } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface TestTabProps {
   onFetch: () => Promise<void>;
@@ -33,7 +33,7 @@ export function TestTab({
         <div>
           {!hasValidToken ? (
             <Alert className="mb-4">
-              <InfoCircle className="h-4 w-4" />
+              <Info className="h-4 w-4" />
               <AlertTitle>Authentication Required</AlertTitle>
               <AlertDescription>
                 Please get an OAuth token first to fetch bookings from Booking.com API
