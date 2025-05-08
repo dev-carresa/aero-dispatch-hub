@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -81,21 +80,30 @@ export function BookingApiTestTabs() {
     setConnectionStatus('connected');
   };
   
-  // Handle fetch bookings with static credentials
+  // Handle fetch bookings with OAuth token or static credentials
   const handleFetchBookings = async (params: any) => {
     try {
       setIsFetching(true);
       
-      // Use the external booking service with static credentials
+      // Prepare the request body with parameters
+      const requestBody: any = { 
+        source: 'booking.com',
+        params,
+      };
+      
+      // Use OAuth token if available, otherwise use static credentials
+      if (oauthToken) {
+        requestBody.oauthToken = oauthToken;
+      } else {
+        requestBody.credentials = {
+          username: STATIC_CREDENTIALS.username,
+          password: STATIC_CREDENTIALS.password
+        };
+      }
+      
+      // Use the external booking service with OAuth token or static credentials
       const response = await supabase.functions.invoke('fetch-external-bookings', {
-        body: { 
-          source: 'booking.com',
-          params,
-          credentials: {
-            username: STATIC_CREDENTIALS.username,
-            password: STATIC_CREDENTIALS.password
-          }
-        }
+        body: requestBody
       });
       
       if (response.error) {
@@ -197,6 +205,7 @@ export function BookingApiTestTabs() {
           isSaving={isSaving}
           onSaveAll={handleSaveAllBookings}
           saveProgress={saveProgress}
+          onTokenReceived={handleTokenReceived}
         />
       </TabsContent>
 

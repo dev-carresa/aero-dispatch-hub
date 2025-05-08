@@ -4,10 +4,14 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { supabaseClient } from "../_shared/supabase-client.ts";
 
 interface RequestBody {
-  clientId?: string;
-  clientSecret?: string;
   useStoredCredentials?: boolean;
 }
+
+// Static credentials for authentication
+const STATIC_CREDENTIALS = {
+  username: "1ej3odu98odoamfpml0lupclbo",
+  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
+};
 
 // Booking.com API OAuth token endpoint
 const BOOKING_AUTH_URL = "https://auth.dispatchapi.taxi.booking.com/oauth2/token";
@@ -19,67 +23,24 @@ serve(async (req) => {
   }
   
   try {
-    const { clientId, clientSecret, useStoredCredentials } = await req.json() as RequestBody;
+    const { useStoredCredentials } = await req.json() as RequestBody;
     
-    let credentialsToUse = {
-      clientId: clientId || "",
-      clientSecret: clientSecret || ""
+    // Use static credentials directly
+    const credentialsToUse = {
+      username: STATIC_CREDENTIALS.username,
+      password: STATIC_CREDENTIALS.password
     };
     
-    // If requested to use stored credentials, fetch from Supabase
-    if (useStoredCredentials) {
-      // Get the API keys from Supabase
-      const clientIdResult = await supabaseClient
-        .from('api_integrations')
-        .select('key_value')
-        .eq('key_name', 'bookingComClientId')
-        .maybeSingle();
-        
-      const clientSecretResult = await supabaseClient
-        .from('api_integrations')
-        .select('key_value')
-        .eq('key_name', 'bookingComClientSecret')
-        .maybeSingle();
-      
-      if (clientIdResult.error || clientSecretResult.error) {
-        throw new Error("Failed to retrieve stored API credentials");
-      }
-      
-      if (!clientIdResult.data?.key_value || !clientSecretResult.data?.key_value) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: "API credentials not configured. Please set Client ID and Client Secret in Settings > API > Travel section." 
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
-      }
-      
-      credentialsToUse = {
-        clientId: clientIdResult.data.key_value,
-        clientSecret: clientSecretResult.data.key_value
-      };
-    }
-    
-    // Validate credentials
-    if (!credentialsToUse.clientId || !credentialsToUse.clientSecret) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Client ID and Client Secret are required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-    
-    // Prepare the OAuth request body
+    // Prepare the OAuth request body using form data
     const formData = new URLSearchParams();
     formData.append('grant_type', 'client_credentials');
-    formData.append('client_id', credentialsToUse.clientId);
-    formData.append('client_secret', credentialsToUse.clientSecret);
     
-    // Make the OAuth token request
+    // Make the OAuth token request with Basic Auth
     const response = await fetch(BOOKING_AUTH_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${btoa(`${credentialsToUse.username}:${credentialsToUse.password}`)}`
       },
       body: formData.toString()
     });
@@ -89,16 +50,6 @@ serve(async (req) => {
     if (!response.ok) {
       console.error("OAuth token error:", data);
       
-      // Store the error in db for diagnostic purposes
-      await supabaseClient
-        .from('api_integrations')
-        .update({ 
-          status: 'error',
-          error: `OAuth error: ${data.error || 'Unknown error'}`,
-          last_tested: new Date().toISOString()
-        })
-        .eq('key_name', 'bookingComClientId');
-        
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -106,18 +57,6 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: response.status }
       );
-    }
-    
-    // On success, update the status in the database
-    if (useStoredCredentials) {
-      await supabaseClient
-        .from('api_integrations')
-        .update({ 
-          status: 'connected',
-          error: null,
-          last_tested: new Date().toISOString()
-        })
-        .eq('key_name', 'bookingComClientId');
     }
     
     // Return the token data

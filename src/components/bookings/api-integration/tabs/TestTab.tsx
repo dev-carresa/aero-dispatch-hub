@@ -2,6 +2,7 @@
 import { FetchControlsForm } from "@/components/bookings/api-integration/FetchControlsForm";
 import { BookingDataPreview } from "@/components/bookings/api-integration/BookingDataPreview";
 import { BookingComBooking } from "@/types/externalBooking";
+import { OAuthTokenHandler } from "@/components/bookings/api-integration/OAuthTokenHandler";
 
 // Static credentials for authentication
 const STATIC_CREDENTIALS = {
@@ -16,6 +17,7 @@ interface TestTabProps {
   isSaving: boolean;
   onSaveAll: () => Promise<void>;
   saveProgress: { current: number; total: number };
+  onTokenReceived?: (token: string) => void;
 }
 
 export function TestTab({ 
@@ -24,7 +26,8 @@ export function TestTab({
   fetchedBookings, 
   isSaving, 
   onSaveAll, 
-  saveProgress 
+  saveProgress,
+  onTokenReceived
 }: TestTabProps) {
   return (
     <div className="space-y-6">
@@ -35,12 +38,7 @@ export function TestTab({
             isLoading={isFetching}
           />
         </div>
-        <div className="p-6 border rounded-lg bg-muted/20">
-          <h3 className="text-lg font-medium mb-4">Static Authentication Active</h3>
-          <p className="text-sm text-muted-foreground">
-            Using static credentials for API requests. No OAuth token required.
-          </p>
-        </div>
+        <OAuthTokenHandler onTokenReceived={onTokenReceived || (() => {})} />
       </div>
 
       {fetchedBookings.length > 0 && (
