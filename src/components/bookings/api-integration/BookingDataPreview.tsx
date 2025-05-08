@@ -76,10 +76,13 @@ export function BookingDataPreview({
                 </div>
                 <CardContent className="p-3 pt-3">
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <Field label="Guest" value={`${booking.guest.first_name} ${booking.guest.last_name}`} />
+                    <Field 
+                      label="Guest" 
+                      value={booking.guest && `${booking.guest.first_name || 'N/A'} ${booking.guest.last_name || 'N/A'}` || "N/A"} 
+                    />
                     <Field label="Room" value={booking.room_details?.room_type || "N/A"} />
-                    <Field label="Check In" value={booking.check_in} />
-                    <Field label="Check Out" value={booking.check_out} />
+                    <Field label="Check In" value={booking.check_in || "N/A"} />
+                    <Field label="Check Out" value={booking.check_out || "N/A"} />
                     <Field 
                       label="Price" 
                       value={
