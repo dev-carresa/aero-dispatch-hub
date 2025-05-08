@@ -129,7 +129,7 @@ export function ApiCard({
               onChange={(value) => onApiKeyChange(keyName, value)}
               onBlur={() => onApiKeyBlur && onApiKeyBlur(keyName)}
               lastTested={apiKeysState[keyName]?.lastTested}
-              disabled={!apiKeysState[keyName]?.enabled || isSubmitting}
+              disabled={!isEnabled || isSubmitting}
               error={apiKeysState[keyName]?.error}
             />
           ))}

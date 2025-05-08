@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +94,7 @@ export function useApiSettings(apiCategories: ApiCategory[]) {
         Object.keys(api.keys).forEach(keyName => {
           initialState[category.name][keyName] = {
             value: "",
-            enabled: false,
+            enabled: false, // This is initializing all API keys as disabled by default
             status: "disconnected"
           };
         });
