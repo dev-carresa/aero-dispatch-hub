@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { BookingComBooking, BookingComResponse, ExternalBooking, ExternalBookingSource } from "@/types/externalBooking";
 import { toast } from "sonner";
 
+// Static credentials for authentication
+const STATIC_CREDENTIALS = {
+  username: "1ej3odu98odoamfpml0lupclbo",
+  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
+};
+
 /**
  * Service for interacting with external booking APIs and the local database
  */
@@ -11,7 +17,13 @@ export const externalBookingService = {
   async testBookingComConnection(): Promise<{ success: boolean; message: string }> {
     try {
       const { data, error } = await supabase.functions.invoke('test-booking-api-connection', {
-        body: { source: 'booking.com' }
+        body: { 
+          source: 'booking.com',
+          credentials: {
+            username: STATIC_CREDENTIALS.username,
+            password: STATIC_CREDENTIALS.password
+          }
+        }
       });
       
       if (error) throw error;
@@ -37,7 +49,11 @@ export const externalBookingService = {
       const { data, error } = await supabase.functions.invoke('fetch-external-bookings', {
         body: { 
           source: 'booking.com',
-          params
+          params,
+          credentials: {
+            username: STATIC_CREDENTIALS.username,
+            password: STATIC_CREDENTIALS.password
+          }
         }
       });
       

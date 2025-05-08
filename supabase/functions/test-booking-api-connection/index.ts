@@ -7,6 +7,12 @@ interface RequestBody {
   source: string;
 }
 
+// Static credentials for authentication
+const STATIC_CREDENTIALS = {
+  username: "1ej3odu98odoamfpml0lupclbo",
+  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -23,22 +29,15 @@ serve(async (req) => {
       );
     }
     
-    // Get the API key from Supabase
-    const { data: apiIntegration, error: apiError } = await supabaseClient
-      .from('api_integrations')
-      .select('key_value, status')
-      .eq('key_name', `${source.toUpperCase()}_API_KEY`)
-      .maybeSingle();
-      
-    if (apiError) {
-      throw apiError;
-    }
+    // Use static credentials instead of fetching from database
+    const apiKey = STATIC_CREDENTIALS.username;
+    const apiPassword = STATIC_CREDENTIALS.password;
     
-    if (!apiIntegration || !apiIntegration.key_value) {
+    if (!apiKey || !apiPassword) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: `API key for ${source} is not configured` 
+          message: `API credentials for ${source} are not properly configured` 
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
       );
@@ -46,19 +45,19 @@ serve(async (req) => {
     
     // For Booking.com, attempt to make a simple API call to verify the key
     if (source.toLowerCase() === 'booking.com') {
-      const apiKey = apiIntegration.key_value;
       const testUrl = "https://distribution-xml.booking.com/json/getHotels";
       
       const response = await fetch(testUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Basic ${btoa(`${apiKey}:`)}`
+          "Authorization": `Basic ${btoa(`${apiKey}:${apiPassword}`)}`
         },
         body: JSON.stringify({
           request: {
             authentication: {
-              apiKey
+              username: apiKey,
+              password: apiPassword
             },
             // Minimal request just to test connectivity
             stay: {

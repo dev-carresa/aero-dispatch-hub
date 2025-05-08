@@ -1,4 +1,3 @@
-
 import { PageTitle } from "@/components/ui/page-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,6 +17,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
+// Static credentials for authentication
+const STATIC_CREDENTIALS = {
+  username: "1ej3odu98odoamfpml0lupclbo",
+  password: "1u7bc2njok72t1spnbjqt019l4eiiva79u8rnsfjsq3ls761b552"
+};
+
 const BookingApiTest = () => {
   const [activeTab, setActiveTab] = useState("configure");
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "error" | "loading">("loading");
@@ -36,32 +41,9 @@ const BookingApiTest = () => {
       try {
         setConnectionStatus("loading");
         
-        // Check if OAuth credentials are configured
-        const { data: clientIdData } = await supabase
-          .from('api_integrations')
-          .select('key_value, status')
-          .eq('key_name', 'bookingComClientId')
-          .maybeSingle();
-          
-        const { data: clientSecretData } = await supabase
-          .from('api_integrations')
-          .select('key_value')
-          .eq('key_name', 'bookingComClientSecret')
-          .maybeSingle();
-          
-        if (clientIdData?.key_value && clientSecretData?.key_value) {
-          setApiKey(clientIdData.key_value);
-          
-          if (clientIdData.status === 'connected') {
-            setConnectionStatus('connected');
-          } else if (clientIdData.status === 'error') {
-            setConnectionStatus('error');
-          } else {
-            setConnectionStatus('disconnected');
-          }
-        } else {
-          setConnectionStatus('disconnected');
-        }
+        // Since we're using static credentials, we can set connected status directly
+        setApiKey(STATIC_CREDENTIALS.username);
+        setConnectionStatus('connected');
       } catch (error) {
         console.error('Error loading API configuration:', error);
         setConnectionStatus('error');
@@ -91,31 +73,9 @@ const BookingApiTest = () => {
   
   // Handle API configuration update
   const handleConfigSaved = () => {
-    // Reload the API configuration
-    const loadApiConfig = async () => {
-      try {
-        const { data: clientIdData } = await supabase
-          .from('api_integrations')
-          .select('key_value')
-          .eq('key_name', 'bookingComClientId')
-          .maybeSingle();
-          
-        const { data: clientSecretData } = await supabase
-          .from('api_integrations')
-          .select('key_value')
-          .eq('key_name', 'bookingComClientSecret')
-          .maybeSingle();
-          
-        if (clientIdData?.key_value && clientSecretData?.key_value) {
-          setApiKey(clientIdData.key_value);
-          setConnectionStatus('disconnected');
-        }
-      } catch (error) {
-        console.error('Error loading API configuration:', error);
-      }
-    };
-    
-    loadApiConfig();
+    // Use static credentials instead of loading from database
+    setApiKey(STATIC_CREDENTIALS.username);
+    setConnectionStatus('connected');
   };
   
   // Handle connection status change
@@ -129,23 +89,20 @@ const BookingApiTest = () => {
     setConnectionStatus('connected');
   };
   
-  // Handle fetch bookings
+  // Handle fetch bookings with static credentials
   const handleFetchBookings = async (params: any) => {
     try {
       setIsFetching(true);
       
-      if (!oauthToken) {
-        toast.error('OAuth token is required. Please get an OAuth token first.');
-        setActiveTab('configure');
-        return;
-      }
-      
-      // Use the external booking service with the OAuth token
+      // Use the external booking service with static credentials
       const response = await supabase.functions.invoke('fetch-external-bookings', {
         body: { 
           source: 'booking.com',
           params,
-          token: oauthToken
+          credentials: {
+            username: STATIC_CREDENTIALS.username,
+            password: STATIC_CREDENTIALS.password
+          }
         }
       });
       
@@ -168,12 +125,6 @@ const BookingApiTest = () => {
     } catch (error: any) {
       console.error('Error fetching bookings:', error);
       toast.error(error.message || 'Failed to fetch bookings');
-      
-      // If token error, clear the token
-      if (error.message?.includes('401') || error.message?.includes('unauthorized') || error.message?.includes('token')) {
-        setOauthToken('');
-        toast.error('OAuth token may have expired. Please get a new token.');
-      }
     } finally {
       setIsFetching(false);
     }
@@ -248,10 +199,10 @@ const BookingApiTest = () => {
 
       <Alert>
         <InfoIcon className="h-4 w-4" />
-        <AlertTitle>OAuth Integration Test</AlertTitle>
+        <AlertTitle>Static Authentication</AlertTitle>
         <AlertDescription>
-          This page allows you to test the Booking.com API integration using OAuth authentication.
-          Configure your Client ID and Secret in the Settings page first.
+          This page uses static credentials for testing the Booking.com API integration.
+          The connection should already be established with the provided credentials.
         </AlertDescription>
       </Alert>
 
@@ -264,7 +215,19 @@ const BookingApiTest = () => {
 
         <TabsContent value="configure" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <OAuthTokenHandler onTokenReceived={handleTokenReceived} />
+            <div className="p-6 border rounded-lg bg-muted/20">
+              <h3 className="text-lg font-medium mb-4">Static Authentication Credentials</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-1">Username:</p>
+                  <code className="bg-muted p-2 rounded block text-sm">{STATIC_CREDENTIALS.username}</code>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Password:</p>
+                  <code className="bg-muted p-2 rounded block text-sm">*********************</code>
+                </div>
+              </div>
+            </div>
             
             <ApiConnectionStatus 
               apiName="Booking.com" 
@@ -272,21 +235,6 @@ const BookingApiTest = () => {
               onConnectionChange={handleConnectionChange}
             />
           </div>
-
-          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900">
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle>API Credentials Required</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>
-                Make sure you have configured your Booking.com API credentials in the Settings.
-              </p>
-              <p>
-                <Link to="/settings/api" className="text-primary underline underline-offset-4">
-                  Go to API Settings
-                </Link> and set up your Client ID and Client Secret under the Travel category.
-              </p>
-            </AlertDescription>
-          </Alert>
         </TabsContent>
 
         <TabsContent value="test" className="space-y-6">
@@ -297,7 +245,12 @@ const BookingApiTest = () => {
                 isLoading={isFetching}
               />
             </div>
-            <OAuthTokenHandler onTokenReceived={handleTokenReceived} />
+            <div className="p-6 border rounded-lg bg-muted/20">
+              <h3 className="text-lg font-medium mb-4">Static Authentication Active</h3>
+              <p className="text-sm text-muted-foreground">
+                Using static credentials for API requests. No OAuth token required.
+              </p>
+            </div>
           </div>
 
           {fetchedBookings.length > 0 && (
