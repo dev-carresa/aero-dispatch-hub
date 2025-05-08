@@ -57,26 +57,40 @@ serve(async (req) => {
         console.log("Making request to Booking.com API with OAuth token");
         
         try {
-          // In a production environment, make the actual API request here
-          // For now, we'll continue with mock data since we can't actually hit the API
+          // Make the actual API request to the Booking.com API
+          const response = await fetch(BOOKING_API_ENDPOINT, {
+            method: "GET",
+            headers: headers
+          });
           
-          // This would be the real API call:
-          // const response = await fetch(BOOKING_API_ENDPOINT, {
-          //   method: "GET",
-          //   headers: headers
-          // });
-          // 
-          // if (!response.ok) {
-          //   throw new Error(`API request failed with status: ${response.status}`);
-          // }
-          // 
-          // const data = await response.json();
-          // return new Response(
-          //   JSON.stringify({ bookings: data }),
-          //   { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          // );
+          console.log(`API response status: ${response.status}`);
           
-          // For testing/demo purposes, return mock data
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("API error response:", errorText);
+            throw new Error(`API request failed with status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log("API response received successfully");
+          
+          return new Response(
+            JSON.stringify({ 
+              bookings: data.bookings || data,
+              meta: data.meta || { 
+                count: Array.isArray(data.bookings) ? data.bookings.length : 
+                       (Array.isArray(data) ? data.length : 0) 
+              }
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+          
+        } catch (apiError: any) {
+          console.error("API request error:", apiError);
+          
+          // Fallback to mock data for development/testing if the API is not available
+          console.log("Using mock data as fallback due to API error");
+          
           const mockBookings = [
             {
               id: "B12345",
@@ -174,16 +188,10 @@ serve(async (req) => {
               meta: {
                 count: mockBookings.length,
                 total: mockBookings.length
-              }
+              },
+              error: apiError.message || "Failed to fetch from API, using mock data"
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-          
-        } catch (apiError: any) {
-          console.error("API request error:", apiError);
-          return new Response(
-            JSON.stringify({ error: apiError.message || "Failed to fetch bookings from API" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
           );
         }
       } else if (credentials) {

@@ -72,6 +72,7 @@ export function BookingApiTestTabs() {
       }
       
       const data = response.data;
+      console.log("Received data from API:", data);
       
       if (data.bookings && Array.isArray(data.bookings)) {
         setFetchedBookings(data.bookings);
