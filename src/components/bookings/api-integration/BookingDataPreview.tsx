@@ -6,6 +6,7 @@ import { Download, MapPin, Save, User, CalendarClock, MoreHorizontal } from "luc
 import { BookingComBooking } from "@/types/externalBooking";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface BookingDataPreviewProps {
   bookings: BookingComBooking[];

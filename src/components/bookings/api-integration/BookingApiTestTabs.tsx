@@ -9,6 +9,7 @@ import { ConfigureTab } from "./tabs/ConfigureTab";
 import { TestTab } from "./tabs/TestTab";
 import { ImportTab } from "./tabs/ImportTab";
 import { bookingConverter } from "./utils/bookingConverter";
+import { useAuth } from "@/context/AuthContext";
 
 export function BookingApiTestTabs() {
   const [activeTab, setActiveTab] = useState("configure");
@@ -21,6 +22,14 @@ export function BookingApiTestTabs() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
+  const { user } = useAuth();
+  
+  // Check if user is logged in
+  useEffect(() => {
+    if (!user) {
+      toast.warning("Please log in to save and manage bookings");
+    }
+  }, [user]);
   
   // Load existing external bookings
   const loadExternalBookings = useCallback(async () => {
@@ -99,11 +108,26 @@ export function BookingApiTestTabs() {
   
   // Handle save all bookings
   const handleSaveAllBookings = async () => {
-    if (!fetchedBookings || fetchedBookings.length === 0) return;
+    if (!fetchedBookings || fetchedBookings.length === 0) {
+      toast.warning("No bookings to save");
+      return;
+    }
     
+    if (!user) {
+      toast.error("Please log in to save bookings");
+      return;
+    }
+
     try {
       setIsSaving(true);
       setSaveProgress({ current: 0, total: fetchedBookings.length });
+      
+      // Progress tracking
+      for (let i = 0; i < fetchedBookings.length; i++) {
+        setSaveProgress({ current: i+1, total: fetchedBookings.length });
+        // Small delay to show progress (this is just for UX)
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       const result = await externalBookingService.saveExternalBookings(fetchedBookings, 'booking.com');
       

@@ -66,7 +66,7 @@ export const externalBookingService = {
     }
   },
   
-  // Save external bookings to the database
+  // Save external bookings to the database directly using supabase client
   async saveExternalBookings(bookings: BookingComBooking[], source: string): Promise<{ 
     success: boolean; 
     saved: number;
@@ -74,16 +74,73 @@ export const externalBookingService = {
     duplicates: number;
   }> {
     try {
-      const { data, error } = await supabase.functions.invoke('save-external-bookings', {
-        body: { 
-          source,
-          bookings
+      // Instead of using the edge function, we'll save the bookings directly
+      let saved = 0;
+      let errors = 0;
+      let duplicates = 0;
+      
+      // Get current user id
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to save bookings");
+        throw new Error("Authentication required");
+      }
+
+      // Process each booking
+      for (const booking of bookings) {
+        if (!booking.id) {
+          errors++;
+          continue;
         }
-      });
+        
+        try {
+          // Check if this booking already exists
+          const { data: existingBooking } = await supabase
+            .from('external_bookings')
+            .select('id')
+            .eq('external_source', source.toLowerCase())
+            .eq('external_id', booking.id)
+            .maybeSingle();
+            
+          if (existingBooking) {
+            console.log(`Booking ${booking.id} already exists, skipping`);
+            duplicates++;
+            continue;
+          }
+          
+          // Map the booking
+          const mappedBooking = {
+            external_id: booking.id,
+            external_source: source.toLowerCase() as ExternalBookingSource,
+            booking_data: booking,
+            status: 'pending' as const,
+            user_id: user.id
+          };
+          
+          // Insert the booking
+          const { error: insertError } = await supabase
+            .from('external_bookings')
+            .insert([mappedBooking]);
+            
+          if (insertError) {
+            console.error("Error inserting booking:", insertError);
+            errors++;
+          } else {
+            saved++;
+          }
+        } catch (error) {
+          console.error("Error processing booking:", error);
+          errors++;
+        }
+      }
       
-      if (error) throw error;
-      
-      return data;
+      return {
+        success: true,
+        saved,
+        errors,
+        duplicates
+      };
     } catch (error: any) {
       console.error("Error saving external bookings:", error);
       throw new Error(error.message || "Failed to save bookings");
