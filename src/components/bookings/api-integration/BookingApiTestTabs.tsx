@@ -39,6 +39,7 @@ export function BookingApiTestTabs() {
   }, []);
   
   useEffect(() => {
+    // Call without returning the value to fix the Promise<void> type issue
     loadExternalBookings();
   }, [loadExternalBookings]);
   
@@ -209,7 +210,7 @@ export function BookingApiTestTabs() {
           isLoading={isLoading}
           onSaveBooking={handleImportBooking}
           onViewDetails={handleViewBookingDetails}
-          refreshBookings={loadExternalBookings}
+          refreshBookings={() => { loadExternalBookings(); }}
         />
       </TabsContent>
     </Tabs>
