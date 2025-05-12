@@ -30,7 +30,8 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  // Fix the type declaration by using any type temporarily
+  const placesService = useRef<any>(null);
   const timeoutRef = useRef<number | null>(null);
 
   // Initialize Google Maps API
@@ -46,7 +47,8 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         
         // Create a dummy element for the Places service (required by the API)
         const dummyElement = document.createElement('div');
-        placesService.current = new window.google.maps.places.PlacesService(dummyElement);
+        // Fix: Use PlacesService as a constructor function rather than a class
+        placesService.current = new google.maps.places.PlacesService(dummyElement);
       } catch (error) {
         console.error("Error initializing existing AutocompleteService:", error);
       }
@@ -86,7 +88,8 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
             
             // Create a dummy element for the Places service
             const dummyElement = document.createElement('div');
-            placesService.current = new window.google.maps.places.PlacesService(dummyElement);
+            // Fix: Use PlacesService as a constructor function
+            placesService.current = new google.maps.places.PlacesService(dummyElement);
           } catch (error) {
             console.error("Error initializing AutocompleteService after script load:", error);
           }
@@ -135,7 +138,8 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         
         // Create a dummy element for the Places service
         const dummyElement = document.createElement('div');
-        placesService.current = new window.google.maps.places.PlacesService(dummyElement);
+        // Fix: Use the corrected type
+        placesService.current = new google.maps.places.PlacesService(dummyElement);
       } catch (error) {
         console.error("Error initializing existing AutocompleteService:", error);
       }
@@ -226,13 +230,14 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
   }, [inputValue, initializeGoogleMaps]);
 
   // Get place details with coordinates
-  const getPlaceDetails = useCallback((placeId: string): Promise<google.maps.places.PlaceResult | null> => {
+  const getPlaceDetails = useCallback((placeId: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       if (!placesService.current) {
         if (window.google?.maps?.places) {
           try {
             const dummyElement = document.createElement('div');
-            placesService.current = new window.google.maps.places.PlacesService(dummyElement);
+            // Fix: Use the corrected PlacesService constructor
+            placesService.current = new google.maps.places.PlacesService(dummyElement);
           } catch (error) {
             console.error("Error initializing PlacesService:", error);
             reject(error);
