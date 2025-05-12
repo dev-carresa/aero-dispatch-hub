@@ -65,7 +65,7 @@ export function BookingDataPreview({
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-blue-700">{booking.reservation_id || booking.id?.substring(0, 6)}</span>
-                      <Badge status={booking.status || "pending"} />
+                      <StatusBadge status={booking.status || "pending"} />
                     </div>
                     <span className="text-sm text-muted-foreground">
                       {booking.property?.name || "Transfer"}
@@ -184,8 +184,8 @@ export function BookingDataPreview({
   );
 }
 
-// Helper components
-function Badge({ status }: { status: string }) {
+// Helper components - Renamed from Badge to StatusBadge
+function StatusBadge({ status }: { status: string }) {
   let bgColor = "bg-gray-100 text-gray-800";
   
   switch (status.toLowerCase()) {

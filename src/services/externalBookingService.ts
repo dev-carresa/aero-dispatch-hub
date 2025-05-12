@@ -109,19 +109,19 @@ export const externalBookingService = {
             continue;
           }
           
-          // Map the booking
+          // Map the booking - Fixed: Cast booking_data to unknown first to satisfy TypeScript
           const mappedBooking = {
             external_id: booking.id,
             external_source: source.toLowerCase() as ExternalBookingSource,
-            booking_data: booking,
+            booking_data: booking as unknown as Record<string, any>,
             status: 'pending' as const,
             user_id: user.id
           };
           
-          // Insert the booking
+          // Insert the booking one at a time (not in a batch)
           const { error: insertError } = await supabase
             .from('external_bookings')
-            .insert([mappedBooking]);
+            .insert(mappedBooking);
             
           if (insertError) {
             console.error("Error inserting booking:", insertError);
