@@ -210,7 +210,7 @@ export function BookingApiTestTabs() {
           isLoading={isLoading}
           onSaveBooking={handleImportBooking}
           onViewDetails={handleViewBookingDetails}
-          refreshBookings={() => { loadExternalBookings(); }}
+          refreshBookings={() => loadExternalBookings()} // Return the Promise from loadExternalBookings
         />
       </TabsContent>
     </Tabs>
