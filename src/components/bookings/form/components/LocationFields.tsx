@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-import { LocationInput } from "@/components/places/components/LocationInput";
+import { LocationInput, PlaceData } from "@/components/places/components/LocationInput";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft } from "lucide-react";
 import { TripTypeBadge } from "./TripTypeBadge";
@@ -35,13 +35,36 @@ export function LocationFields({ form }: LocationFieldsProps) {
     const currentPickup = form.getValues('pickupLocation');
     const currentDestination = form.getValues('destination');
     
+    const pickupLat = form.getValues('pickupLatitude');
+    const pickupLng = form.getValues('pickupLongitude');
+    const destLat = form.getValues('destinationLatitude');
+    const destLng = form.getValues('destinationLongitude');
+    
     form.setValue('pickupLocation', currentDestination);
     form.setValue('destination', currentPickup);
+    
+    // Switch coordinates as well
+    form.setValue('pickupLatitude', destLat);
+    form.setValue('pickupLongitude', destLng);
+    form.setValue('destinationLatitude', pickupLat);
+    form.setValue('destinationLongitude', pickupLng);
   };
 
-  // Handle place selection with explicit address update
-  const handlePlaceSelect = (fieldName: 'pickupLocation' | 'destination') => (address: string) => {
-    form.setValue(fieldName, address);
+  // Handle place selection with coordinates
+  const handlePickupPlaceSelect = (placeData: PlaceData) => {
+    form.setValue('pickupLocation', placeData.address);
+    if (placeData.latitude && placeData.longitude) {
+      form.setValue('pickupLatitude', placeData.latitude);
+      form.setValue('pickupLongitude', placeData.longitude);
+    }
+  };
+
+  const handleDestinationPlaceSelect = (placeData: PlaceData) => {
+    form.setValue('destination', placeData.address);
+    if (placeData.latitude && placeData.longitude) {
+      form.setValue('destinationLatitude', placeData.latitude);
+      form.setValue('destinationLongitude', placeData.longitude);
+    }
   };
 
   return (
@@ -62,7 +85,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
                 <LocationInput
                   value={field.value}
                   onChange={(value) => field.onChange(value)}
-                  onPlaceSelect={handlePlaceSelect('pickupLocation')}
+                  onPlaceSelect={handlePickupPlaceSelect}
                   placeholder="Enter pickup location"
                 />
               </FormControl>
@@ -94,7 +117,7 @@ export function LocationFields({ form }: LocationFieldsProps) {
                 <LocationInput
                   value={field.value}
                   onChange={(value) => field.onChange(value)}
-                  onPlaceSelect={handlePlaceSelect('destination')}
+                  onPlaceSelect={handleDestinationPlaceSelect}
                   placeholder="Enter destination"
                 />
               </FormControl>

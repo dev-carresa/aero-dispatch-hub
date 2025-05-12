@@ -4,10 +4,17 @@ import { MapPin } from 'lucide-react';
 import CustomPlacesAutocomplete from '@/components/places/CustomPlacesAutocomplete';
 import { cn } from '@/lib/utils';
 
+export interface PlaceData {
+  address: string;
+  placeId?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 interface LocationInputProps {
   value: string;
   onChange: (value: string) => void;
-  onPlaceSelect: (address: string, placeId?: string) => void;
+  onPlaceSelect: (placeData: PlaceData) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -28,9 +35,14 @@ export function LocationInput({
   icon = <MapPin className="h-4 w-4" />
 }: LocationInputProps) {
   // Create a handler that ensures both onChange and onPlaceSelect are called
-  const handlePlaceSelect = (address: string, placeId?: string) => {
+  const handlePlaceSelect = (address: string, placeId?: string, latitude?: number, longitude?: number) => {
     onChange(address); // Update the form field value
-    onPlaceSelect(address, placeId); // Call the original onPlaceSelect
+    onPlaceSelect({
+      address,
+      placeId,
+      latitude,
+      longitude
+    }); // Call the original onPlaceSelect with all data
   };
 
   return (

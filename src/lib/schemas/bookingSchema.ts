@@ -17,6 +17,12 @@ export const bookingFormSchema = z.object({
   vehicleType: z.enum(["sedan", "suv", "van", "luxury"]),
   tripType: z.enum(["arrival", "departure", "transfer"]).default("transfer"),
   
+  // New coordinate fields
+  pickupLatitude: z.number().optional(),
+  pickupLongitude: z.number().optional(),
+  destinationLatitude: z.number().optional(),
+  destinationLongitude: z.number().optional(),
+  
   // Passengers tab
   passengerCount: z.number().min(1, "At least 1 passenger is required"),
   luggageCount: z.number().min(0, "Luggage count cannot be negative"),

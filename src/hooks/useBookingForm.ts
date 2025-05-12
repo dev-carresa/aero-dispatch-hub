@@ -42,6 +42,10 @@ export function useBookingForm({
       referenceSource: bookingData?.reference_source || "",
       pickupLocation: bookingData?.pickup_location || "",
       destination: bookingData?.destination || "",
+      pickupLatitude: bookingData?.pickup_latitude || undefined,
+      pickupLongitude: bookingData?.pickup_longitude || undefined,
+      destinationLatitude: bookingData?.destination_latitude || undefined,
+      destinationLongitude: bookingData?.destination_longitude || undefined,
       passengerCount: bookingData?.passenger_count || 1,
       luggageCount: bookingData?.luggage_count || 0,
       price: bookingData?.price || 0,
@@ -128,6 +132,15 @@ export function useBookingForm({
 
   // Map form data to database schema
   const mapFormDataToDbSchema = (data: BookingFormData) => {
+    // Create a datetime from pickupDate and pickupTime for the database
+    let pickupDateTime = null;
+    if (data.pickupDate && data.pickupTime) {
+      const [hours, minutes] = data.pickupTime.split(':').map(Number);
+      pickupDateTime = new Date(data.pickupDate);
+      pickupDateTime.setHours(hours || 0);
+      pickupDateTime.setMinutes(minutes || 0);
+    }
+
     return {
       customer_name: data.customerName,
       email: data.email,
@@ -137,8 +150,13 @@ export function useBookingForm({
       reference_source: data.referenceSource,
       pickup_location: data.pickupLocation,
       destination: data.destination,
+      pickup_latitude: data.pickupLatitude,
+      pickup_longitude: data.pickupLongitude,
+      destination_latitude: data.destinationLatitude,
+      destination_longitude: data.destinationLongitude,
       pickup_date: data.pickupDate?.toISOString().split('T')[0],
       pickup_time: data.pickupTime,
+      pickup_datetime: pickupDateTime?.toISOString(),
       vehicle_type: data.vehicleType,
       passenger_count: data.passengerCount,
       luggage_count: data.luggageCount,

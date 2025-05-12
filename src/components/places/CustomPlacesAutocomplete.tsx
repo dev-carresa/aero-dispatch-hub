@@ -6,7 +6,7 @@ import { PredictionsList } from './components/PredictionsList';
 import { SearchInputWithClear } from './components/SearchInputWithClear';
 
 interface CustomPlacesAutocompleteProps {
-  onPlaceSelect: (address: string, placeId?: string) => void;
+  onPlaceSelect: (address: string, placeId?: string, latitude?: number, longitude?: number) => void;
   placeholder?: string;
   className?: string;
   value?: string;
@@ -30,18 +30,37 @@ const CustomPlacesAutocomplete = forwardRef<HTMLInputElement, CustomPlacesAutoco
       predictions, 
       showDropdown, 
       setShowDropdown, 
-      handlePlaceSelect 
+      handlePlaceSelect,
+      getPlaceDetails 
     } = usePlacesAutocomplete({ 
       inputValue, 
       onPlaceSelect: (address, placeId) => {
-        // Update the input value to display the selected address
-        setInputValue(address);
-        // Call the parent component's onPlaceSelect callback
-        onPlaceSelect(address, placeId);
-        // Also call onChange if it exists
-        if (onChange) {
-          onChange(address);
+        // Get place details including coordinates when a place is selected
+        if (placeId) {
+          getPlaceDetails(placeId).then(placeDetails => {
+            const latitude = placeDetails?.geometry?.location?.lat();
+            const longitude = placeDetails?.geometry?.location?.lng();
+            
+            // Update the input value to display the selected address
+            setInputValue(address);
+            
+            // Call the parent component's onPlaceSelect callback with all data
+            onPlaceSelect(address, placeId, latitude, longitude);
+            
+            // Also call onChange if it exists
+            if (onChange) {
+              onChange(address);
+            }
+          });
+        } else {
+          // If no placeId, just update with address
+          setInputValue(address);
+          onPlaceSelect(address);
+          if (onChange) {
+            onChange(address);
+          }
         }
+        
         // Immediately hide dropdown after selection
         setShowDropdown(false);
       }

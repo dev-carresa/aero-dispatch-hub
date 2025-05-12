@@ -23,9 +23,29 @@ function mapExternalToInternalBooking(externalBooking: any) {
   const pickupLocation = bookingData.property?.address || 'N/A';
   const destination = bookingData.property?.name || 'N/A';
   
+  // Extract coordinates if available
+  const pickupLatitude = bookingData.pickup?.coordinates?.latitude;
+  const pickupLongitude = bookingData.pickup?.coordinates?.longitude;
+  const destinationLatitude = bookingData.property?.location?.coordinates?.latitude;
+  const destinationLongitude = bookingData.property?.location?.coordinates?.longitude;
+  
   // Extract date and time
   const checkInDate = bookingData.check_in || new Date().toISOString().split('T')[0];
-  const checkInTime = '12:00'; // Default to noon since Booking.com typically doesn't provide specific times
+  const checkInTime = bookingData.check_in_time || '12:00'; // Default to noon if not provided
+  
+  // Create a combined datetime for pickup
+  let pickupDateTime = null;
+  try {
+    if (checkInDate && checkInTime) {
+      const [hours, minutes] = checkInTime.split(':').map(Number);
+      const dateObj = new Date(checkInDate);
+      dateObj.setHours(hours || 0);
+      dateObj.setMinutes(minutes || 0);
+      pickupDateTime = dateObj.toISOString();
+    }
+  } catch (error) {
+    console.error("Error creating pickup datetime:", error);
+  }
   
   // Extract price
   const price = bookingData.price_details?.total_price || 0;
@@ -40,17 +60,23 @@ function mapExternalToInternalBooking(externalBooking: any) {
     status: 'pending',
     pickup_location: pickupLocation,
     destination: destination,
-    vehicle_type: 'Standard', // Default vehicle type
+    pickup_latitude: pickupLatitude,
+    pickup_longitude: pickupLongitude,
+    destination_latitude: destinationLatitude,
+    destination_longitude: destinationLongitude,
+    vehicle_type: 'sedan', // Default vehicle type
     pickup_time: checkInTime,
     pickup_date: checkInDate,
-    flight_number: null,
+    pickup_datetime: pickupDateTime,
+    flight_number: bookingData.flight_number,
     price: price,
     passenger_count: bookingData.room_details?.guests || 1,
     luggage_count: 1, // Default luggage count
     payment_method: 'Credit Card', // Default payment method
     payment_status: 'pending',
     source: 'booking.com',
-    reference_source: externalBooking.external_id
+    reference_source: externalBooking.external_id,
+    external_booking_id: externalBooking.id
   };
 }
 

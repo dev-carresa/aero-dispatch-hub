@@ -30,6 +30,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const timeoutRef = useRef<number | null>(null);
 
   // Initialize Google Maps API
@@ -42,6 +43,10 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
       
       try {
         autocompleteService.current = new window.google.maps.places.AutocompleteService();
+        
+        // Create a dummy element for the Places service (required by the API)
+        const dummyElement = document.createElement('div');
+        placesService.current = new window.google.maps.places.PlacesService(dummyElement);
       } catch (error) {
         console.error("Error initializing existing AutocompleteService:", error);
       }
@@ -78,6 +83,10 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
         if (window.google?.maps?.places) {
           try {
             autocompleteService.current = new window.google.maps.places.AutocompleteService();
+            
+            // Create a dummy element for the Places service
+            const dummyElement = document.createElement('div');
+            placesService.current = new window.google.maps.places.PlacesService(dummyElement);
           } catch (error) {
             console.error("Error initializing AutocompleteService after script load:", error);
           }
@@ -123,6 +132,10 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
       
       try {
         autocompleteService.current = new window.google.maps.places.AutocompleteService();
+        
+        // Create a dummy element for the Places service
+        const dummyElement = document.createElement('div');
+        placesService.current = new window.google.maps.places.PlacesService(dummyElement);
       } catch (error) {
         console.error("Error initializing existing AutocompleteService:", error);
       }
@@ -212,6 +225,47 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
     };
   }, [inputValue, initializeGoogleMaps]);
 
+  // Get place details with coordinates
+  const getPlaceDetails = useCallback((placeId: string): Promise<google.maps.places.PlaceResult | null> => {
+    return new Promise((resolve, reject) => {
+      if (!placesService.current) {
+        if (window.google?.maps?.places) {
+          try {
+            const dummyElement = document.createElement('div');
+            placesService.current = new window.google.maps.places.PlacesService(dummyElement);
+          } catch (error) {
+            console.error("Error initializing PlacesService:", error);
+            reject(error);
+            return;
+          }
+        } else {
+          reject(new Error("Google Maps Places API not loaded"));
+          return;
+        }
+      }
+      
+      try {
+        placesService.current.getDetails(
+          {
+            placeId: placeId,
+            fields: ['geometry', 'formatted_address', 'name']
+          },
+          (result, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+              resolve(result);
+            } else {
+              console.error("Error getting place details:", status);
+              reject(new Error(`Error getting place details: ${status}`));
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Exception getting place details:", error);
+        reject(error);
+      }
+    });
+  }, []);
+
   // Handle place selection
   const handlePlaceSelect = (prediction: PlacePrediction) => {
     // Call the onPlaceSelect callback with the address and placeId
@@ -226,6 +280,7 @@ export function usePlacesAutocomplete({ inputValue, onPlaceSelect }: UsePlacesAu
     predictions,
     showDropdown,
     setShowDropdown,
-    handlePlaceSelect
+    handlePlaceSelect,
+    getPlaceDetails
   };
 }

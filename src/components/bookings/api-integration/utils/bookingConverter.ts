@@ -98,5 +98,34 @@ export const bookingConverter = {
   // Check if an external booking can be imported (not already imported or in error state)
   canImportBooking(booking: ExternalBooking): boolean {
     return booking.status === 'pending' || booking.status === 'error';
+  },
+
+  // Extract coordinates from booking data
+  extractCoordinates(bookingData: any): {
+    pickupLatitude?: number;
+    pickupLongitude?: number;
+    destinationLatitude?: number;
+    destinationLongitude?: number;
+  } {
+    let coordinates = {};
+    
+    // Try to extract coordinates from booking data if available
+    if (bookingData?.property?.location?.coordinates) {
+      coordinates = {
+        destinationLatitude: bookingData.property.location.coordinates.latitude,
+        destinationLongitude: bookingData.property.location.coordinates.longitude,
+      };
+    }
+    
+    // Some providers might include pickup location coordinates
+    if (bookingData?.pickup?.coordinates) {
+      coordinates = {
+        ...coordinates,
+        pickupLatitude: bookingData.pickup.coordinates.latitude,
+        pickupLongitude: bookingData.pickup.coordinates.longitude
+      };
+    }
+    
+    return coordinates;
   }
 };

@@ -290,6 +290,8 @@ export type Database = {
           created_at: string | null
           customer_name: string
           destination: string
+          destination_latitude: number | null
+          destination_longitude: number | null
           driver_income: number | null
           driver_notes: string | null
           email: string
@@ -303,7 +305,10 @@ export type Database = {
           payment_status: string
           phone: string
           pickup_date: string
+          pickup_datetime: string | null
+          pickup_latitude: number | null
           pickup_location: string
+          pickup_longitude: number | null
           pickup_time: string
           price: number
           reference_source: string | null
@@ -320,6 +325,8 @@ export type Database = {
           created_at?: string | null
           customer_name: string
           destination: string
+          destination_latitude?: number | null
+          destination_longitude?: number | null
           driver_income?: number | null
           driver_notes?: string | null
           email: string
@@ -333,7 +340,10 @@ export type Database = {
           payment_status: string
           phone: string
           pickup_date: string
+          pickup_datetime?: string | null
+          pickup_latitude?: number | null
           pickup_location: string
+          pickup_longitude?: number | null
           pickup_time: string
           price: number
           reference_source?: string | null
@@ -350,6 +360,8 @@ export type Database = {
           created_at?: string | null
           customer_name?: string
           destination?: string
+          destination_latitude?: number | null
+          destination_longitude?: number | null
           driver_income?: number | null
           driver_notes?: string | null
           email?: string
@@ -363,7 +375,10 @@ export type Database = {
           payment_status?: string
           phone?: string
           pickup_date?: string
+          pickup_datetime?: string | null
+          pickup_latitude?: number | null
           pickup_location?: string
+          pickup_longitude?: number | null
           pickup_time?: string
           price?: number
           reference_source?: string | null
