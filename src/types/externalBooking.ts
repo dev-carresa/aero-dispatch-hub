@@ -17,7 +17,6 @@ export interface ExternalBooking {
 }
 
 // Simplified structure of what we expect from Booking.com API
-// This will be refined as we understand the actual API response better
 export interface BookingComResponse {
   bookings?: BookingComBooking[];
   status?: string;
@@ -50,6 +49,12 @@ export interface BookingComBooking {
     address?: string;
     city?: string;
     country?: string;
+    location?: {
+      coordinates?: {
+        latitude: number;
+        longitude: number;
+      }
+    };
   };
   price_details?: {
     total_price?: number;
@@ -58,4 +63,25 @@ export interface BookingComBooking {
   special_requests?: string;
   created_at?: string;
   updated_at?: string;
+  check_in_time?: string;
+  flight_number?: string;
+  pickup?: {
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    }
+  };
+}
+
+export interface BatchConversionResult {
+  success: boolean;
+  total: number;
+  successful: number;
+  failed: number;
+  results: Array<{
+    success: boolean;
+    bookingId: string;
+    message: string;
+    internalBookingId?: string;
+  }>;
 }

@@ -90,16 +90,44 @@ export const externalBookingService = {
     }
   },
   
-  // Get all external bookings
-  async getExternalBookings(source?: string): Promise<ExternalBooking[]> {
+  // Get all external bookings with optional filtering
+  async getExternalBookings(
+    source?: string, 
+    status?: string,
+    options?: { 
+      limit?: number;
+      offset?: number;
+      orderBy?: string;
+      orderDirection?: 'asc' | 'desc';
+    }
+  ): Promise<ExternalBooking[]> {
     try {
       let query = supabase
         .from('external_bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
         
+      // Apply source filter
       if (source) {
         query = query.eq('external_source', source);
+      }
+      
+      // Apply status filter
+      if (status) {
+        query = query.eq('status', status);
+      }
+      
+      // Apply ordering
+      const orderBy = options?.orderBy || 'created_at';
+      const orderDirection = options?.orderDirection || 'desc';
+      query = query.order(orderBy, { ascending: orderDirection === 'asc' });
+      
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      
+      if (options?.offset) {
+        query = query.range(options.offset, options.offset + (options?.limit || 10) - 1);
       }
       
       const { data, error } = await query;
@@ -174,6 +202,101 @@ export const externalBookingService = {
       console.error(`Error updating external booking status:`, error);
       toast.error("Failed to update booking status");
       throw error;
+    }
+  },
+  
+  // Get statistics about external bookings
+  async getExternalBookingStats(source?: string): Promise<{
+    total: number;
+    pending: number;
+    imported: number;
+    error: number;
+    lastImport?: string;
+  }> {
+    try {
+      // Count total bookings
+      let countQuery = supabase
+        .from('external_bookings')
+        .select('*', { count: 'exact', head: true });
+        
+      if (source) {
+        countQuery = countQuery.eq('external_source', source);
+      }
+        
+      const { count: total, error: totalError } = await countQuery;
+      
+      if (totalError) throw totalError;
+      
+      // Count pending bookings
+      let pendingQuery = supabase
+        .from('external_bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+        
+      if (source) {
+        pendingQuery = pendingQuery.eq('external_source', source);
+      }
+        
+      const { count: pending, error: pendingError } = await pendingQuery;
+      
+      if (pendingError) throw pendingError;
+      
+      // Count imported bookings
+      let importedQuery = supabase
+        .from('external_bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'imported');
+        
+      if (source) {
+        importedQuery = importedQuery.eq('external_source', source);
+      }
+        
+      const { count: imported, error: importedError } = await importedQuery;
+      
+      if (importedError) throw importedError;
+      
+      // Count error bookings
+      let errorQuery = supabase
+        .from('external_bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'error');
+        
+      if (source) {
+        errorQuery = errorQuery.eq('external_source', source);
+      }
+        
+      const { count: error, error: errorQueryError } = await errorQuery;
+      
+      if (errorQueryError) throw errorQueryError;
+      
+      // Get the last import date
+      let lastImportQuery = supabase
+        .from('external_bookings')
+        .select('updated_at')
+        .eq('status', 'imported')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+        
+      if (source) {
+        lastImportQuery = lastImportQuery.eq('external_source', source);
+      }
+        
+      const { data: lastImportData, error: lastImportError } = await lastImportQuery;
+      
+      if (lastImportError) throw lastImportError;
+      
+      const lastImport = lastImportData && lastImportData.length > 0 ? lastImportData[0].updated_at : undefined;
+      
+      return {
+        total: total || 0,
+        pending: pending || 0,
+        imported: imported || 0,
+        error: error || 0,
+        lastImport
+      };
+    } catch (error: any) {
+      console.error("Error fetching external booking stats:", error);
+      throw new Error("Failed to fetch external booking statistics");
     }
   }
 };

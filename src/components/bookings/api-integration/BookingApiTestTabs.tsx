@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { externalBookingService } from "@/services/externalBookingService";
@@ -23,22 +23,24 @@ export function BookingApiTestTabs() {
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   
   // Load existing external bookings
-  const loadExternalBookings = async () => {
+  const loadExternalBookings = useCallback(async () => {
     try {
       setIsLoading(true);
       const bookings = await externalBookingService.getExternalBookings('booking.com');
       setExternalBookings(bookings);
+      return bookings; // Return bookings for chaining
     } catch (error) {
       console.error('Error loading external bookings:', error);
       toast.error('Failed to load external bookings');
+      return [];
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
   
   useEffect(() => {
     loadExternalBookings();
-  }, []);
+  }, [loadExternalBookings]);
   
   // Handle OAuth token received
   const handleTokenReceived = (token: string) => {
@@ -162,8 +164,17 @@ export function BookingApiTestTabs() {
     });
   };
 
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    // If switching to import tab, refresh bookings
+    if (value === 'import') {
+      loadExternalBookings();
+    }
+    setActiveTab(value);
+  };
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid grid-cols-3 mb-6">
         <TabsTrigger value="configure">Configure API</TabsTrigger>
         <TabsTrigger value="test">Test API</TabsTrigger>

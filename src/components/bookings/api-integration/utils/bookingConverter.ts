@@ -41,6 +41,73 @@ export const bookingConverter = {
     }
   },
   
+  // Convert multiple external bookings in batch - NEW IMPROVED VERSION
+  async batchConvertBookings(bookingIds: string[]): Promise<{ 
+    success: boolean;
+    total: number;
+    successful: number;
+    failed: number;
+    results: Array<{
+      success: boolean;
+      bookingId: string;
+      message: string;
+      internalBookingId?: string;
+    }>;
+  }> {
+    try {
+      if (!bookingIds.length) {
+        return {
+          success: false,
+          total: 0,
+          successful: 0,
+          failed: 0,
+          results: []
+        };
+      }
+      
+      // Call the batch conversion function
+      const { data, error } = await supabase.functions.invoke('batch-convert-external-bookings', {
+        body: { bookingIds }
+      });
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      console.error("Error in batch conversion:", error);
+      return {
+        success: false,
+        total: bookingIds.length,
+        successful: 0,
+        failed: bookingIds.length,
+        results: bookingIds.map(id => ({
+          success: false,
+          bookingId: id,
+          message: error.message || "Failed to process batch conversion"
+        }))
+      };
+    }
+  },
+  
+  // Legacy method for backward compatibility
+  async convertMultipleBookings(bookingIds: string[]): Promise<{ 
+    success: number;
+    failed: number;
+    messages: string[];
+  }> {
+    const batchResult = await this.batchConvertBookings(bookingIds);
+    
+    return {
+      success: batchResult.successful,
+      failed: batchResult.failed,
+      messages: batchResult.results.map(result => 
+        result.success 
+          ? `Successfully imported booking ${result.bookingId}`
+          : `Failed to import booking ${result.bookingId}: ${result.message}`
+      )
+    };
+  },
+  
   // Update external booking status
   async updateBookingStatus(bookingId: string, status: string, errorMessage?: string): Promise<boolean> {
     try {
@@ -66,33 +133,6 @@ export const bookingConverter = {
       toast.error(error.message || "Failed to update booking status");
       return false;
     }
-  },
-  
-  // Convert multiple external bookings in batch
-  async convertMultipleBookings(bookingIds: string[]): Promise<{ 
-    success: number;
-    failed: number;
-    messages: string[];
-  }> {
-    const results = {
-      success: 0,
-      failed: 0,
-      messages: [] as string[]
-    };
-    
-    for (const bookingId of bookingIds) {
-      const result = await this.convertExternalBooking(bookingId);
-      
-      if (result.success) {
-        results.success++;
-        results.messages.push(`Successfully imported booking ${bookingId}`);
-      } else {
-        results.failed++;
-        results.messages.push(`Failed to import booking ${bookingId}: ${result.message}`);
-      }
-    }
-    
-    return results;
   },
   
   // Check if an external booking can be imported (not already imported or in error state)
