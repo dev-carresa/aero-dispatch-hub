@@ -28,18 +28,16 @@ export function BookingApiTestTabs() {
       setIsLoading(true);
       const bookings = await externalBookingService.getExternalBookings('booking.com');
       setExternalBookings(bookings);
-      return bookings; // Return bookings for chaining
+      return; // Return void instead of the bookings
     } catch (error) {
       console.error('Error loading external bookings:', error);
       toast.error('Failed to load external bookings');
-      return [];
     } finally {
       setIsLoading(false);
     }
   }, []);
   
   useEffect(() => {
-    // Call without returning the value to fix the Promise<void> type issue
     loadExternalBookings();
   }, [loadExternalBookings]);
   
@@ -210,7 +208,9 @@ export function BookingApiTestTabs() {
           isLoading={isLoading}
           onSaveBooking={handleImportBooking}
           onViewDetails={handleViewBookingDetails}
-          refreshBookings={() => loadExternalBookings()} // Return the Promise from loadExternalBookings
+          refreshBookings={() => {
+            return loadExternalBookings(); // Explicitly return the Promise to match the expected type
+          }}
         />
       </TabsContent>
     </Tabs>
