@@ -4,8 +4,10 @@ import { BookingComBooking, BookingApiLink } from "@/types/externalBooking";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { externalBookingService } from "@/services/externalBookingService";
+import { useAuth } from "@/context/AuthContext";
 
 export function useBookingData(user: any) {
+  const { isAuthenticated } = useAuth();
   const [fetchedBookings, setFetchedBookings] = useState<BookingComBooking[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
@@ -39,6 +41,8 @@ export function useBookingData(user: any) {
         setFetchedBookings([]);
         setPaginationLinks([]);
         setTotalBookingsLoaded(0);
+        // Clear any previous errors
+        setErrorDetails(null);
       }
       
       // Get the next link if loading more
@@ -110,8 +114,6 @@ export function useBookingData(user: any) {
         }
       }
       
-      // Clear any previous error details
-      setErrorDetails(null);
     } catch (error: any) {
       console.error('Error fetching bookings:', error);
       toast.error(error.message || 'Failed to fetch bookings');
@@ -137,8 +139,13 @@ export function useBookingData(user: any) {
       return;
     }
     
-    if (!user) {
-      toast.error("Please log in to save bookings");
+    // Check if user is authenticated before attempting to save
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to save bookings");
+      setErrorDetails(JSON.stringify({ 
+        message: "Authentication required. Please log in to save bookings.",
+        code: 401
+      }, null, 2));
       return;
     }
 
@@ -168,7 +175,16 @@ export function useBookingData(user: any) {
           toast.warning(`There was an error saving the booking`);
         }
       } else {
-        throw new Error(result.message || 'Failed to save booking');
+        // Handle authentication errors specially
+        if (result.code === 401) {
+          toast.error("Authentication required. Please log in to save bookings.");
+          setErrorDetails(JSON.stringify({
+            message: result.message || "Authentication failed. Please log in to save bookings.",
+            code: 401
+          }, null, 2));
+        } else {
+          throw new Error(result.message || 'Failed to save booking');
+        }
       }
     } catch (error: any) {
       console.error('Error saving booking:', error);
@@ -197,7 +213,7 @@ export function useBookingData(user: any) {
     saveProgress, 
     rawApiResponse,
     totalBookingsLoaded,
-    errorDetails, // Add this to the returned object
+    errorDetails,
     handleFetchBookings,
     handleLoadMoreBookings,
     handleSaveBookings,

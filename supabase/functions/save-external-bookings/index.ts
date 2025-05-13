@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { supabaseClient } from "../_shared/supabase-client.ts";
+import { supabaseAdmin, getSupabaseClient } from "../_shared/supabase-client.ts";
 
 interface RequestBody {
   source: string;
@@ -121,9 +121,16 @@ serve(async (req) => {
   }
   
   try {
+    // Extract the Authorization header from the request
+    const authHeader = req.headers.get('Authorization');
+    console.log("Auth header present:", !!authHeader);
+    
+    // Create a client using the auth header (if present)
+    const supabaseClient = getSupabaseClient(authHeader);
+    
     console.log("Parsing request body");
     const body = await req.json();
-    console.log("Request body:", JSON.stringify(body));
+    console.log("Request body received");
     
     const { source, bookings } = body as RequestBody;
     
@@ -147,8 +154,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: "Authentication required", 
-          error: authError ? JSON.stringify(authError) : "No user found" 
+          message: "Authentication required. Please log in to save bookings.", 
+          error: authError ? authError.message : "No user authenticated",
+          code: 401
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
@@ -201,7 +209,6 @@ serve(async (req) => {
         mappedBooking.user_id = user.id;
         
         console.log(`Inserting booking ${externalId} into database`);
-        console.log("Mapped booking data:", JSON.stringify(mappedBooking, null, 2));
         
         const { error: insertError } = await supabaseClient
           .from('bookings_data')

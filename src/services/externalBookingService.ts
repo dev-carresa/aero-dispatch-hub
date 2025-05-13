@@ -85,6 +85,7 @@ export const externalBookingService = {
     errors: number;
     duplicates: number;
     message?: string;
+    code?: number;
   }> {
     try {
       console.log("Saving bookings:", JSON.stringify(bookings, null, 2));
@@ -98,7 +99,8 @@ export const externalBookingService = {
           saved: 0,
           errors: bookings.length,
           duplicates: 0,
-          message: "Authentication required. Please log in to save bookings."
+          message: "Authentication required. Please log in to save bookings.",
+          code: 401
         };
       }
 
@@ -108,10 +110,12 @@ export const externalBookingService = {
           saved: 0,
           errors: bookings.length,
           duplicates: 0,
-          message: "No authenticated session found. Please log in to save bookings."
+          message: "No authenticated session found. Please log in to save bookings.",
+          code: 401
         };
       }
       
+      // Call the edge function to save bookings, ensuring auth header is passed with session token
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
         body: {
           source,
@@ -121,6 +125,17 @@ export const externalBookingService = {
       
       if (error) {
         console.error("Function invocation error:", error);
+        // Check if it's an authentication error
+        if (error.message && (error.message.includes('auth') || error.message.includes('401'))) {
+          return {
+            success: false,
+            saved: 0,
+            errors: bookings.length,
+            duplicates: 0,
+            message: "Authentication failed. Please log in again to save bookings.",
+            code: 401
+          };
+        }
         throw error;
       }
       
@@ -131,7 +146,8 @@ export const externalBookingService = {
         saved: data.saved || 0,
         errors: data.errors || 0,
         duplicates: data.duplicates || 0,
-        message: data.message
+        message: data.message,
+        code: data.code
       };
     } catch (error: any) {
       console.error("Error saving bookings:", error);
@@ -140,7 +156,8 @@ export const externalBookingService = {
         saved: 0,
         errors: bookings.length,
         duplicates: 0,
-        message: error.message || "Failed to save bookings"
+        message: error.message || "Failed to save bookings",
+        code: error.code || 500
       };
     }
   },

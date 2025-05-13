@@ -10,7 +10,7 @@ import { useOAuthToken } from "./hooks/useOAuthToken";
 
 export function BookingApiTestTabs() {
   const [activeTab, setActiveTab] = useState("configure");
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   // Use our custom hooks
   const { oauthToken, connectionStatus, setConnectionStatus, handleTokenReceived } = useOAuthToken();
@@ -22,7 +22,7 @@ export function BookingApiTestTabs() {
     saveProgress, 
     rawApiResponse, 
     totalBookingsLoaded,
-    errorDetails, // Get error details from hook 
+    errorDetails,
     handleFetchBookings, 
     handleLoadMoreBookings, 
     handleSaveBookings, 
@@ -31,10 +31,10 @@ export function BookingApiTestTabs() {
   
   // Check if user is logged in
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       toast.warning("Please log in to save and manage bookings");
     }
-  }, [user]);
+  }, [isAuthenticated]);
   
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -71,7 +71,7 @@ export function BookingApiTestTabs() {
           onLoadMore={() => handleLoadMoreBookings(oauthToken)}
           isPaginationLoading={isPaginationLoading}
           totalBookingsLoaded={totalBookingsLoaded}
-          errorDetails={errorDetails} // Pass error details to TestTab
+          errorDetails={errorDetails}
         />
       </TabsContent>
     </Tabs>

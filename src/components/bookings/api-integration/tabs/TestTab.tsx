@@ -5,11 +5,12 @@ import { BookingDataPreview } from "@/components/bookings/api-integration/Bookin
 import { BookingComBooking } from "@/types/externalBooking";
 import { OAuthTokenHandler } from "@/components/bookings/api-integration/OAuthTokenHandler";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle } from "lucide-react";
+import { Info, AlertTriangle, LogIn } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface TestTabProps {
   onFetch: () => Promise<void>;
@@ -25,25 +26,35 @@ interface TestTabProps {
   onLoadMore: () => void;
   isPaginationLoading: boolean;
   totalBookingsLoaded: number;
-  errorDetails?: string | null; // Add error details prop
+  errorDetails?: string | null;
 }
 
 export function TestTab({ 
   onFetch, 
   isFetching, 
-  fetchedBookings = [], // Default to empty array
+  fetchedBookings = [],
   isSaving, 
   onSaveAll, 
-  saveProgress = { current: 0, total: 0 }, // Add default values
-  onTokenReceived = () => {}, // Default no-op function
+  saveProgress = { current: 0, total: 0 },
+  onTokenReceived = () => {},
   hasValidToken = false,
   rawApiResponse,
   hasNextPage = false,
   onLoadMore = () => {},
   isPaginationLoading = false,
   totalBookingsLoaded = 0,
-  errorDetails = null // Default to null
+  errorDetails = null
 }: TestTabProps) {
+  const { isAuthenticated } = useAuth();
+
+  // Check if error details contain authentication errors
+  const isAuthError = errorDetails && 
+    (errorDetails.includes('Authentication required') || 
+     errorDetails.includes('No authenticated session') || 
+     errorDetails.includes('Authentication failed') ||
+     errorDetails.includes('No user authenticated') ||
+     errorDetails.includes('401'));
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -57,6 +68,17 @@ export function TestTab({
               </AlertDescription>
             </Alert>
           ) : null}
+
+          {/* Show authentication alert if user is not logged in */}
+          {!isAuthenticated && (
+            <Alert className="mb-4 border-amber-300 bg-amber-50">
+              <LogIn className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-700">Login Required</AlertTitle>
+              <AlertDescription className="text-amber-600">
+                You must be logged in to save bookings. Please log in to continue.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <FetchControlsForm
             onFetch={onFetch}
@@ -66,8 +88,30 @@ export function TestTab({
         <OAuthTokenHandler onTokenReceived={onTokenReceived} />
       </div>
 
-      {/* Display error details if available */}
-      {errorDetails && (
+      {/* Authentication error alert */}
+      {isAuthError && (
+        <Card className="mb-6 border-red-300">
+          <CardHeader className="pb-2 bg-red-50">
+            <CardTitle className="text-lg flex items-center gap-2 text-red-700">
+              <AlertTriangle className="h-5 w-5" />
+              Authentication Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Not Authenticated</AlertTitle>
+              <AlertDescription className="flex flex-col gap-2">
+                <p>You need to be logged in to save bookings. Please log in to your account and try again.</p>
+                <p className="text-sm text-gray-700">Error details: Authentication failed or session expired</p>
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Display error details if available and not authentication error */}
+      {errorDetails && !isAuthError && (
         <Card className="mb-6 border-red-300">
           <CardHeader className="pb-2 bg-red-50">
             <CardTitle className="text-lg flex items-center gap-2 text-red-700">
