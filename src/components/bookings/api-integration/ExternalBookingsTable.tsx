@@ -1,124 +1,187 @@
 
 import { useState } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, MapPin, Calendar } from "lucide-react";
 import { BookingComBooking } from "@/types/externalBooking";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface ExternalBookingsTableProps {
   bookingData: BookingComBooking[];
+  selectedBookings: BookingComBooking[];
   onRowSelect: (booking: BookingComBooking, isSelected: boolean) => void;
   onViewBooking: (booking: BookingComBooking) => void;
-  selectedBookings: BookingComBooking[];
 }
 
 export function ExternalBookingsTable({
   bookingData,
+  selectedBookings,
   onRowSelect,
-  onViewBooking,
-  selectedBookings
+  onViewBooking
 }: ExternalBookingsTableProps) {
   const [selectAll, setSelectAll] = useState(false);
-  
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
+
+  const handleSelectAll = () => {
+    const newSelectAll = !selectAll;
+    setSelectAll(newSelectAll);
     
-    if (checked) {
-      // Select all bookings that aren't already selected
-      const newSelected = [...selectedBookings];
+    if (newSelectAll) {
+      // Select all bookings
       bookingData.forEach(booking => {
-        if (!selectedBookings.some(b => b.id === booking.id)) {
-          newSelected.push(booking);
+        if (!isSelected(booking)) {
+          onRowSelect(booking, true);
         }
       });
-      bookingData.forEach(booking => onRowSelect(booking, true));
     } else {
       // Deselect all bookings
-      bookingData.forEach(booking => onRowSelect(booking, false));
+      bookingData.forEach(booking => {
+        if (isSelected(booking)) {
+          onRowSelect(booking, false);
+        }
+      });
     }
   };
-  
-  const isBookingSelected = (booking: BookingComBooking) => {
+
+  const isSelected = (booking: BookingComBooking) => {
     return selectedBookings.some(b => b.id === booking.id);
   };
-  
-  const formatDate = (dateString: string | undefined) => {
+
+  const handleRowClick = (booking: BookingComBooking) => {
+    const selected = isSelected(booking);
+    onRowSelect(booking, !selected);
+  };
+
+  const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
-    
     try {
-      return format(new Date(dateString), "MMM d, yyyy");
+      return format(parseISO(dateString), "MMM d, yyyy HH:mm");
     } catch (error) {
       return dateString;
     }
   };
 
+  const getGuestName = (booking: BookingComBooking) => {
+    if (booking.passenger?.name) {
+      return booking.passenger.name;
+    } else if (booking.guest) {
+      return `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim();
+    } else {
+      return "No name";
+    }
+  };
+
+  const getPickupLocation = (booking: BookingComBooking) => {
+    if (booking.pickup?.address) {
+      return booking.pickup.address;
+    } else if (booking.property?.address) {
+      return booking.property.address;
+    } else {
+      return "Unknown location";
+    }
+  };
+
+  const getPickupDate = (booking: BookingComBooking) => {
+    if (booking.pickup_date_time) {
+      return formatDate(booking.pickup_date_time);
+    } else if (booking.check_in) {
+      return formatDate(booking.check_in);
+    } else if (booking.booked_date) {
+      return formatDate(booking.booked_date);
+    } else {
+      return "No date";
+    }
+  };
+
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[50px]">
               <Checkbox 
-                checked={selectAll || (bookingData.length > 0 && selectedBookings.length === bookingData.length)} 
+                checked={selectAll} 
                 onCheckedChange={handleSelectAll}
-                aria-label="Select all bookings"
+                aria-label="Select all"
               />
             </TableHead>
             <TableHead>Guest</TableHead>
-            <TableHead>Check In</TableHead>
-            <TableHead>Check Out</TableHead>
+            <TableHead>Pickup</TableHead>
+            <TableHead>Date & Time</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bookingData.map(booking => {
-            // Get guest name from the appropriate property depending on API response structure
-            const guestName = booking.passenger?.name || 
-              (booking.guest ? `${booking.guest.first_name} ${booking.guest.last_name}` : 'No name');
-            
-            return (
-              <TableRow key={booking.id} className={isBookingSelected(booking) ? "bg-muted/50" : undefined}>
-                <TableCell>
-                  <Checkbox 
-                    checked={isBookingSelected(booking)}
-                    onCheckedChange={(checked) => onRowSelect(booking, !!checked)}
-                    aria-label={`Select booking for ${guestName}`}
-                  />
-                </TableCell>
-                <TableCell>{guestName}</TableCell>
-                <TableCell>{formatDate(booking.check_in)}</TableCell>
-                <TableCell>{formatDate(booking.check_out)}</TableCell>
-                <TableCell>{booking.status || "pending"}</TableCell>
-                <TableCell className="text-right">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => onViewBooking(booking)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-          
-          {bookingData.length === 0 && (
+          {bookingData.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
                 No bookings found
               </TableCell>
             </TableRow>
+          ) : (
+            bookingData.map((booking, index) => {
+              const isRowSelected = isSelected(booking);
+              const bookingId = booking.id || booking.reference || booking.legId || `booking-${index}`;
+              
+              return (
+                <TableRow 
+                  key={bookingId} 
+                  className={isRowSelected ? "bg-primary/5" : undefined}
+                  onClick={() => handleRowClick(booking)}
+                >
+                  <TableCell>
+                    <Checkbox 
+                      checked={isRowSelected}
+                      aria-label={`Select booking for ${getGuestName(booking)}`}
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={(checked) => onRowSelect(booking, !!checked)}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {getGuestName(booking)}
+                    {index === 0 && (
+                      <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+                        First
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="truncate max-w-[150px]">
+                        {getPickupLocation(booking)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{getPickupDate(booking)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={booking.status?.toLowerCase() === "accepted" ? "success" : "outline"}>
+                      {booking.status || "Unknown"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewBooking(booking);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>

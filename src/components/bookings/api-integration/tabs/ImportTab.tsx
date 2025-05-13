@@ -5,7 +5,7 @@ import { FetchControlsForm } from "../FetchControlsForm";
 import { ExternalBookingsTable } from "../ExternalBookingsTable";
 import { BookingDataPreview } from "../BookingDataPreview";
 import { useToast } from "@/components/ui/use-toast";
-import { BookingComBooking, ExternalBooking } from "@/types/externalBooking";
+import { BookingComBooking } from "@/types/externalBooking";
 import { externalBookingService } from "@/services/externalBookingService";
 import { Loader2 } from "lucide-react";
 
@@ -23,6 +23,7 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [previewBooking, setPreviewBooking] = useState<BookingComBooking | null>(null);
+  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
   
   const { toast } = useToast();
 
@@ -65,6 +66,50 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
     setPreviewBooking(booking);
   };
 
+  const handleSaveFirstBooking = async () => {
+    if (previewBooking) {
+      setLoading(true);
+      setSaveProgress({ current: 1, total: 1 });
+      
+      try {
+        const result = await externalBookingService.saveExternalBookings(
+          [previewBooking],
+          'booking.com'
+        );
+        
+        toast({
+          title: "Booking saved",
+          description: `Successfully saved booking. ${
+            result.duplicates > 0 ? `${result.duplicates} duplicates skipped.` : ''
+          } ${result.errors > 0 ? `${result.errors} errors encountered.` : ''}`,
+          variant: result.success ? "default" : "destructive",
+        });
+        
+        // Close the preview after saving
+        setPreviewBooking(null);
+        
+        // Call the onImportComplete callback
+        if (onImportComplete && result.success) {
+          onImportComplete({
+            saved: result.saved,
+            errors: result.errors,
+            duplicates: result.duplicates
+          });
+        }
+      } catch (error) {
+        console.error("Error saving booking:", error);
+        toast({
+          title: "Error saving booking",
+          description: error instanceof Error ? error.message : "Unknown error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+        setSaveProgress({ current: 0, total: 0 });
+      }
+    }
+  };
+
   const handleImport = async () => {
     if (selectedBookings.length === 0) {
       toast({
@@ -76,6 +121,7 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
     }
 
     setLoading(true);
+    setSaveProgress({ current: 0, total: selectedBookings.length });
     
     try {
       const result = await externalBookingService.saveExternalBookings(
@@ -112,6 +158,7 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
       });
     } finally {
       setLoading(false);
+      setSaveProgress({ current: 0, total: 0 });
     }
   };
 
@@ -161,10 +208,10 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
         <BookingDataPreview 
           bookings={[previewBooking]}
           onClose={() => setPreviewBooking(null)}
-          isLoading={false}
-          onSaveAll={() => {}}
-          currentProgress={0}
-          totalProgress={0}
+          isLoading={loading}
+          onSaveAll={handleSaveFirstBooking}
+          currentProgress={saveProgress.current}
+          totalProgress={saveProgress.total}
         />
       )}
     </div>

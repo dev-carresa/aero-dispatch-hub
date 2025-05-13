@@ -10,12 +10,14 @@ interface RequestBody {
 
 // Map a Booking.com booking to our internal format
 function mapBookingToInternalFormat(booking: any, source: string) {
+  console.log("Mapping booking:", JSON.stringify(booking));
+  
   // Get guest information with fallbacks
   const guestName = booking.passenger?.name || 
     (booking.guest ? `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim() : 'Guest');
   
-  const email = booking.guest?.email || 'guest@example.com';
-  const phone = booking.guest?.phone || 'N/A';
+  const email = booking.guest?.email || booking.passenger?.email || 'guest@example.com';
+  const phone = booking.guest?.phone || booking.passenger?.telephone_number || 'N/A';
   
   // Get location information with fallbacks
   const pickupLocation = booking.pickup?.address || 
@@ -41,14 +43,21 @@ function mapBookingToInternalFormat(booking: any, source: string) {
   const pickupDate = booking.check_in || new Date().toISOString().split('T')[0];
   
   // Get price information with fallbacks
-  const price = booking.price_details?.total_price || 0;
+  let price = 0;
+  if (booking.price_details?.total_price) {
+    price = parseFloat(booking.price_details.total_price);
+  } else if (booking.price?.amount) {
+    price = parseFloat(booking.price.amount);
+  }
   
   // Get passenger count with fallbacks
-  const passengerCount = booking.room_details?.guests || 1;
+  const passengerCount = booking.room_details?.guests || booking.passenger_count || 1;
   
   // Use various ID fields with fallbacks
   const externalId = booking.id || booking.reference || booking.legId || booking.bookingReference || 
-    `${source}-${new Date().getTime()}`;
+    booking.customerReference || `${source}-${new Date().getTime()}`;
+  
+  console.log("External ID determined as:", externalId);
   
   // Flight number if available
   const flightNumber = booking.flight_number || null;
@@ -88,9 +97,11 @@ serve(async (req) => {
   }
   
   try {
+    console.log("Request received in save-external-bookings");
     const { source, bookings } = await req.json() as RequestBody;
     
     if (!source || !bookings || !Array.isArray(bookings)) {
+      console.error("Invalid request: missing source or bookings array");
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -100,10 +111,13 @@ serve(async (req) => {
       );
     }
     
+    console.log(`Processing ${bookings.length} bookings from ${source}`);
+    
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
     if (authError || !user) {
+      console.error("Authentication error:", authError);
       return new Response(
         JSON.stringify({ success: false, message: "Authentication required" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
@@ -116,9 +130,19 @@ serve(async (req) => {
     
     // Process each booking and save directly to bookings_data
     for (const booking of bookings) {
-      const externalId = booking.id || booking.reference || booking.legId || booking.bookingReference;
+      // Debug logging of the booking object
+      console.log("Processing booking:", JSON.stringify({
+        id: booking.id,
+        reference: booking.reference,
+        legId: booking.legId,
+        bookingReference: booking.bookingReference,
+        customerReference: booking.customerReference
+      }));
+      
+      const externalId = booking.id || booking.reference || booking.legId || booking.bookingReference || booking.customerReference;
       
       if (!externalId) {
+        console.error("No external ID found for booking", booking);
         errors++;
         continue;
       }
@@ -133,6 +157,7 @@ serve(async (req) => {
           .maybeSingle();
           
         if (existingBooking) {
+          console.log(`Booking with external ID ${externalId} already exists, skipping`);
           duplicates++;
           continue;
         }
@@ -143,6 +168,8 @@ serve(async (req) => {
         // Add user_id to the booking data
         mappedBooking.user_id = user.id;
         
+        console.log(`Saving booking with external ID ${externalId}`);
+        
         const { error: insertError } = await supabaseClient
           .from('bookings_data')
           .insert([mappedBooking]);
@@ -151,6 +178,7 @@ serve(async (req) => {
           console.error("Error inserting booking:", insertError);
           errors++;
         } else {
+          console.log(`Successfully saved booking with external ID ${externalId}`);
           saved++;
         }
       } catch (error) {
@@ -159,13 +187,17 @@ serve(async (req) => {
       }
     }
     
+    const result = {
+      success: true,
+      saved,
+      errors,
+      duplicates
+    };
+    
+    console.log("Result:", result);
+    
     return new Response(
-      JSON.stringify({
-        success: true,
-        saved,
-        errors,
-        duplicates
-      }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
     

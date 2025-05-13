@@ -35,6 +35,8 @@ export function BookingDataPreview({
     }
   };
 
+  const firstBooking = bookings && bookings.length > 0 ? bookings[0] : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -61,7 +63,7 @@ export function BookingDataPreview({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save First Booking
+                {firstBooking ? 'Save First Booking' : 'No Bookings to Save'}
               </>
             )}
           </Button>
