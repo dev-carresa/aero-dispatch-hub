@@ -1,74 +1,59 @@
 
 import { useState } from "react";
 import { BookingComBooking } from "@/types/externalBooking";
+import { saveExternalBookings } from "@/services/external-booking";
 import { toast } from "sonner";
-import { saveService } from "@/services/external-booking";
 
-interface UseBookingSaverProps {
-  fetchedBookings: BookingComBooking[];
-  setErrorDetails: React.Dispatch<React.SetStateAction<string | null>>;
-  isAuthenticated?: boolean; // Make this optional with a default value
+export interface SaveProgress {
+  current: number;
+  total: number;
 }
 
-export function useBookingSaver({
+export interface UseBookingSaverProps {
+  fetchedBookings: BookingComBooking[];
+  setErrorDetails: (details: string | null) => void;
+  isAuthenticated?: boolean;
+}
+
+export function useBookingSaver({ 
   fetchedBookings,
   setErrorDetails,
-  isAuthenticated = true // Default to true if not provided
+  isAuthenticated = false
 }: UseBookingSaverProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
-  
-  // Handle save bookings - saves one or more bookings directly to bookings_data
+  const [saveProgress, setSaveProgress] = useState<SaveProgress>({ current: 0, total: 0 });
+
   const handleSaveBookings = async () => {
-    if (!fetchedBookings || fetchedBookings.length === 0) {
-      toast.warning("No bookings to save");
+    if (!fetchedBookings.length) {
+      toast.error("No bookings to save");
       return;
     }
 
     try {
       setIsSaving(true);
+      setSaveProgress({ current: 0, total: fetchedBookings.length });
       setErrorDetails(null);
-      
-      // Select the booking to save - always use the first booking
-      const bookingToSave = fetchedBookings[0];
-      console.log("Attempting to save booking:", bookingToSave);
-      setSaveProgress({ current: 0, total: 1 });
-      
-      // Small delay to show progress (this is just for UX)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSaveProgress({ current: 1, total: 1 });
-      
-      const result = await saveService.saveExternalBookings([bookingToSave], 'booking.com');
-      
-      if (result.success) {
-        toast.success(`Successfully saved booking`);
-        
-        if (result.duplicates > 0) {
-          toast.info(`The booking was already saved previously and was skipped`);
-        }
-        
-        if (result.errors > 0) {
-          toast.warning(`There was an error saving the booking`);
-        }
+
+      // Save all bookings at once
+      const response = await saveExternalBookings(fetchedBookings);
+
+      if (response.success) {
+        toast.success(`Successfully saved ${response.savedCount} bookings`);
+        setSaveProgress({ current: response.savedCount, total: fetchedBookings.length });
       } else {
-        throw new Error(result.message || 'Failed to save booking');
+        toast.error(response.message || "Failed to save bookings");
+        if (response.errors && response.errors.length > 0) {
+          setErrorDetails(JSON.stringify(response.errors, null, 2));
+        } else {
+          setErrorDetails(response.message || "Unknown error occurred while saving bookings");
+        }
       }
     } catch (error: any) {
-      console.error('Error saving booking:', error);
-      
-      // Capture and display detailed error information
-      const errorMessage = error.message || 'Failed to save booking';
-      toast.error(errorMessage);
-      
-      // Store detailed error info for debugging
-      if (error.status) {
-        setErrorDetails(`Status: ${error.status}\nMessage: ${errorMessage}\nDetails: ${JSON.stringify(error, null, 2)}`);
-      } else {
-        setErrorDetails(JSON.stringify(error, null, 2));
-      }
+      console.error("Error saving bookings:", error);
+      toast.error("Error saving bookings");
+      setErrorDetails(error.message || "Unknown error occurred while saving bookings");
     } finally {
       setIsSaving(false);
-      setSaveProgress({ current: 0, total: 0 });
     }
   };
 

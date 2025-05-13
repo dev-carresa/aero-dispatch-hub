@@ -3,20 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BookingForm } from "@/components/bookings/BookingForm";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Spinner } from "@/components/ui/spinner";
 
 const NewBooking = () => {
-  const { loading } = useRequireAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">

@@ -1,51 +1,54 @@
+import { BookingComBooking } from "@/types/externalBooking";
+
+export interface SaveResponse {
+  success: boolean;
+  message: string;
+  savedCount: number;
+  errors?: any[];
+}
 
 import { supabase } from "@/integrations/supabase/client";
-import { BookingComBooking } from "@/types/externalBooking";
-import { toast } from "sonner";
-import { SaveResult } from "./types";
 
 /**
- * Service for saving external bookings
+ * Save fetched bookings to the database
  */
-export const saveService = {
-  // Save external bookings directly to bookings_data table
-  async saveExternalBookings(bookings: BookingComBooking[], source: string): Promise<SaveResult> {
-    try {
-      console.log("Saving bookings:", JSON.stringify(bookings, null, 2));
-      
-      // Call the edge function without authentication requirement
-      const { data, error } = await supabase.functions.invoke('save-external-bookings', {
-        body: {
-          source,
-          bookings
-        }
-      });
-      
-      if (error) {
-        console.error("Function invocation error:", error);
-        throw error;
-      }
-      
-      console.log("Save response:", data);
-      
-      return {
-        success: true,
-        saved: data.saved || 0,
-        errors: data.errors || 0,
-        duplicates: data.duplicates || 0,
-        message: data.message,
-        code: data.code
-      };
-    } catch (error: any) {
-      console.error("Error saving bookings:", error);
-      return {
-        success: false,
-        saved: 0,
-        errors: bookings.length,
-        duplicates: 0,
-        message: error.message || "Failed to save bookings",
-        code: error.code || 500
+export const saveExternalBookings = async (bookings: BookingComBooking[]): Promise<SaveResponse> => {
+  try {
+    console.log('Saving external bookings:', bookings.length);
+    
+    if (!bookings.length) {
+      return { success: false, message: 'No bookings to save', savedCount: 0 };
+    }
+
+    const response = await supabase.functions.invoke('save-external-bookings', {
+      body: { bookings }
+    });
+
+    if (response.error) {
+      console.error('Error from edge function:', response.error);
+      return { 
+        success: false, 
+        message: `Failed to save bookings: ${response.error.message || 'Unknown error'}`,
+        savedCount: 0
       };
     }
+
+    if (!response.data) {
+      return { success: false, message: 'No response data from save function', savedCount: 0 };
+    }
+
+    return {
+      success: true,
+      message: `Successfully saved ${response.data.savedCount} bookings`,
+      savedCount: response.data.savedCount,
+      errors: response.data.errors || []
+    };
+  } catch (error: any) {
+    console.error('Error saving external bookings:', error);
+    return { 
+      success: false, 
+      message: `Error saving bookings: ${error.message || 'Unknown error'}`,
+      savedCount: 0
+    };
   }
 };

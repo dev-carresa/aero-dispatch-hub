@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { PageTitle } from "@/components/ui/page-title";
 import { Separator } from "@/components/ui/separator";
 import { BookingApiTestTabs } from "./BookingApiTestTabs";
@@ -24,10 +23,9 @@ export default function BookingApiTestPage() {
       {!isAuthenticated && (
         <Alert className="border-amber-300 bg-amber-50">
           <LogIn className="h-5 w-5 text-amber-500" />
-          <AlertTitle className="text-amber-700">Authentication Required</AlertTitle>
+          <AlertTitle className="text-amber-700">Not logged in</AlertTitle>
           <AlertDescription className="text-amber-600 flex flex-col gap-4">
-            <p>You need to be logged in to save bookings from the API to your account. 
-            You can still test API connectivity, but you'll need to log in to save the data.</p>
+            <p>You're not currently logged in. You can still test the API and save bookings, but for a better experience, we recommend logging in.</p>
             
             <div>
               <Button 
