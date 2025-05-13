@@ -6,6 +6,7 @@ export interface SaveResponse {
   message: string;
   savedCount: number;
   errors?: any[];
+  errorDetails?: any[];
 }
 
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +27,10 @@ export const saveService = {
       }
   
       const response = await supabase.functions.invoke('save-external-bookings', {
-        body: { bookings }
+        body: { 
+          bookings,
+          source: 'booking.com' 
+        }
       });
   
       if (response.error) {
@@ -46,7 +50,8 @@ export const saveService = {
         success: true,
         message: `Successfully saved ${response.data.savedCount} bookings`,
         savedCount: response.data.savedCount,
-        errors: response.data.errors || []
+        errors: response.data.errors || [],
+        errorDetails: response.data.errorDetails
       };
     } catch (error: any) {
       console.error('Error saving external bookings:', error);

@@ -1,45 +1,23 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-// Initialize the Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Create a standard supabase client with service role key
-export const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+// Create supabase clients with the Project URL and the public API key
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Function to create a client with user's JWT from request headers
-export const getSupabaseClient = (authHeader?: string) => {
-  // If no auth header is provided, return the admin client
-  if (!authHeader) {
-    console.log('No auth header provided, using admin client');
-    return supabaseAdmin;
-  }
-  
-  try {
-    // Extract JWT token from Authorization header
-    // Format should be "Bearer TOKEN_VALUE"
-    const token = authHeader.replace('Bearer ', '');
-    
-    if (!token || token === 'null' || token === 'undefined') {
-      console.log('Invalid token in auth header, using admin client');
-      return supabaseAdmin;
-    }
-    
-    console.log('Creating client with user JWT token');
-    // Create a new client with the user's JWT
-    return createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+// Admin client for operations requiring elevated privileges
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// Create a client with the user's access token
+export const getSupabaseClient = (accessToken: string) => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-    });
-  } catch (error) {
-    console.error('Error creating client with auth header:', error);
-    return supabaseAdmin;
-  }
+    },
+  });
 };

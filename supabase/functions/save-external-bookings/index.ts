@@ -1,15 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { supabaseAdmin, getSupabaseClient } from "../_shared/supabase-client.ts";
+import { supabaseAdmin } from "../_shared/supabase-client.ts";
 
 interface RequestBody {
-  source: string;
   bookings: any[];
+  source?: string;
 }
 
 // Map a booking to our internal format - enhanced to handle different API response formats
-function mapBookingToInternalFormat(booking: any, source: string) {
+function mapBookingToInternalFormat(booking: any, source: string = "booking.com") {
   console.log("Mapping booking:", JSON.stringify(booking));
   
   try {
@@ -121,21 +121,21 @@ serve(async (req) => {
   }
   
   try {
-    // Create admin client since authentication is no longer required
+    // Create admin client
     const supabaseClient = supabaseAdmin;
     
     console.log("Parsing request body");
     const body = await req.json();
-    console.log("Request body received");
+    console.log("Request body received:", JSON.stringify(body));
     
-    const { source, bookings } = body as RequestBody;
+    const { source = "booking.com", bookings } = body as RequestBody;
     
-    if (!source || !bookings || !Array.isArray(bookings)) {
-      console.error("Invalid request: Missing source or bookings array");
+    if (!bookings || !Array.isArray(bookings)) {
+      console.error("Invalid request: Missing bookings array");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: "Source and bookings array are required" 
+          message: "Bookings array is required" 
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
@@ -144,6 +144,7 @@ serve(async (req) => {
     let saved = 0;
     let errors = 0;
     let duplicates = 0;
+    const errorDetails = [];
     
     // Process each booking and save directly to bookings_data
     for (const booking of bookings) {
@@ -152,8 +153,10 @@ serve(async (req) => {
         booking.customerReference || booking.legId || booking.id;
       
       if (!externalId) {
-        console.error("No external ID found for booking", booking);
+        const error = "No external ID found for booking";
+        console.error(error, booking);
         errors++;
+        errorDetails.push({ error, booking: JSON.stringify(booking).substring(0, 100) + "..." });
         continue;
       }
       
@@ -169,7 +172,9 @@ serve(async (req) => {
           
         if (checkError) {
           console.error("Error checking for existing booking:", checkError);
-          throw checkError;
+          errors++;
+          errorDetails.push({ error: checkError.message, bookingId: externalId });
+          continue;
         }
           
         if (existingBooking) {
@@ -182,10 +187,6 @@ serve(async (req) => {
         console.log(`Mapping booking ${externalId}`);
         const mappedBooking = mapBookingToInternalFormat(booking, source);
         
-        // Use a default user_id or system user_id since auth is not required
-        // You can remove this line or set a default system user ID
-        // mappedBooking.user_id = "system";
-        
         console.log(`Inserting booking ${externalId} into database`);
         
         const { error: insertError } = await supabaseClient
@@ -195,6 +196,7 @@ serve(async (req) => {
         if (insertError) {
           console.error("Error inserting booking:", insertError);
           errors++;
+          errorDetails.push({ error: insertError.message, bookingId: externalId });
         } else {
           console.log(`Successfully saved booking ${externalId}`);
           saved++;
@@ -202,14 +204,16 @@ serve(async (req) => {
       } catch (error) {
         console.error(`Error processing booking ${externalId}:`, error);
         errors++;
+        errorDetails.push({ error: error.message, bookingId: externalId });
       }
     }
     
     const response = {
-      success: true,
-      saved,
+      success: saved > 0,
+      savedCount: saved,
       errors,
-      duplicates
+      duplicates,
+      errorDetails: errorDetails.length > 0 ? errorDetails : undefined
     };
     
     console.log("Function complete with result:", response);

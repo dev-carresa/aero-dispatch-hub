@@ -2,7 +2,7 @@
 // Re-export all services from the external-booking module
 import { connectionService } from './external-booking/connectionService';
 import { fetchService } from './external-booking/fetchService';
-import { saveExternalBookings } from './external-booking/saveService';
+import { saveService, saveExternalBookings } from './external-booking/saveService';
 import { statsService } from './external-booking/statsService';
 
 /**
