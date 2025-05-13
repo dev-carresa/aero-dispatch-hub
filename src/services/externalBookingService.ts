@@ -2,7 +2,7 @@
 // Re-export all services from the external-booking module
 import { connectionService } from './external-booking/connectionService';
 import { fetchService } from './external-booking/fetchService';
-import { saveService } from './external-booking/saveService';
+import { saveExternalBookings } from './external-booking/saveService';
 import { statsService } from './external-booking/statsService';
 
 /**
@@ -16,7 +16,7 @@ export const externalBookingService = {
   fetchBookingsFromBookingCom: fetchService.fetchBookingsFromBookingCom,
   
   // Save service methods
-  saveExternalBookings: saveService.saveExternalBookings,
+  saveExternalBookings: saveExternalBookings,
   
   // Stats service methods
   getBookingStatsBySource: statsService.getBookingStatsBySource
