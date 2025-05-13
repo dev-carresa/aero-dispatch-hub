@@ -16,7 +16,7 @@ export default function BookingApiTestPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
-        <PageTitle>Booking.com API Integration</PageTitle>
+        <PageTitle heading="Booking.com API Integration" />
       </div>
       
       <Separator />
