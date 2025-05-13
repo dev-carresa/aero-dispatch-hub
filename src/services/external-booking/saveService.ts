@@ -13,26 +13,8 @@ export const saveService = {
     try {
       console.log("Saving bookings:", JSON.stringify(bookings, null, 2));
       
-      // Get current auth session before proceeding
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error("Authentication error:", sessionError || "No active session");
-        return {
-          success: false,
-          saved: 0,
-          errors: bookings.length,
-          duplicates: 0,
-          message: "Authentication required. Please log in to save bookings.",
-          code: 401
-        };
-      }
-      
-      // Call the edge function with session token explicitly included
+      // Call the edge function without authentication requirement
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        },
         body: {
           source,
           bookings
@@ -41,24 +23,6 @@ export const saveService = {
       
       if (error) {
         console.error("Function invocation error:", error);
-        
-        // Check if it's an authentication error
-        if (error.message && (
-          error.message.includes('auth') || 
-          error.message.includes('401') ||
-          error.message.includes('unauthorized') ||
-          error.message.includes('not authenticated')
-        )) {
-          return {
-            success: false,
-            saved: 0,
-            errors: bookings.length,
-            duplicates: 0,
-            message: "Authentication failed. Please log in again to save bookings.",
-            code: 401
-          };
-        }
-        
         throw error;
       }
       

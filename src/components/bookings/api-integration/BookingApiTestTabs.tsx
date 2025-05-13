@@ -10,7 +10,7 @@ import { useOAuthToken } from "./hooks/useOAuthToken";
 
 export function BookingApiTestTabs() {
   const [activeTab, setActiveTab] = useState("configure");
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   
   // Use our custom hooks
   const { oauthToken, connectionStatus, setConnectionStatus, handleTokenReceived } = useOAuthToken();
@@ -28,13 +28,6 @@ export function BookingApiTestTabs() {
     handleSaveBookings, 
     getNextLink 
   } = useBookingData(user);
-  
-  // Check if user is logged in
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.warning("Please log in to save and manage bookings");
-    }
-  }, [isAuthenticated]);
   
   // Handle tab change
   const handleTabChange = (value: string) => {

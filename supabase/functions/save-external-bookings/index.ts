@@ -121,12 +121,8 @@ serve(async (req) => {
   }
   
   try {
-    // Extract the Authorization header from the request
-    const authHeader = req.headers.get('Authorization');
-    console.log("Auth header present:", !!authHeader);
-    
-    // Create a client using the auth header (if present)
-    const supabaseClient = getSupabaseClient(authHeader);
+    // Create admin client since authentication is no longer required
+    const supabaseClient = supabaseAdmin;
     
     console.log("Parsing request body");
     const body = await req.json();
@@ -144,25 +140,6 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
-    
-    // Get the authenticated user
-    console.log("Getting authenticated user");
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    
-    if (authError || !user) {
-      console.error("Authentication error:", authError);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Authentication required. Please log in to save bookings.", 
-          error: authError ? authError.message : "No user authenticated",
-          code: 401
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-    
-    console.log("Authenticated as user:", user.id);
     
     let saved = 0;
     let errors = 0;
@@ -205,8 +182,9 @@ serve(async (req) => {
         console.log(`Mapping booking ${externalId}`);
         const mappedBooking = mapBookingToInternalFormat(booking, source);
         
-        // Add user_id to the booking data
-        mappedBooking.user_id = user.id;
+        // Use a default user_id or system user_id since auth is not required
+        // You can remove this line or set a default system user ID
+        // mappedBooking.user_id = "system";
         
         console.log(`Inserting booking ${externalId} into database`);
         

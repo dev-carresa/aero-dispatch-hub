@@ -6,13 +6,11 @@ import { saveService } from "@/services/external-booking";
 
 interface UseBookingSaverProps {
   fetchedBookings: BookingComBooking[];
-  isAuthenticated: boolean;
   setErrorDetails: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 export function useBookingSaver({
   fetchedBookings,
-  isAuthenticated,
   setErrorDetails
 }: UseBookingSaverProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -22,16 +20,6 @@ export function useBookingSaver({
   const handleSaveBookings = async () => {
     if (!fetchedBookings || fetchedBookings.length === 0) {
       toast.warning("No bookings to save");
-      return;
-    }
-    
-    // Check if user is authenticated before attempting to save
-    if (!isAuthenticated) {
-      toast.error("You must be logged in to save bookings");
-      setErrorDetails(JSON.stringify({ 
-        message: "Authentication required. Please log in to save bookings.",
-        code: 401
-      }, null, 2));
       return;
     }
 
@@ -61,16 +49,7 @@ export function useBookingSaver({
           toast.warning(`There was an error saving the booking`);
         }
       } else {
-        // Handle authentication errors specially
-        if (result.code === 401) {
-          toast.error("Authentication required. Please log in to save bookings.");
-          setErrorDetails(JSON.stringify({
-            message: result.message || "Authentication failed. Please log in to save bookings.",
-            code: 401
-          }, null, 2));
-        } else {
-          throw new Error(result.message || 'Failed to save booking');
-        }
+        throw new Error(result.message || 'Failed to save booking');
       }
     } catch (error: any) {
       console.error('Error saving booking:', error);
