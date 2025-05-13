@@ -1,10 +1,11 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Booking, BookingStatus } from "./types/booking";
-import { Clock, MapPin, Calendar, User, Tag, Phone, ExternalLink } from "lucide-react";
+import { CalendarClock, Car, MapPin, MoreHorizontal, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface BookingCardProps {
   booking: Booking;
@@ -26,88 +27,115 @@ export function BookingCard({ booking }: BookingCardProps) {
     }
   };
   
-  // Check if this is an external booking
-  const isExternalBooking = !!booking.external_source;
-  
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-muted/50 pb-2">
-        <div className="flex flex-col sm:flex-row justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium">{booking.customer}</h3>
-              <Badge variant="outline" className={getBadgeColor(booking.status)}>
-                {booking.status}
-              </Badge>
-              {isExternalBooking && (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                  {booking.external_source}
+    <Card className="border rounded-lg shadow-sm relative overflow-hidden">
+      <div className="p-4 flex flex-col md:flex-row gap-4">
+        {/* Left section: Booking reference and status */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-blue-700 font-bold text-lg">
+                  {booking.reference || `#${booking.id.substring(0, 6)}`}
+                </h3>
+                <Badge variant="outline" className={cn(getBadgeColor(booking.status))}>
+                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                 </Badge>
-              )}
+              </div>
+              <p className="text-gray-600 mt-1">{booking.serviceType || "Transfer"}</p>
             </div>
-            <div className="flex items-center text-sm text-muted-foreground mt-1 gap-1">
-              {booking.reference && (
-                <>
-                  <Tag className="h-3.5 w-3.5" />
-                  <span className="mr-2">#{booking.reference}</span>
-                </>
-              )}
-              {booking.serviceType && (
-                <span className="mr-2">{booking.serviceType}</span>
-              )}
+            
+            <div className="text-right hidden md:block">
+              <div className="text-blue-700 font-bold text-lg">{booking.price}</div>
+              <div className="text-xs text-gray-500">Total price</div>
             </div>
           </div>
-          <div className="mt-2 sm:mt-0 flex flex-col sm:text-right">
-            <span className="font-medium text-green-600">{booking.price}</span>
-            <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                {booking.date} at {booking.time}
-              </span>
+          
+          {/* Vehicle section */}
+          <div className="flex items-center gap-2 mt-3 bg-blue-50 p-2 rounded-lg">
+            <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+              <Car className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">{booking.vehicle}</p>
+              <p className="text-xs text-gray-500">Premium Transportation</p>
             </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <div className="flex items-start gap-1.5">
-              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Origin</p>
-                <p className="text-sm text-muted-foreground">{booking.origin}</p>
+          
+          {/* Customer and locations */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <User className="h-4 w-4 text-gray-500 mt-0.5" />
+              <span className="text-sm">{booking.customer || "Guest from booking.com"}</span>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">From:</span>
+                <span className="text-sm font-medium">{booking.origin || "Imported Address"}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">To:</span>
+                <span className="text-sm font-medium">{booking.destination || "Imported Destination"}</span>
               </div>
             </div>
           </div>
-          <div>
-            <div className="flex items-start gap-1.5">
-              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Destination</p>
-                <p className="text-sm text-muted-foreground">{booking.destination}</p>
-              </div>
+        </div>
+        
+        {/* Right section - Time and action buttons */}
+        <div className="flex flex-col md:border-l md:pl-4 w-full md:w-1/3">
+          <div className="text-right md:hidden mb-3">
+            <div className="text-blue-700 font-bold text-lg">{booking.price}</div>
+            <div className="text-xs text-gray-500">Total price</div>
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-blue-600" />
+              <span className="text-sm">{booking.date} at {booking.time}</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">Driver: {booking.driver || "Unassigned"}</span>
             </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="bg-muted/20 p-2 px-4 flex justify-between items-center">
-        <div className="flex gap-2 text-sm">
-          <div className="flex items-center gap-1">
-            <User className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>{booking.driver || "Unassigned"}</span>
+          
+          <div className="flex justify-between mt-auto pt-4 gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={() => {}}
+            >
+              Change Driver
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex-1"
+              onClick={() => {}}
+            >
+              Assign Fleet
+            </Button>
+            
+            <Link to={`/bookings/${booking.id}`} className="flex-1">
+              <Button 
+                className="w-full"
+                size="sm"
+              >
+                View Details
+              </Button>
+            </Link>
           </div>
-          <div className="flex items-center gap-1 ml-2">
-            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>{booking.vehicle}</span>
-          </div>
         </div>
-        <Link to={`/bookings/${booking.id}`}>
-          <Button variant="ghost" size="sm">
-            <ExternalLink className="h-3.5 w-3.5 mr-1" />
-            Details
-          </Button>
-        </Link>
-      </CardFooter>
+      </div>
     </Card>
   );
 }

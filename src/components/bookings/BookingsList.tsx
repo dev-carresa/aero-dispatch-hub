@@ -12,7 +12,7 @@ interface BookingsListProps {
 export function BookingsList({ bookings }: BookingsListProps) {
   return (
     <>
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-5">
         {bookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} />
         ))}
