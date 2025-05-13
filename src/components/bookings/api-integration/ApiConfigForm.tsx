@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ApiConfigFormProps {
@@ -23,33 +23,45 @@ export function ApiConfigForm({ apiName, keyName, onConfigSaved }: ApiConfigForm
     e.preventDefault();
     
     if (!apiKey || !apiSecret) {
-      toast.error("API key and secret are required");
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "API key and secret are required"
+      });
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Save API credentials
+      // Save API credentials with correct field mapping
       const { error } = await supabase
         .from('api_integrations')
-        .upsert([
-          {
-            key_name: keyName,
-            api_key: apiKey,
-            api_secret: apiSecret,
-            status: 'connected',
-            last_updated: new Date().toISOString()
-          }
-        ]);
+        .upsert({
+          api_title: apiName,
+          category: 'booking',
+          key_name: keyName,
+          key_value: JSON.stringify({ apiKey, apiSecret }), // Store both values as JSON in key_value
+          status: 'connected',
+          enabled: true,
+          updated_at: new Date().toISOString(),
+          user_id: '00000000-0000-0000-0000-000000000000' // Default user ID for now
+        });
       
       if (error) throw error;
       
-      toast.success(`${apiName} API configuration saved successfully`);
+      toast({
+        title: "Success",
+        description: `${apiName} API configuration saved successfully`
+      });
       onConfigSaved();
     } catch (error: any) {
       console.error("Error saving API config:", error);
-      toast.error(error.message || `Failed to save ${apiName} API configuration`);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || `Failed to save ${apiName} API configuration`
+      });
     } finally {
       setIsLoading(false);
     }
