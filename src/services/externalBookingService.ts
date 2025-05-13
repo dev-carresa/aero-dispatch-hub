@@ -92,30 +92,34 @@ export const externalBookingService = {
 
       // Process each booking
       for (const booking of bookings) {
-        if (!booking.id) {
-          console.error("Booking has no ID, skipping", booking);
+        // Fix: Use a booking identifier based on what's available
+        // In Booking.com's case, we can use reference, legId, or bookingReference as the ID
+        const bookingId = booking.id || booking.reference || booking.legId || booking.bookingReference;
+        
+        if (!bookingId) {
+          console.error("Booking has no identifiable ID, skipping", booking);
           errors++;
           continue;
         }
         
         try {
-          // Check if this booking already exists
+          // Check if this booking already exists using the appropriate identifier
           const { data: existingBooking } = await supabase
             .from('external_bookings')
             .select('id')
             .eq('external_source', source.toLowerCase())
-            .eq('external_id', booking.id)
+            .eq('external_id', bookingId)
             .maybeSingle();
             
           if (existingBooking) {
-            console.log(`Booking ${booking.id} already exists, skipping`);
+            console.log(`Booking ${bookingId} already exists, skipping`);
             duplicates++;
             continue;
           }
           
           // Map the booking - Fixed: Cast booking_data to unknown first to satisfy TypeScript
           const mappedBooking = {
-            external_id: booking.id,
+            external_id: bookingId,
             external_source: source.toLowerCase() as ExternalBookingSource,
             booking_data: booking as unknown as Record<string, any>,
             status: 'pending' as const,
