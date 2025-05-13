@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { ApiConnectionStatus } from "@/components/bookings/api-integration/ApiConnectionStatus";
 
 // Static credentials for authentication
@@ -8,12 +9,16 @@ const STATIC_CREDENTIALS = {
 };
 
 interface ConfigureTabProps {
-  connectionStatus: "connected" | "disconnected" | "error" | "loading";
-  onConnectionChange: (status: "connected" | "disconnected" | "error") => void;
-  onConfigSaved: () => void;
+  connectionStatus?: "connected" | "disconnected" | "error" | "loading";
+  onConnectionChange?: (status: "connected" | "disconnected" | "error") => void;
+  onConfigured?: () => void;
 }
 
-export function ConfigureTab({ connectionStatus, onConnectionChange, onConfigSaved }: ConfigureTabProps) {
+export function ConfigureTab({ 
+  connectionStatus = "disconnected", 
+  onConnectionChange = () => {}, 
+  onConfigured = () => {} 
+}: ConfigureTabProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -34,7 +39,12 @@ export function ConfigureTab({ connectionStatus, onConnectionChange, onConfigSav
         <ApiConnectionStatus 
           apiName="Booking.com" 
           initialStatus={connectionStatus === "loading" ? "disconnected" : connectionStatus}
-          onConnectionChange={onConnectionChange}
+          onConnectionChange={(status) => {
+            onConnectionChange(status);
+            if (status === "connected") {
+              onConfigured();
+            }
+          }}
         />
       </div>
     </div>

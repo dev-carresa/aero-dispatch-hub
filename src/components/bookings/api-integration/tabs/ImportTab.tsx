@@ -5,7 +5,7 @@ import { FetchControlsForm } from "../FetchControlsForm";
 import { ExternalBookingsTable } from "../ExternalBookingsTable";
 import { BookingDataPreview } from "../BookingDataPreview";
 import { useToast } from "@/components/ui/use-toast";
-import { BookingComBooking } from "@/types/externalBooking";
+import { BookingComBooking, ExternalBooking } from "@/types/externalBooking";
 import { externalBookingService } from "@/services/externalBookingService";
 import { Loader2 } from "lucide-react";
 
@@ -159,8 +159,12 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
 
       {previewBooking && (
         <BookingDataPreview 
-          booking={previewBooking} 
+          bookings={[previewBooking]}
           onClose={() => setPreviewBooking(null)}
+          isLoading={false}
+          onSaveAll={() => {}}
+          currentProgress={0}
+          totalProgress={0}
         />
       )}
     </div>

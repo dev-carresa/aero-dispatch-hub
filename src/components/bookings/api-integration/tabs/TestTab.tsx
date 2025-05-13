@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { FetchControlsForm } from "@/components/bookings/api-integration/FetchControlsForm";
 import { BookingDataPreview } from "@/components/bookings/api-integration/BookingDataPreview";
 import { BookingComBooking } from "@/types/externalBooking";
@@ -11,35 +12,37 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Loader2 } from "lucide-react";
 
 interface TestTabProps {
-  onFetch: () => Promise<void>;
-  isFetching: boolean;
-  fetchedBookings: BookingComBooking[];
-  isSaving: boolean;
-  onSaveAll: () => Promise<void>;
-  saveProgress: { current: number; total: number };
+  onFetch?: () => Promise<void>;
+  isFetching?: boolean;
+  fetchedBookings?: BookingComBooking[];
+  isSaving?: boolean;
+  onSaveAll?: () => Promise<void>;
+  saveProgress?: { current: number; total: number };
   onTokenReceived?: (token: string) => void;
-  hasValidToken: boolean;
+  hasValidToken?: boolean;
   rawApiResponse?: any;
-  hasNextPage: boolean;
-  onLoadMore: () => void;
-  isPaginationLoading: boolean;
-  totalBookingsLoaded: number;
+  hasNextPage?: boolean;
+  onLoadMore?: () => void;
+  isPaginationLoading?: boolean;
+  totalBookingsLoaded?: number;
+  onSuccess?: () => void;
 }
 
 export function TestTab({ 
-  onFetch, 
-  isFetching, 
-  fetchedBookings, 
-  isSaving, 
-  onSaveAll, 
-  saveProgress,
-  onTokenReceived,
-  hasValidToken,
+  onFetch = async () => {}, 
+  isFetching = false, 
+  fetchedBookings = [], 
+  isSaving = false, 
+  onSaveAll = async () => {}, 
+  saveProgress = { current: 0, total: 0 },
+  onTokenReceived = () => {},
+  hasValidToken = false,
   rawApiResponse,
-  hasNextPage,
-  onLoadMore,
-  isPaginationLoading,
-  totalBookingsLoaded
+  hasNextPage = false,
+  onLoadMore = () => {},
+  isPaginationLoading = false,
+  totalBookingsLoaded = 0,
+  onSuccess = () => {}
 }: TestTabProps) {
   return (
     <div className="space-y-6">
@@ -60,7 +63,7 @@ export function TestTab({
             isLoading={isFetching}
           />
         </div>
-        <OAuthTokenHandler onTokenReceived={onTokenReceived || (() => {})} />
+        <OAuthTokenHandler onTokenReceived={onTokenReceived} />
       </div>
 
       {rawApiResponse && (
@@ -83,7 +86,10 @@ export function TestTab({
           <BookingDataPreview
             bookings={fetchedBookings}
             isLoading={isSaving}
-            onSaveAll={onSaveAll}
+            onSaveAll={() => {
+              onSaveAll();
+              onSuccess();
+            }}
             currentProgress={saveProgress.current}
             totalProgress={saveProgress.total}
           />

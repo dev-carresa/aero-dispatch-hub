@@ -4,11 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SearchIcon, Loader2 } from "lucide-react";
 
 interface FetchControlsFormProps {
-  onFetch: () => void;
+  onFetch?: () => void;
+  onSubmit?: (params: any) => Promise<void>;
   isLoading?: boolean;
 }
 
-export function FetchControlsForm({ onFetch, isLoading = false }: FetchControlsFormProps) {
+export function FetchControlsForm({ onFetch, onSubmit, isLoading = false }: FetchControlsFormProps) {
+  const handleAction = () => {
+    if (onSubmit) {
+      onSubmit({});
+    } else if (onFetch) {
+      onFetch();
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -19,7 +28,7 @@ export function FetchControlsForm({ onFetch, isLoading = false }: FetchControlsF
       </CardHeader>
       <CardContent>
         <Button 
-          onClick={onFetch} 
+          onClick={handleAction} 
           className="w-full gap-2" 
           disabled={isLoading}
         >

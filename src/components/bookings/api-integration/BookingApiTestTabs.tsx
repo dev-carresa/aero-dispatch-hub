@@ -15,6 +15,7 @@ interface BookingApiTestTabsProps {
 
 export function BookingApiTestTabs({ onImportComplete }: BookingApiTestTabsProps) {
   const [activeTab, setActiveTab] = useState("configure");
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "error" | "loading">("disconnected");
 
   return (
     <Tabs 
@@ -29,7 +30,11 @@ export function BookingApiTestTabs({ onImportComplete }: BookingApiTestTabsProps
       </TabsList>
       
       <TabsContent value="configure">
-        <ConfigureTab onConfigured={() => setActiveTab("test")} />
+        <ConfigureTab 
+          onConfigured={() => setActiveTab("test")}
+          connectionStatus={connectionStatus}
+          onConnectionChange={setConnectionStatus} 
+        />
       </TabsContent>
       
       <TabsContent value="test">

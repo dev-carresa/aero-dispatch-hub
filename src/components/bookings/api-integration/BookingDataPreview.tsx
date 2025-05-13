@@ -14,6 +14,7 @@ interface BookingDataPreviewProps {
   onSaveAll: () => void;
   currentProgress: number;
   totalProgress: number;
+  onClose?: () => void;
 }
 
 export function BookingDataPreview({
@@ -21,7 +22,8 @@ export function BookingDataPreview({
   isLoading,
   onSaveAll,
   currentProgress,
-  totalProgress
+  totalProgress,
+  onClose
 }: BookingDataPreviewProps) {
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
 
@@ -37,23 +39,33 @@ export function BookingDataPreview({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Booking Data Preview</h3>
-        <Button 
-          onClick={onSaveAll} 
-          disabled={isLoading || bookings.length === 0}
-          className="flex items-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Save First Booking
-            </>
+        <div className="flex gap-2">
+          {onClose && (
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+            >
+              Close
+            </Button>
           )}
-        </Button>
+          <Button 
+            onClick={onSaveAll} 
+            disabled={isLoading || bookings.length === 0}
+            className="flex items-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save First Booking
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {isLoading && totalProgress > 0 && (
