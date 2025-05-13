@@ -295,6 +295,8 @@ export type Database = {
           driver_income: number | null
           driver_notes: string | null
           email: string
+          external_id: string | null
+          external_source: string | null
           fleet_income: number | null
           flight_number: string | null
           id: string
@@ -311,6 +313,7 @@ export type Database = {
           pickup_longitude: number | null
           pickup_time: string
           price: number
+          raw_booking_data: Json | null
           reference_source: string | null
           source: string | null
           special_instructions: string | null
@@ -330,6 +333,8 @@ export type Database = {
           driver_income?: number | null
           driver_notes?: string | null
           email: string
+          external_id?: string | null
+          external_source?: string | null
           fleet_income?: number | null
           flight_number?: string | null
           id?: string
@@ -346,6 +351,7 @@ export type Database = {
           pickup_longitude?: number | null
           pickup_time: string
           price: number
+          raw_booking_data?: Json | null
           reference_source?: string | null
           source?: string | null
           special_instructions?: string | null
@@ -365,6 +371,8 @@ export type Database = {
           driver_income?: number | null
           driver_notes?: string | null
           email?: string
+          external_id?: string | null
+          external_source?: string | null
           fleet_income?: number | null
           flight_number?: string | null
           id?: string
@@ -381,6 +389,7 @@ export type Database = {
           pickup_longitude?: number | null
           pickup_time?: string
           price?: number
+          raw_booking_data?: Json | null
           reference_source?: string | null
           source?: string | null
           special_instructions?: string | null
@@ -1279,6 +1288,10 @@ export type Database = {
       is_fleet: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      migrate_external_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       remove_permission_from_role: {
         Args: { p_role_id: string; p_permission_id: string }

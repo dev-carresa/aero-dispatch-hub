@@ -17,6 +17,8 @@ export interface Booking {
   source?: string;
   flightNumber?: string;
   serviceType?: string;
+  external_id?: string;
+  external_source?: string;
 }
 
 export interface BookingMeetingData {

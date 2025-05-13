@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { BookingComBooking, BookingComResponse, ExternalBooking, ExternalBookingSource } from "@/types/externalBooking";
+import { BookingComBooking, BookingComResponse } from "@/types/externalBooking";
 import { toast } from "sonner";
 
 // Static credentials for authentication
@@ -65,8 +66,7 @@ export const externalBookingService = {
     }
   },
   
-  // Save external bookings to the database directly using supabase client
-  // This now works with any number of bookings (even just one)
+  // Save external bookings directly to bookings_data table
   async saveExternalBookings(bookings: BookingComBooking[], source: string): Promise<{ 
     success: boolean; 
     saved: number;
@@ -74,221 +74,39 @@ export const externalBookingService = {
     duplicates: number;
   }> {
     try {
-      // Instead of using the edge function, we'll save the bookings directly
-      let saved = 0;
-      let errors = 0;
-      let duplicates = 0;
-      
-      // Get current user id
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("You must be logged in to save bookings");
-        throw new Error("Authentication required");
-      }
-
-      console.log(`Processing ${bookings.length} booking(s) to save`);
-
-      // Process each booking
-      for (const booking of bookings) {
-        // Use id as primary identifier, fallback to other fields if available
-        const bookingId = booking.id || booking.reference || booking.legId || booking.bookingReference;
-        
-        if (!bookingId) {
-          console.error("Booking has no identifiable ID, skipping", booking);
-          errors++;
-          continue;
+      const { data, error } = await supabase.functions.invoke('save-external-bookings', {
+        body: {
+          source,
+          bookings
         }
-        
-        try {
-          // Check if this booking already exists using the appropriate identifier
-          const { data: existingBooking } = await supabase
-            .from('external_bookings')
-            .select('id')
-            .eq('external_source', source.toLowerCase())
-            .eq('external_id', bookingId)
-            .maybeSingle();
-            
-          if (existingBooking) {
-            console.log(`Booking ${bookingId} already exists, skipping`);
-            duplicates++;
-            continue;
-          }
-          
-          // Map the booking - Fixed: Cast booking_data to unknown first to satisfy TypeScript
-          const mappedBooking = {
-            external_id: bookingId,
-            external_source: source.toLowerCase() as ExternalBookingSource,
-            booking_data: booking as unknown as Record<string, any>,
-            status: 'pending' as const,
-            user_id: user.id
-          };
-          
-          console.log("Saving booking to database:", mappedBooking.external_id);
-          
-          // Insert the booking one at a time (not in a batch)
-          const { error: insertError } = await supabase
-            .from('external_bookings')
-            .insert(mappedBooking);
-            
-          if (insertError) {
-            console.error("Error inserting booking:", insertError);
-            errors++;
-          } else {
-            console.log("Successfully saved booking:", mappedBooking.external_id);
-            saved++;
-          }
-        } catch (error) {
-          console.error("Error processing booking:", error);
-          errors++;
-        }
-      }
+      });
       
-      console.log(`Save results: ${saved} saved, ${errors} errors, ${duplicates} duplicates`);
+      if (error) throw error;
       
-      return {
-        success: saved > 0,
-        saved,
-        errors,
-        duplicates
-      };
+      return data;
     } catch (error: any) {
-      console.error("Error saving external bookings:", error);
+      console.error("Error saving bookings:", error);
       throw new Error(error.message || "Failed to save bookings");
     }
   },
   
-  // Get all external bookings with optional filtering
-  async getExternalBookings(
-    source?: string, 
-    status?: string,
-    options?: { 
-      limit?: number;
-      offset?: number;
-      orderBy?: string;
-      orderDirection?: 'asc' | 'desc';
-    }
-  ): Promise<ExternalBooking[]> {
-    try {
-      let query = supabase
-        .from('external_bookings')
-        .select('*');
-        
-      // Apply source filter
-      if (source) {
-        query = query.eq('external_source', source);
-      }
-      
-      // Apply status filter
-      if (status) {
-        query = query.eq('status', status);
-      }
-      
-      // Apply ordering
-      const orderBy = options?.orderBy || 'created_at';
-      const orderDirection = options?.orderDirection || 'desc';
-      query = query.order(orderBy, { ascending: orderDirection === 'asc' });
-      
-      // Apply pagination
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-      
-      if (options?.offset) {
-        query = query.range(options.offset, options.offset + (options?.limit || 10) - 1);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // Transform the data to ensure it matches the ExternalBooking type
-      return (data || []).map(item => ({
-        ...item,
-        external_source: item.external_source as ExternalBookingSource,
-        status: item.status as ExternalBooking['status'],
-      }));
-    } catch (error: any) {
-      console.error("Error fetching external bookings:", error);
-      throw new Error("Failed to fetch external bookings");
-    }
-  },
-  
-  // Get a specific external booking by ID
-  async getExternalBookingById(id: string): Promise<ExternalBooking | null> {
-    try {
-      const { data, error } = await supabase
-        .from('external_bookings')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-        
-      if (error) throw error;
-      
-      if (data) {
-        return {
-          ...data,
-          external_source: data.external_source as ExternalBookingSource,
-          status: data.status as ExternalBooking['status'],
-        };
-      }
-      
-      return null;
-    } catch (error: any) {
-      console.error(`Error fetching external booking with ID ${id}:`, error);
-      throw new Error("Failed to fetch the external booking");
-    }
-  },
-  
-  // Update external booking status
-  async updateExternalBookingStatus(
-    id: string, 
-    status: ExternalBooking['status'], 
-    mapped_booking_id?: string, 
-    error_message?: string
-  ): Promise<void> {
-    try {
-      const updates: any = { status };
-      
-      if (mapped_booking_id) {
-        updates.mapped_booking_id = mapped_booking_id;
-      }
-      
-      if (error_message) {
-        updates.error_message = error_message;
-      }
-      
-      const { error } = await supabase
-        .from('external_bookings')
-        .update(updates)
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast.success(`Booking status updated to ${status}`);
-    } catch (error: any) {
-      console.error(`Error updating external booking status:`, error);
-      toast.error("Failed to update booking status");
-      throw error;
-    }
-  },
-  
-  // Get statistics about external bookings
-  async getExternalBookingStats(source?: string): Promise<{
+  // Get booking stats by source
+  async getBookingStatsBySource(source?: string): Promise<{
     total: number;
     pending: number;
-    imported: number;
-    error: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
     lastImport?: string;
   }> {
     try {
-      // Count total bookings
+      // Count total bookings from this source
       let countQuery = supabase
-        .from('external_bookings')
+        .from('bookings_data')
         .select('*', { count: 'exact', head: true });
         
       if (source) {
-        countQuery = countQuery.eq('external_source', source);
+        countQuery = countQuery.eq('source', source);
       }
         
       const { count: total, error: totalError } = await countQuery;
@@ -297,74 +115,85 @@ export const externalBookingService = {
       
       // Count pending bookings
       let pendingQuery = supabase
-        .from('external_bookings')
+        .from('bookings_data')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
         
       if (source) {
-        pendingQuery = pendingQuery.eq('external_source', source);
+        pendingQuery = pendingQuery.eq('source', source);
       }
         
       const { count: pending, error: pendingError } = await pendingQuery;
       
       if (pendingError) throw pendingError;
       
-      // Count imported bookings
-      let importedQuery = supabase
-        .from('external_bookings')
+      // Count confirmed bookings
+      let confirmedQuery = supabase
+        .from('bookings_data')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'imported');
+        .eq('status', 'confirmed');
         
       if (source) {
-        importedQuery = importedQuery.eq('external_source', source);
+        confirmedQuery = confirmedQuery.eq('source', source);
       }
         
-      const { count: imported, error: importedError } = await importedQuery;
+      const { count: confirmed, error: confirmedError } = await confirmedQuery;
       
-      if (importedError) throw importedError;
+      if (confirmedError) throw confirmedError;
       
-      // Count error bookings
-      let errorQuery = supabase
-        .from('external_bookings')
+      // Count completed bookings
+      let completedQuery = supabase
+        .from('bookings_data')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'error');
+        .eq('status', 'completed');
         
       if (source) {
-        errorQuery = errorQuery.eq('external_source', source);
+        completedQuery = completedQuery.eq('source', source);
       }
         
-      const { count: error, error: errorQueryError } = await errorQuery;
+      const { count: completed, error: completedError } = await completedQuery;
       
-      if (errorQueryError) throw errorQueryError;
+      if (completedError) throw completedError;
+      
+      // Count cancelled bookings
+      let cancelledQuery = supabase
+        .from('bookings_data')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'cancelled');
+        
+      if (source) {
+        cancelledQuery = cancelledQuery.eq('source', source);
+      }
+        
+      const { count: cancelled, error: cancelledError } = await cancelledQuery;
+      
+      if (cancelledError) throw cancelledError;
       
       // Get the last import date
       let lastImportQuery = supabase
-        .from('external_bookings')
-        .select('updated_at')
-        .eq('status', 'imported')
-        .order('updated_at', { ascending: false })
+        .from('bookings_data')
+        .select('created_at')
+        .eq('source', source || '')
+        .order('created_at', { ascending: false })
         .limit(1);
-        
-      if (source) {
-        lastImportQuery = lastImportQuery.eq('external_source', source);
-      }
         
       const { data: lastImportData, error: lastImportError } = await lastImportQuery;
       
       if (lastImportError) throw lastImportError;
       
-      const lastImport = lastImportData && lastImportData.length > 0 ? lastImportData[0].updated_at : undefined;
+      const lastImport = lastImportData && lastImportData.length > 0 ? lastImportData[0].created_at : undefined;
       
       return {
         total: total || 0,
         pending: pending || 0,
-        imported: imported || 0,
-        error: error || 0,
+        confirmed: confirmed || 0,
+        completed: completed || 0,
+        cancelled: cancelled || 0,
         lastImport
       };
     } catch (error: any) {
-      console.error("Error fetching external booking stats:", error);
-      throw new Error("Failed to fetch external booking statistics");
+      console.error("Error fetching booking stats:", error);
+      throw new Error("Failed to fetch booking statistics");
     }
   }
 };

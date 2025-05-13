@@ -3,12 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { externalBookingService } from "@/services/externalBookingService";
-import { BookingApiLink, BookingComBooking, ExternalBooking } from "@/types/externalBooking";
+import { BookingApiLink, BookingComBooking } from "@/types/externalBooking";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfigureTab } from "./tabs/ConfigureTab";
 import { TestTab } from "./tabs/TestTab";
-import { ImportTab } from "./tabs/ImportTab";
-import { bookingConverter } from "./utils/bookingConverter";
 import { useAuth } from "@/context/AuthContext";
 
 export function BookingApiTestTabs() {
@@ -16,7 +14,6 @@ export function BookingApiTestTabs() {
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "error" | "loading">("loading");
   const [oauthToken, setOauthToken] = useState<string>("");
   const [fetchedBookings, setFetchedBookings] = useState<BookingComBooking[]>([]);
-  const [externalBookings, setExternalBookings] = useState<ExternalBooking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
@@ -33,25 +30,6 @@ export function BookingApiTestTabs() {
       toast.warning("Please log in to save and manage bookings");
     }
   }, [user]);
-  
-  // Load existing external bookings
-  const loadExternalBookings = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const bookings = await externalBookingService.getExternalBookings('booking.com');
-      setExternalBookings(bookings);
-      return; // Return void instead of the bookings
-    } catch (error) {
-      console.error('Error loading external bookings:', error);
-      toast.error('Failed to load external bookings');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-  
-  useEffect(() => {
-    loadExternalBookings();
-  }, [loadExternalBookings]);
   
   // Handle OAuth token received
   const handleTokenReceived = (token: string) => {
@@ -163,7 +141,7 @@ export function BookingApiTestTabs() {
     handleFetchBookings(true);
   };
   
-  // Handle save all bookings - modified to save just one booking
+  // Handle save bookings - saves one or more bookings directly to bookings_data
   const handleSaveBookings = async () => {
     if (!fetchedBookings || fetchedBookings.length === 0) {
       toast.warning("No bookings to save");
@@ -177,11 +155,9 @@ export function BookingApiTestTabs() {
 
     try {
       setIsSaving(true);
-      // We're now saving just one booking
-      setSaveProgress({ current: 0, total: 1 });
-      
-      // Get just the first booking
+      // Save just the first booking for demo purposes
       const bookingToSave = fetchedBookings[0];
+      setSaveProgress({ current: 0, total: 1 });
       
       // Small delay to show progress (this is just for UX)
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -199,12 +175,6 @@ export function BookingApiTestTabs() {
         if (result.errors > 0) {
           toast.warning(`There was an error saving the booking`);
         }
-        
-        // Refresh the external bookings list
-        await loadExternalBookings();
-        
-        // Switch to the import tab
-        setActiveTab('import');
       } else {
         toast.error('Failed to save booking');
       }
@@ -216,50 +186,17 @@ export function BookingApiTestTabs() {
       setSaveProgress({ current: 0, total: 0 });
     }
   };
-  
-  // Handle import external booking to internal system
-  const handleImportBooking = async (booking: ExternalBooking) => {
-    try {
-      toast.info(`Starting import of booking ${booking.external_id}`);
-      
-      const result = await bookingConverter.convertExternalBooking(booking.id);
-      
-      if (result.success) {
-        toast.success(`Successfully imported booking ${booking.external_id}`);
-        await loadExternalBookings();
-      } else {
-        toast.error(`Failed to import booking: ${result.message}`);
-      }
-    } catch (error: any) {
-      console.error('Error importing booking:', error);
-      toast.error(error.message || 'Failed to import booking');
-    }
-  };
-  
-  // Handle view booking details
-  const handleViewBookingDetails = (booking: ExternalBooking) => {
-    // Display booking details in a toast for now
-    toast.info('Viewing booking details', {
-      description: `Booking ID: ${booking.external_id} from ${booking.external_source}`,
-      duration: 5000,
-    });
-  };
 
   // Handle tab change
   const handleTabChange = (value: string) => {
-    // If switching to import tab, refresh bookings
-    if (value === 'import') {
-      loadExternalBookings();
-    }
     setActiveTab(value);
   };
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-3 mb-6">
+      <TabsList className="grid grid-cols-2 mb-6">
         <TabsTrigger value="configure">Configure API</TabsTrigger>
-        <TabsTrigger value="test">Test API</TabsTrigger>
-        <TabsTrigger value="import">Imported Bookings</TabsTrigger>
+        <TabsTrigger value="test">Test & Import</TabsTrigger>
       </TabsList>
 
       <TabsContent value="configure">
@@ -285,18 +222,6 @@ export function BookingApiTestTabs() {
           onLoadMore={handleLoadMoreBookings}
           isPaginationLoading={isPaginationLoading}
           totalBookingsLoaded={totalBookingsLoaded}
-        />
-      </TabsContent>
-
-      <TabsContent value="import">
-        <ImportTab 
-          bookings={externalBookings}
-          isLoading={isLoading}
-          onSaveBooking={handleImportBooking}
-          onViewDetails={handleViewBookingDetails}
-          refreshBookings={() => {
-            return loadExternalBookings(); // Explicitly return the Promise to match the expected type
-          }}
         />
       </TabsContent>
     </Tabs>
