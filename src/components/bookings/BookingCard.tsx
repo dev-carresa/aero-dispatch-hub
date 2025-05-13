@@ -29,30 +29,29 @@ export function BookingCard({ booking }: BookingCardProps) {
   
   return (
     <Card className="border rounded-lg shadow-sm relative overflow-hidden">
-      <div className="p-4 flex flex-col md:flex-row gap-4">
-        {/* Left section: Booking reference and status */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-blue-700 font-bold text-lg">
-                  {booking.reference || `#${booking.id.substring(0, 6)}`}
-                </h3>
-                <Badge variant="outline" className={cn(getBadgeColor(booking.status))}>
-                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                </Badge>
-              </div>
-              <p className="text-gray-600 mt-1">{booking.serviceType || "Transfer"}</p>
+      <div className="p-4">
+        {/* Header - Booking reference, status and price */}
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-blue-700 font-bold text-lg">
+                {booking.reference || `#${booking.id.substring(0, 6)}`}
+              </h3>
+              <Badge variant="outline" className={cn(getBadgeColor(booking.status))}>
+                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </Badge>
             </div>
-            
-            <div className="text-right hidden md:block">
-              <div className="text-blue-700 font-bold text-lg">{booking.price}</div>
-              <div className="text-xs text-gray-500">Total price</div>
-            </div>
+            <p className="text-gray-600 mt-1">{booking.serviceType || "Transfer"}</p>
           </div>
-          
-          {/* Vehicle section */}
-          <div className="flex items-center gap-2 mt-3 bg-blue-50 p-2 rounded-lg">
+          <div className="text-right">
+            <div className="text-blue-700 font-bold text-lg">{booking.price}</div>
+            <div className="text-xs text-gray-500">Total price</div>
+          </div>
+        </div>
+        
+        {/* Vehicle section */}
+        <div className="bg-blue-50 p-2 rounded-lg mb-4">
+          <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
               <Car className="h-4 w-4" />
             </div>
@@ -61,79 +60,73 @@ export function BookingCard({ booking }: BookingCardProps) {
               <p className="text-xs text-gray-500">Premium Transportation</p>
             </div>
           </div>
+        </div>
+        
+        {/* Customer and locations */}
+        <div className="mb-4">
+          <div className="flex items-start gap-2 mb-2">
+            <User className="h-4 w-4 text-gray-500 mt-0.5" />
+            <span className="text-sm">{booking.customer || "Guest from booking.com"}</span>
+          </div>
           
-          {/* Customer and locations */}
-          <div className="mt-4 space-y-2">
-            <div className="flex items-start gap-2">
-              <User className="h-4 w-4 text-gray-500 mt-0.5" />
-              <span className="text-sm">{booking.customer || "Guest from booking.com"}</span>
+          <div className="flex items-start gap-2 mb-2">
+            <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">From:</span>
+              <span className="text-sm font-medium">{booking.origin || "Imported Address"}</span>
             </div>
-            
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500">From:</span>
-                <span className="text-sm font-medium">{booking.origin || "Imported Address"}</span>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500">To:</span>
-                <span className="text-sm font-medium">{booking.destination || "Imported Destination"}</span>
-              </div>
+          </div>
+          
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-blue-600 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">To:</span>
+              <span className="text-sm font-medium">{booking.destination || "Imported Destination"}</span>
             </div>
           </div>
         </div>
         
-        {/* Right section - Time and action buttons */}
-        <div className="flex flex-col md:border-l md:pl-4 w-full md:w-1/3">
-          <div className="text-right md:hidden mb-3">
-            <div className="text-blue-700 font-bold text-lg">{booking.price}</div>
-            <div className="text-xs text-gray-500">Total price</div>
+        {/* Time and driver info */}
+        <div className="mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarClock className="h-4 w-4 text-blue-600" />
+            <span className="text-sm">{booking.date} at {booking.time}</span>
           </div>
           
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-blue-600" />
-              <span className="text-sm">{booking.date} at {booking.time}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">Driver: {booking.driver || "Unassigned"}</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-gray-500" />
+            <span className="text-sm">Driver: {booking.driver || "Unassigned"}</span>
           </div>
+        </div>
+        
+        {/* Action buttons */}
+        <div className="flex justify-end gap-2 mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8"
+            onClick={() => {}}
+          >
+            Change Driver
+          </Button>
           
-          <div className="flex justify-between mt-auto pt-4 gap-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => {}}
+          >
+            Assign Fleet
+          </Button>
+          
+          <Link to={`/bookings/${booking.id}`}>
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => {}}
-            >
-              Change Driver
-            </Button>
-            
-            <Button 
-              variant="outline" 
               size="sm"
-              className="flex-1"
-              onClick={() => {}}
+              className="h-8"
             >
-              Assign Fleet
+              View Details
             </Button>
-            
-            <Link to={`/bookings/${booking.id}`} className="flex-1">
-              <Button 
-                className="w-full"
-                size="sm"
-              >
-                View Details
-              </Button>
-            </Link>
-          </div>
+          </Link>
         </div>
       </div>
     </Card>
