@@ -8,53 +8,77 @@ interface RequestBody {
   bookings: any[];
 }
 
-// Map a Booking.com booking to our internal format
+// Map a booking to our internal format - enhanced to handle different API response formats
 function mapBookingToInternalFormat(booking: any, source: string) {
-  // Get guest information with fallbacks
-  const guestName = booking.passenger?.name || 
-    (booking.guest ? `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim() : 'Guest');
+  // Handle name from different formats
+  let customerName = "Guest";
   
-  const email = booking.guest?.email || 'guest@example.com';
-  const phone = booking.guest?.phone || 'N/A';
+  if (booking.passenger?.name) {
+    customerName = booking.passenger.name;
+  } else if (booking.guest) {
+    customerName = `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim();
+  }
   
-  // Get location information with fallbacks
+  // Handle contact details with fallbacks
+  const email = booking.passenger?.email || booking.guest?.email || 'guest@example.com';
+  const phone = booking.passenger?.telephone_number || booking.guest?.phone || 'N/A';
+  
+  // Handle pickup location with fallbacks
   const pickupLocation = booking.pickup?.address || 
     booking.property?.address || 
     'Not specified';
     
+  // Handle destination with fallbacks
   const destination = booking.dropoff?.address || 
     booking.property?.name || 
     'Not specified';
   
-  // Get coordinates with fallbacks
-  const pickupLatitude = booking.pickup?.coordinates?.latitude || 
+  // Handle coordinates with fallbacks
+  const pickupLatitude = booking.pickup?.latitude || 
     booking.property?.location?.coordinates?.latitude || null;
     
-  const pickupLongitude = booking.pickup?.coordinates?.longitude || 
+  const pickupLongitude = booking.pickup?.longitude || 
     booking.property?.location?.coordinates?.longitude || null;
     
-  const destinationLatitude = booking.dropoff?.coordinates?.latitude || null;
-  const destinationLongitude = booking.dropoff?.coordinates?.longitude || null;
+  const destinationLatitude = booking.dropoff?.latitude || null;
+  const destinationLongitude = booking.dropoff?.longitude || null;
   
-  // Get date information with fallbacks
-  const pickupTime = booking.check_in_time || '12:00';
-  const pickupDate = booking.check_in || new Date().toISOString().split('T')[0];
+  // Handle time information - supporting multiple formats
+  const pickupTime = booking.pickup_date_time 
+    ? new Date(booking.pickup_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : booking.check_in_time || '12:00';
+    
+  // Handle date information with fallbacks
+  const pickupDate = booking.pickup_date_time 
+    ? new Date(booking.pickup_date_time).toISOString().split('T')[0] 
+    : booking.check_in || new Date().toISOString().split('T')[0];
   
-  // Get price information with fallbacks
-  const price = booking.price_details?.total_price || 0;
+  // Handle price information with fallbacks
+  let price = 0;
+  if (booking.price?.amount) {
+    price = parseFloat(booking.price.amount);
+  } else if (booking.price?.customerOriginalPrice) {
+    price = booking.price.customerOriginalPrice;
+  } else if (booking.price_details?.total_price) {
+    price = booking.price_details.total_price;
+  }
   
   // Get passenger count with fallbacks
-  const passengerCount = booking.room_details?.guests || 1;
+  const passengerCount = booking.passenger_count || booking.room_details?.guests || 1;
   
   // Use various ID fields with fallbacks
-  const externalId = booking.id || booking.reference || booking.legId || booking.bookingReference || 
+  const externalId = booking.bookingReference || booking.reference || 
+    booking.customerReference || booking.legId || booking.id || 
     `${source}-${new Date().getTime()}`;
   
   // Flight number if available
   const flightNumber = booking.flight_number || null;
   
+  // Get vehicle type with standardization
+  const vehicleType = (booking.vehicle_type || 'sedan').toLowerCase();
+  
   return {
-    customer_name: guestName,
+    customer_name: customerName,
     email: email,
     phone: phone,
     status: 'pending',
@@ -64,7 +88,7 @@ function mapBookingToInternalFormat(booking: any, source: string) {
     pickup_longitude: pickupLongitude,
     destination_latitude: destinationLatitude,
     destination_longitude: destinationLongitude,
-    vehicle_type: 'sedan',
+    vehicle_type: vehicleType,
     pickup_time: pickupTime,
     pickup_date: pickupDate,
     flight_number: flightNumber,
@@ -116,7 +140,9 @@ serve(async (req) => {
     
     // Process each booking and save directly to bookings_data
     for (const booking of bookings) {
-      const externalId = booking.id || booking.reference || booking.legId || booking.bookingReference;
+      // Extract external ID using multiple possible properties
+      const externalId = booking.bookingReference || booking.reference || 
+        booking.customerReference || booking.legId || booking.id;
       
       if (!externalId) {
         errors++;

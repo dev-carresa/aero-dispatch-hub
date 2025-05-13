@@ -59,7 +59,19 @@ export const externalBookingService = {
       
       if (error) throw error;
       
-      return data;
+      // Handle different response formats
+      let responseData: BookingComResponse = {};
+      
+      if (Array.isArray(data)) {
+        // If data is directly an array of bookings
+        responseData.bookings = data;
+        responseData.meta = { count: data.length, page: 1, pages: 1 };
+      } else {
+        // Normal response format
+        responseData = data;
+      }
+      
+      return responseData;
     } catch (error: any) {
       console.error("Error fetching bookings from Booking.com:", error);
       throw new Error(error.message || "Failed to fetch bookings");
@@ -74,6 +86,8 @@ export const externalBookingService = {
     duplicates: number;
   }> {
     try {
+      console.log("Saving bookings:", bookings);
+      
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
         body: {
           source,

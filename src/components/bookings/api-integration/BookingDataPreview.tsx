@@ -32,6 +32,38 @@ export function BookingDataPreview({
       setExpandedBooking(id);
     }
   };
+  
+  // Helper function to get a unique identifier for a booking
+  const getBookingId = (booking: BookingComBooking, index: number) => {
+    return booking.bookingReference || booking.reference || booking.legId || 
+           booking.customerReference || booking.id || `booking-${index}`;
+  };
+  
+  // Helper function to get guest name from various formats
+  const getGuestName = (booking: BookingComBooking) => {
+    if (booking.passenger?.name) {
+      return booking.passenger.name;
+    } else if (booking.guest) {
+      return `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim();
+    }
+    return 'No name';
+  };
+  
+  // Helper function to get pickup/date information
+  const getDateInfo = (booking: BookingComBooking) => {
+    return booking.pickup_date_time || booking.booked_date || booking.check_in || 'No date information';
+  };
+  
+  // Helper function to get pickup address
+  const getPickupAddress = (booking: BookingComBooking) => {
+    return booking.pickup?.address || 
+      (booking.property?.address || 'Unknown pickup');
+  };
+  
+  // Helper function to get dropoff address
+  const getDropoffAddress = (booking: BookingComBooking) => {
+    return booking.dropoff?.address || 'Unknown destination';
+  };
 
   return (
     <div className="space-y-6">
@@ -67,22 +99,12 @@ export function BookingDataPreview({
 
       <div className="grid gap-4">
         {bookings.map((booking, index) => {
-          // Use id as primary identifier, fallback to other fields if available
-          const bookingId = booking.id || booking.reference || booking.legId || booking.bookingReference || `booking-${index}`;
+          const bookingId = getBookingId(booking, index);
           const isExpanded = expandedBooking === bookingId;
-          
-          // Get guest name from the appropriate property depending on API response structure
-          const guestName = booking.passenger?.name || 
-            (booking.guest ? `${booking.guest.first_name} ${booking.guest.last_name}` : 'No name');
-          
-          // Get date information from the appropriate property depending on API response structure
-          const dateInfo = booking.pickup_date_time || booking.booked_date || booking.check_in || 'No date information';
-          
-          // Get pickup and dropoff addresses with fallbacks
-          const pickupAddress = booking.pickup?.address || 
-            (booking.property?.address || 'Unknown pickup');
-          
-          const dropoffAddress = booking.dropoff?.address || 'Unknown destination';
+          const guestName = getGuestName(booking);
+          const dateInfo = getDateInfo(booking);
+          const pickupAddress = getPickupAddress(booking);
+          const dropoffAddress = getDropoffAddress(booking);
           
           return (
             <Card key={bookingId} className="overflow-hidden">

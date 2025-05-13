@@ -101,17 +101,26 @@ export function BookingApiTestTabs() {
         setPaginationLinks([]);
       }
       
+      // Check different possible formats of bookings in the response
+      let bookingsData = [];
       if (data.bookings && Array.isArray(data.bookings)) {
+        bookingsData = data.bookings;
+      } else if (Array.isArray(data)) {
+        // Some APIs might return the array directly
+        bookingsData = data;
+      }
+      
+      if (bookingsData.length > 0) {
         if (isLoadingMore) {
           // Append new bookings to existing ones
-          setFetchedBookings(prev => [...prev, ...data.bookings]);
-          setTotalBookingsLoaded(prev => prev + data.bookings.length);
-          toast.success(`Loaded ${data.bookings.length} more bookings`);
+          setFetchedBookings(prev => [...prev, ...bookingsData]);
+          setTotalBookingsLoaded(prev => prev + bookingsData.length);
+          toast.success(`Loaded ${bookingsData.length} more bookings`);
         } else {
           // Set new bookings
-          setFetchedBookings(data.bookings);
-          setTotalBookingsLoaded(data.bookings.length);
-          toast.success(`Retrieved ${data.bookings.length} bookings from Booking.com`);
+          setFetchedBookings(bookingsData);
+          setTotalBookingsLoaded(bookingsData.length);
+          toast.success(`Retrieved ${bookingsData.length} bookings from Booking.com`);
         }
       } else if (data.error) {
         throw new Error(data.error);
@@ -155,7 +164,8 @@ export function BookingApiTestTabs() {
 
     try {
       setIsSaving(true);
-      // Save just the first booking for demo purposes
+      
+      // Select the booking to save - always use the first booking
       const bookingToSave = fetchedBookings[0];
       setSaveProgress({ current: 0, total: 1 });
       
