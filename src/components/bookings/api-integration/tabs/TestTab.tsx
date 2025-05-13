@@ -5,7 +5,7 @@ import { BookingDataPreview } from "@/components/bookings/api-integration/Bookin
 import { BookingComBooking } from "@/types/externalBooking";
 import { OAuthTokenHandler } from "@/components/bookings/api-integration/OAuthTokenHandler";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ interface TestTabProps {
   onLoadMore: () => void;
   isPaginationLoading: boolean;
   totalBookingsLoaded: number;
+  errorDetails?: string | null; // Add error details prop
 }
 
 export function TestTab({ 
@@ -40,7 +41,8 @@ export function TestTab({
   hasNextPage = false,
   onLoadMore = () => {},
   isPaginationLoading = false,
-  totalBookingsLoaded = 0
+  totalBookingsLoaded = 0,
+  errorDetails = null // Default to null
 }: TestTabProps) {
   return (
     <div className="space-y-6">
@@ -63,6 +65,25 @@ export function TestTab({
         </div>
         <OAuthTokenHandler onTokenReceived={onTokenReceived} />
       </div>
+
+      {/* Display error details if available */}
+      {errorDetails && (
+        <Card className="mb-6 border-red-300">
+          <CardHeader className="pb-2 bg-red-50">
+            <CardTitle className="text-lg flex items-center gap-2 text-red-700">
+              <AlertTriangle className="h-5 w-5" />
+              Error Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[200px] w-full rounded border p-4 bg-slate-50">
+              <pre className="text-xs text-slate-800 whitespace-pre-wrap">
+                {errorDetails}
+              </pre>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
 
       {rawApiResponse && (
         <Card className="mb-6">

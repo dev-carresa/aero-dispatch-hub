@@ -21,7 +21,8 @@ export function BookingApiTestTabs() {
     isSaving, 
     saveProgress, 
     rawApiResponse, 
-    totalBookingsLoaded, 
+    totalBookingsLoaded,
+    errorDetails, // Get error details from hook 
     handleFetchBookings, 
     handleLoadMoreBookings, 
     handleSaveBookings, 
@@ -70,6 +71,7 @@ export function BookingApiTestTabs() {
           onLoadMore={() => handleLoadMoreBookings(oauthToken)}
           isPaginationLoading={isPaginationLoading}
           totalBookingsLoaded={totalBookingsLoaded}
+          errorDetails={errorDetails} // Pass error details to TestTab
         />
       </TabsContent>
     </Tabs>

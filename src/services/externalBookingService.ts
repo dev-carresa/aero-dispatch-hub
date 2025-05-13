@@ -84,9 +84,33 @@ export const externalBookingService = {
     saved: number;
     errors: number;
     duplicates: number;
+    message?: string;
   }> {
     try {
-      console.log("Saving bookings:", bookings);
+      console.log("Saving bookings:", JSON.stringify(bookings, null, 2));
+      
+      // Verify user is authenticated before proceeding
+      const { data: authData, error: authError } = await supabase.auth.getSession();
+      if (authError) {
+        console.error("Auth error:", authError);
+        return {
+          success: false,
+          saved: 0,
+          errors: bookings.length,
+          duplicates: 0,
+          message: "Authentication required. Please log in to save bookings."
+        };
+      }
+
+      if (!authData.session) {
+        return {
+          success: false,
+          saved: 0,
+          errors: bookings.length,
+          duplicates: 0,
+          message: "No authenticated session found. Please log in to save bookings."
+        };
+      }
       
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
         body: {
@@ -95,12 +119,29 @@ export const externalBookingService = {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Function invocation error:", error);
+        throw error;
+      }
       
-      return data;
+      console.log("Save response:", data);
+      
+      return {
+        success: true,
+        saved: data.saved || 0,
+        errors: data.errors || 0,
+        duplicates: data.duplicates || 0,
+        message: data.message
+      };
     } catch (error: any) {
       console.error("Error saving bookings:", error);
-      throw new Error(error.message || "Failed to save bookings");
+      return {
+        success: false,
+        saved: 0,
+        errors: bookings.length,
+        duplicates: 0,
+        message: error.message || "Failed to save bookings"
+      };
     }
   },
   

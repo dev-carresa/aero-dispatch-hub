@@ -14,6 +14,7 @@ export function useBookingData(user: any) {
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   const [paginationLinks, setPaginationLinks] = useState<BookingApiLink[]>([]);
   const [totalBookingsLoaded, setTotalBookingsLoaded] = useState(0);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   
   // Extract next pagination link if available
   const getNextLink = useCallback(() => {
@@ -108,9 +109,13 @@ export function useBookingData(user: any) {
           toast.info('No more bookings to load');
         }
       }
+      
+      // Clear any previous error details
+      setErrorDetails(null);
     } catch (error: any) {
       console.error('Error fetching bookings:', error);
       toast.error(error.message || 'Failed to fetch bookings');
+      setErrorDetails(JSON.stringify(error, null, 2));
     } finally {
       if (isLoadingMore) {
         setIsPaginationLoading(false);
@@ -139,9 +144,11 @@ export function useBookingData(user: any) {
 
     try {
       setIsSaving(true);
+      setErrorDetails(null);
       
       // Select the booking to save - always use the first booking
       const bookingToSave = fetchedBookings[0];
+      console.log("Attempting to save booking:", bookingToSave);
       setSaveProgress({ current: 0, total: 1 });
       
       // Small delay to show progress (this is just for UX)
@@ -161,11 +168,21 @@ export function useBookingData(user: any) {
           toast.warning(`There was an error saving the booking`);
         }
       } else {
-        toast.error('Failed to save booking');
+        throw new Error(result.message || 'Failed to save booking');
       }
     } catch (error: any) {
       console.error('Error saving booking:', error);
-      toast.error(error.message || 'Failed to save booking');
+      
+      // Capture and display detailed error information
+      const errorMessage = error.message || 'Failed to save booking';
+      toast.error(errorMessage);
+      
+      // Store detailed error info for debugging
+      if (error.status) {
+        setErrorDetails(`Status: ${error.status}\nMessage: ${errorMessage}\nDetails: ${JSON.stringify(error, null, 2)}`);
+      } else {
+        setErrorDetails(JSON.stringify(error, null, 2));
+      }
     } finally {
       setIsSaving(false);
       setSaveProgress({ current: 0, total: 0 });
@@ -180,6 +197,7 @@ export function useBookingData(user: any) {
     saveProgress, 
     rawApiResponse,
     totalBookingsLoaded,
+    errorDetails, // Add this to the returned object
     handleFetchBookings,
     handleLoadMoreBookings,
     handleSaveBookings,
