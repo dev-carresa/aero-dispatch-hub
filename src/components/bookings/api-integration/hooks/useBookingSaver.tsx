@@ -7,11 +7,13 @@ import { saveService } from "@/services/external-booking";
 interface UseBookingSaverProps {
   fetchedBookings: BookingComBooking[];
   setErrorDetails: React.Dispatch<React.SetStateAction<string | null>>;
+  isAuthenticated?: boolean; // Make this optional with a default value
 }
 
 export function useBookingSaver({
   fetchedBookings,
-  setErrorDetails
+  setErrorDetails,
+  isAuthenticated = true // Default to true if not provided
 }: UseBookingSaverProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
