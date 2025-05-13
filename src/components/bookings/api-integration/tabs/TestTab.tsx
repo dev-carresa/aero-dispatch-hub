@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { FetchControlsForm } from "@/components/bookings/api-integration/FetchControlsForm";
 import { BookingDataPreview } from "@/components/bookings/api-integration/BookingDataPreview";
 import { BookingComBooking } from "@/types/externalBooking";
@@ -29,17 +30,17 @@ interface TestTabProps {
 export function TestTab({ 
   onFetch, 
   isFetching, 
-  fetchedBookings, 
+  fetchedBookings = [], // Default to empty array
   isSaving, 
   onSaveAll, 
-  saveProgress,
-  onTokenReceived,
-  hasValidToken,
+  saveProgress = { current: 0, total: 0 }, // Add default values
+  onTokenReceived = () => {}, // Default no-op function
+  hasValidToken = false,
   rawApiResponse,
-  hasNextPage,
-  onLoadMore,
-  isPaginationLoading,
-  totalBookingsLoaded
+  hasNextPage = false,
+  onLoadMore = () => {},
+  isPaginationLoading = false,
+  totalBookingsLoaded = 0
 }: TestTabProps) {
   return (
     <div className="space-y-6">
@@ -60,7 +61,7 @@ export function TestTab({
             isLoading={isFetching}
           />
         </div>
-        <OAuthTokenHandler onTokenReceived={onTokenReceived || (() => {})} />
+        <OAuthTokenHandler onTokenReceived={onTokenReceived} />
       </div>
 
       {rawApiResponse && (

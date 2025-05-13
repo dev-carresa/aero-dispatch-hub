@@ -211,7 +211,7 @@ export function BookingApiTestTabs() {
         <TestTab 
           onFetch={() => handleFetchBookings(false)}
           isFetching={isFetching}
-          fetchedBookings={fetchedBookings}
+          fetchedBookings={fetchedBookings || []} 
           isSaving={isSaving}
           onSaveAll={handleSaveBookings}
           saveProgress={saveProgress}
