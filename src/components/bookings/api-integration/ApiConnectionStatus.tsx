@@ -7,23 +7,35 @@ import { useState } from "react";
 import { externalBookingService } from "@/services/externalBookingService";
 import { toast } from "sonner";
 
-interface ApiConnectionStatusProps {
-  apiName: string;
-  initialStatus?: "connected" | "disconnected" | "error";
-  onConnectionChange?: (status: "connected" | "disconnected" | "error") => void;
+export interface ApiConnectionStatusProps {
+  apiName?: string;
+  initialStatus?: "connected" | "disconnected" | "error" | "loading";
+  onConnectionChange?: (status: "connected" | "disconnected" | "error" | "loading") => void;
+  status?: "connected" | "disconnected" | "error" | "loading"; // Added status prop
 }
 
 export function ApiConnectionStatus({ 
-  apiName, 
+  apiName = "Booking.com", 
   initialStatus = "disconnected",
-  onConnectionChange
+  onConnectionChange,
+  status: externalStatus, // Renamed to avoid conflict with local state
 }: ApiConnectionStatusProps) {
-  const [status, setStatus] = useState<"connected" | "disconnected" | "error" | "testing">(initialStatus);
+  // Use externalStatus (passed prop) if available, otherwise use initialStatus
+  const [status, setStatus] = useState<"connected" | "disconnected" | "error" | "loading">(
+    externalStatus || initialStatus
+  );
   const [message, setMessage] = useState<string>("");
+  
+  // Update internal state when external status prop changes
+  React.useEffect(() => {
+    if (externalStatus) {
+      setStatus(externalStatus);
+    }
+  }, [externalStatus]);
   
   const testConnection = async () => {
     try {
-      setStatus("testing");
+      setStatus("loading");
       setMessage("Testing connection...");
       
       // We currently only support Booking.com
@@ -82,7 +94,7 @@ export function ApiConnectionStatus({
                 <span className="text-sm font-medium text-red-600">Error</span>
               </>
             )}
-            {status === "testing" && (
+            {status === "loading" && (
               <>
                 <Spinner size="sm" className="text-primary" />
                 <span className="text-sm font-medium text-gray-600">Testing...</span>
@@ -94,7 +106,7 @@ export function ApiConnectionStatus({
             variant="outline" 
             size="sm" 
             onClick={testConnection}
-            disabled={status === "testing"}
+            disabled={status === "loading"}
             className="flex items-center gap-1"
           >
             <RefreshCcw className="h-4 w-4" />

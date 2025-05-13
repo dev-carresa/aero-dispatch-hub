@@ -94,6 +94,14 @@ export function ExternalBookingsTable({
     }
   };
 
+  // Get the appropriate badge variant based on status
+  const getBadgeVariant = (status: string) => {
+    if (status?.toLowerCase() === "accepted") {
+      return "default"; // Changed from "success" to "default"
+    }
+    return "outline";
+  };
+
   return (
     <div className="border rounded-lg">
       <Table>
@@ -162,7 +170,7 @@ export function ExternalBookingsTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={booking.status?.toLowerCase() === "accepted" ? "success" : "outline"}>
+                    <Badge variant={getBadgeVariant(booking.status || '')}>
                       {booking.status || "Unknown"}
                     </Badge>
                   </TableCell>

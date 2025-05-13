@@ -21,6 +21,11 @@ export function ConfigureTab({
 }: ConfigureTabProps) {
   const [accessToken, setAccessToken] = useState("");
   const { toast } = useToast();
+  
+  const handleApiConfigSaved = (values: { apiKey: string; apiSecret?: string }) => {
+    // In a real app, we would save these values to a secure store
+    console.log("API config saved:", values);
+  };
 
   const handleTestConnection = async () => {
     onConnectionChange("loading");
@@ -70,10 +75,18 @@ export function ConfigureTab({
         </p>
       </div>
       
-      <ApiConnectionStatus status={connectionStatus} />
+      <ApiConnectionStatus 
+        apiName="Booking.com"
+        status={connectionStatus} 
+        onConnectionChange={onConnectionChange}
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ApiConfigForm />
+        <ApiConfigForm 
+          apiName="Booking.com" 
+          keyName="BOOKING_API_KEY" 
+          onConfigSaved={handleApiConfigSaved}
+        />
         <OAuthTokenHandler onTokenReceived={handleTokenReceived} />
       </div>
       
