@@ -149,7 +149,7 @@ export function ImportTab({ onImportComplete }: ImportTabProps) {
           </div>
           
           <ExternalBookingsTable 
-            bookings={bookings}
+            bookingData={bookings}
             onRowSelect={handleRowSelect}
             onViewBooking={handleViewBooking}
             selectedBookings={selectedBookings}
