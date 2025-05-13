@@ -38,6 +38,9 @@ export interface BookingComResponse {
 
 export interface BookingComBooking {
   id: string;
+  reference?: string; // Added for compatibility
+  legId?: string; // Added for compatibility
+  bookingReference?: string; // Added for compatibility
   reservation_id?: string;
   check_in: string;
   check_out: string;
@@ -48,6 +51,13 @@ export interface BookingComBooking {
     email?: string;
     phone?: string;
   };
+  // Added passenger object for compatibility
+  passenger?: {
+    name: string;
+  };
+  // Added date fields for compatibility
+  pickup_date_time?: string;
+  booked_date?: string;
   room_details?: {
     room_type?: string;
     guests?: number;
@@ -73,11 +83,21 @@ export interface BookingComBooking {
   updated_at?: string;
   check_in_time?: string;
   flight_number?: string;
+  // Update pickup and add dropoff for compatibility
   pickup?: {
     coordinates?: {
       latitude: number;
       longitude: number;
-    }
+    },
+    address?: string; // Added missing address property
+  };
+  // Add dropoff property
+  dropoff?: {
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    },
+    address?: string;
   };
 }
 

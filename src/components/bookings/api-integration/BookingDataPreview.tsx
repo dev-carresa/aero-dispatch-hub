@@ -67,8 +67,22 @@ export function BookingDataPreview({
 
       <div className="grid gap-4">
         {bookings.map((booking, index) => {
+          // Use id as primary identifier, fallback to other fields if available
           const bookingId = booking.id || booking.reference || booking.legId || booking.bookingReference || `booking-${index}`;
           const isExpanded = expandedBooking === bookingId;
+          
+          // Get guest name from the appropriate property depending on API response structure
+          const guestName = booking.passenger?.name || 
+            (booking.guest ? `${booking.guest.first_name} ${booking.guest.last_name}` : 'No name');
+          
+          // Get date information from the appropriate property depending on API response structure
+          const dateInfo = booking.pickup_date_time || booking.booked_date || booking.check_in || 'No date information';
+          
+          // Get pickup and dropoff addresses with fallbacks
+          const pickupAddress = booking.pickup?.address || 
+            (booking.property?.address || 'Unknown pickup');
+          
+          const dropoffAddress = booking.dropoff?.address || 'Unknown destination';
           
           return (
             <Card key={bookingId} className="overflow-hidden">
@@ -76,11 +90,11 @@ export function BookingDataPreview({
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-base">
-                      {booking.passenger?.name || 'No passenger name'} 
+                      {guestName}
                       {index === 0 && <Badge className="ml-2 bg-green-500">First booking</Badge>}
                     </CardTitle>
                     <CardDescription>
-                      {booking.pickup_date_time || booking.booked_date || 'No date information'}
+                      {dateInfo}
                     </CardDescription>
                   </div>
                   <Button 
@@ -106,10 +120,10 @@ export function BookingDataPreview({
               <CardFooter className="bg-muted/50 px-6 py-3">
                 <div className="flex justify-between items-center w-full text-sm">
                   <div>
-                    From: {booking.pickup?.address || 'Unknown pickup'}
+                    From: {pickupAddress}
                   </div>
                   <div>
-                    To: {booking.dropoff?.address || 'Unknown destination'}
+                    To: {dropoffAddress}
                   </div>
                 </div>
               </CardFooter>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BookingComBooking, BookingComResponse, ExternalBooking, ExternalBookingSource } from "@/types/externalBooking";
 import { toast } from "sonner";
@@ -92,8 +91,7 @@ export const externalBookingService = {
 
       // Process each booking
       for (const booking of bookings) {
-        // Fix: Use a booking identifier based on what's available
-        // In Booking.com's case, we can use reference, legId, or bookingReference as the ID
+        // Use id as primary identifier, fallback to other fields if available
         const bookingId = booking.id || booking.reference || booking.legId || booking.bookingReference;
         
         if (!bookingId) {
