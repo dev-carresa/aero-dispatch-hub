@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { externalBookingService } from "@/services/externalBookingService";
-import { BookingComBooking, ExternalBooking } from "@/types/externalBooking";
+import { BookingApiLink, BookingComBooking, ExternalBooking } from "@/types/externalBooking";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfigureTab } from "./tabs/ConfigureTab";
 import { TestTab } from "./tabs/TestTab";
@@ -19,9 +19,12 @@ export function BookingApiTestTabs() {
   const [externalBookings, setExternalBookings] = useState<ExternalBooking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [isPaginationLoading, setIsPaginationLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
+  const [paginationLinks, setPaginationLinks] = useState<BookingApiLink[]>([]);
+  const [totalBookingsLoaded, setTotalBookingsLoaded] = useState(0);
   const { user } = useAuth();
   
   // Check if user is logged in
@@ -59,20 +62,42 @@ export function BookingApiTestTabs() {
     setActiveTab('test');
   };
   
+  // Extract next pagination link if available
+  const getNextLink = useCallback(() => {
+    if (!paginationLinks || paginationLinks.length === 0) return null;
+    return paginationLinks.find(link => link.rel === "next")?.href || null;
+  }, [paginationLinks]);
+  
   // Handle fetch bookings with OAuth token
-  const handleFetchBookings = async () => {
+  const handleFetchBookings = async (isLoadingMore = false) => {
     if (!oauthToken) {
       toast.error("Please get an OAuth token before fetching bookings");
       return;
     }
 
     try {
-      setIsFetching(true);
+      // Set the appropriate loading state
+      if (isLoadingMore) {
+        setIsPaginationLoading(true);
+      } else {
+        setIsFetching(true);
+        // Clear existing bookings when starting a new fetch
+        setFetchedBookings([]);
+        setPaginationLinks([]);
+        setTotalBookingsLoaded(0);
+      }
+      
+      // Get the next link if loading more
+      const nextLink = isLoadingMore ? getNextLink() : null;
       
       // Prepare the request with OAuth token
       const requestBody = { 
         source: 'booking.com',
-        oauthToken: oauthToken
+        oauthToken: oauthToken,
+        nextLink: nextLink,
+        params: {
+          size: 20 // Request a smaller page size to demonstrate pagination
+        }
       };
       
       const response = await supabase.functions.invoke('fetch-external-bookings', {
@@ -87,23 +112,55 @@ export function BookingApiTestTabs() {
       console.log("Received data from API:", data);
       
       // Store the raw API response
-      setRawApiResponse(data);
+      if (!isLoadingMore) {
+        setRawApiResponse(data);
+      }
+      
+      // Store pagination links if present
+      if (data.links && Array.isArray(data.links)) {
+        setPaginationLinks(data.links);
+      } else {
+        setPaginationLinks([]);
+      }
       
       if (data.bookings && Array.isArray(data.bookings)) {
-        setFetchedBookings(data.bookings);
-        toast.success(`Retrieved ${data.bookings.length} bookings from Booking.com`);
+        if (isLoadingMore) {
+          // Append new bookings to existing ones
+          setFetchedBookings(prev => [...prev, ...data.bookings]);
+          setTotalBookingsLoaded(prev => prev + data.bookings.length);
+          toast.success(`Loaded ${data.bookings.length} more bookings`);
+        } else {
+          // Set new bookings
+          setFetchedBookings(data.bookings);
+          setTotalBookingsLoaded(data.bookings.length);
+          toast.success(`Retrieved ${data.bookings.length} bookings from Booking.com`);
+        }
       } else if (data.error) {
         throw new Error(data.error);
       } else {
-        toast.warning('No bookings found');
-        setFetchedBookings([]);
+        if (!isLoadingMore) {
+          toast.warning('No bookings found');
+          setFetchedBookings([]);
+          setTotalBookingsLoaded(0);
+        } else {
+          toast.info('No more bookings to load');
+        }
       }
     } catch (error: any) {
       console.error('Error fetching bookings:', error);
       toast.error(error.message || 'Failed to fetch bookings');
     } finally {
-      setIsFetching(false);
+      if (isLoadingMore) {
+        setIsPaginationLoading(false);
+      } else {
+        setIsFetching(false);
+      }
     }
+  };
+  
+  // Handle load more bookings
+  const handleLoadMoreBookings = () => {
+    handleFetchBookings(true);
   };
   
   // Handle save all bookings
@@ -214,7 +271,7 @@ export function BookingApiTestTabs() {
 
       <TabsContent value="test">
         <TestTab 
-          onFetch={handleFetchBookings}
+          onFetch={() => handleFetchBookings(false)}
           isFetching={isFetching}
           fetchedBookings={fetchedBookings}
           isSaving={isSaving}
@@ -223,6 +280,10 @@ export function BookingApiTestTabs() {
           onTokenReceived={handleTokenReceived}
           hasValidToken={!!oauthToken}
           rawApiResponse={rawApiResponse}
+          hasNextPage={!!getNextLink()}
+          onLoadMore={handleLoadMoreBookings}
+          isPaginationLoading={isPaginationLoading}
+          totalBookingsLoaded={totalBookingsLoaded}
         />
       </TabsContent>
 

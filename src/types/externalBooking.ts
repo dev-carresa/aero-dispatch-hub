@@ -16,6 +16,13 @@ export interface ExternalBooking {
   user_id?: string;
 }
 
+// Link object for pagination in Booking.com API responses
+export interface BookingApiLink {
+  rel: string;
+  href: string;
+  type: string;
+}
+
 // Simplified structure of what we expect from Booking.com API
 export interface BookingComResponse {
   bookings?: BookingComBooking[];
@@ -26,6 +33,7 @@ export interface BookingComResponse {
     page: number;
     pages: number;
   };
+  links?: BookingApiLink[]; // Added links array for pagination
 }
 
 export interface BookingComBooking {
