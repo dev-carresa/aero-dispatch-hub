@@ -67,6 +67,7 @@ export const externalBookingService = {
   },
   
   // Save external bookings to the database directly using supabase client
+  // This now works with any number of bookings (even just one)
   async saveExternalBookings(bookings: BookingComBooking[], source: string): Promise<{ 
     success: boolean; 
     saved: number;
@@ -87,9 +88,12 @@ export const externalBookingService = {
         throw new Error("Authentication required");
       }
 
+      console.log(`Processing ${bookings.length} booking(s) to save`);
+
       // Process each booking
       for (const booking of bookings) {
         if (!booking.id) {
+          console.error("Booking has no ID, skipping", booking);
           errors++;
           continue;
         }
@@ -118,6 +122,8 @@ export const externalBookingService = {
             user_id: user.id
           };
           
+          console.log("Saving booking to database:", mappedBooking.external_id);
+          
           // Insert the booking one at a time (not in a batch)
           const { error: insertError } = await supabase
             .from('external_bookings')
@@ -127,6 +133,7 @@ export const externalBookingService = {
             console.error("Error inserting booking:", insertError);
             errors++;
           } else {
+            console.log("Successfully saved booking:", mappedBooking.external_id);
             saved++;
           }
         } catch (error) {
@@ -135,8 +142,10 @@ export const externalBookingService = {
         }
       }
       
+      console.log(`Save results: ${saved} saved, ${errors} errors, ${duplicates} duplicates`);
+      
       return {
-        success: true,
+        success: saved > 0,
         saved,
         errors,
         duplicates

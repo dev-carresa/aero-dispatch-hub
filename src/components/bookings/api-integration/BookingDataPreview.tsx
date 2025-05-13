@@ -41,7 +41,7 @@ export function BookingDataPreview({
           ) : (
             <>
               <Save className="h-4 w-4" />
-              Save All
+              Save One Booking
             </>
           )}
         </Button>
@@ -50,7 +50,7 @@ export function BookingDataPreview({
         {isLoading && totalProgress > 0 && (
           <div className="mb-4">
             <p className="text-sm text-muted-foreground mb-1">
-              Saving bookings: {currentProgress} of {totalProgress}
+              Saving booking: {currentProgress} of {totalProgress}
             </p>
             <Progress value={(currentProgress / totalProgress) * 100} />
           </div>

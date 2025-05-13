@@ -163,8 +163,8 @@ export function BookingApiTestTabs() {
     handleFetchBookings(true);
   };
   
-  // Handle save all bookings
-  const handleSaveAllBookings = async () => {
+  // Handle save all bookings - modified to save just one booking
+  const handleSaveBookings = async () => {
     if (!fetchedBookings || fetchedBookings.length === 0) {
       toast.warning("No bookings to save");
       return;
@@ -177,26 +177,27 @@ export function BookingApiTestTabs() {
 
     try {
       setIsSaving(true);
-      setSaveProgress({ current: 0, total: fetchedBookings.length });
+      // We're now saving just one booking
+      setSaveProgress({ current: 0, total: 1 });
       
-      // Progress tracking
-      for (let i = 0; i < fetchedBookings.length; i++) {
-        setSaveProgress({ current: i+1, total: fetchedBookings.length });
-        // Small delay to show progress (this is just for UX)
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      // Get just the first booking
+      const bookingToSave = fetchedBookings[0];
       
-      const result = await externalBookingService.saveExternalBookings(fetchedBookings, 'booking.com');
+      // Small delay to show progress (this is just for UX)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setSaveProgress({ current: 1, total: 1 });
+      
+      const result = await externalBookingService.saveExternalBookings([bookingToSave], 'booking.com');
       
       if (result.success) {
-        toast.success(`Successfully saved ${result.saved} bookings`);
+        toast.success(`Successfully saved booking`);
         
         if (result.duplicates > 0) {
-          toast.info(`${result.duplicates} bookings were duplicates and skipped`);
+          toast.info(`The booking was already saved previously and was skipped`);
         }
         
         if (result.errors > 0) {
-          toast.warning(`${result.errors} bookings had errors and were not saved`);
+          toast.warning(`There was an error saving the booking`);
         }
         
         // Refresh the external bookings list
@@ -205,11 +206,11 @@ export function BookingApiTestTabs() {
         // Switch to the import tab
         setActiveTab('import');
       } else {
-        toast.error('Failed to save bookings');
+        toast.error('Failed to save booking');
       }
     } catch (error: any) {
-      console.error('Error saving bookings:', error);
-      toast.error(error.message || 'Failed to save bookings');
+      console.error('Error saving booking:', error);
+      toast.error(error.message || 'Failed to save booking');
     } finally {
       setIsSaving(false);
       setSaveProgress({ current: 0, total: 0 });
@@ -275,7 +276,7 @@ export function BookingApiTestTabs() {
           isFetching={isFetching}
           fetchedBookings={fetchedBookings}
           isSaving={isSaving}
-          onSaveAll={handleSaveAllBookings}
+          onSaveAll={handleSaveBookings}
           saveProgress={saveProgress}
           onTokenReceived={handleTokenReceived}
           hasValidToken={!!oauthToken}
