@@ -1,25 +1,32 @@
 
-import { Card } from "@/components/ui/card";
-import { BookingApiTestTabs } from "./BookingApiTestTabs";
+import React from 'react';
+import { BookingApiTestTabs } from './BookingApiTestTabs';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { Spinner } from '@/components/ui/spinner';
 
-export default function BookingApiTestPage() {
+const BookingApiTestPage = () => {
+  const { loading } = useRequireAuth();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-6 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Booking API Integration</h1>
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight mb-2">External Booking API Integration</h2>
         <p className="text-muted-foreground">
-          Connect to external booking systems and import bookings directly
+          Test connections and import bookings from external systems
         </p>
       </div>
       
-      <Card className="p-6">
-        <BookingApiTestTabs />
-      </Card>
-      
-      <div className="text-sm text-muted-foreground bg-yellow-50 p-4 rounded-md">
-        <p className="font-medium">Note:</p>
-        <p>Imported bookings are now saved directly to your main bookings system and will appear in your bookings list.</p>
-      </div>
+      <BookingApiTestTabs />
     </div>
   );
-}
+};
+
+export default BookingApiTestPage;
