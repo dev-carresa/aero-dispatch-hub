@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface TestTabProps {
   onFetch: () => Promise<void>;
@@ -45,7 +46,7 @@ export function TestTab({
   totalBookingsLoaded = 0,
   errorDetails = null
 }: TestTabProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Check if error details contain authentication errors
   const isAuthError = errorDetails && 
@@ -54,6 +55,15 @@ export function TestTab({
      errorDetails.includes('Authentication failed') ||
      errorDetails.includes('No user authenticated') ||
      errorDetails.includes('401'));
+
+  // Handle save click with authentication check
+  const handleSaveClick = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to save bookings");
+      return;
+    }
+    await onSaveAll();
+  };
 
   return (
     <div className="space-y-6">
@@ -149,7 +159,7 @@ export function TestTab({
           <BookingDataPreview
             bookings={fetchedBookings}
             isLoading={isSaving}
-            onSaveAll={onSaveAll}
+            onSaveAll={handleSaveClick} // Use our wrapper function with auth check
             currentProgress={saveProgress.current}
             totalProgress={saveProgress.total}
           />

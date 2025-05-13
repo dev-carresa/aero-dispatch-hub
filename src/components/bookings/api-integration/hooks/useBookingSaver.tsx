@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { BookingComBooking } from "@/types/externalBooking";
 import { toast } from "sonner";
-import { externalBookingService } from "@/services/externalBookingService";
+import { saveService } from "@/services/external-booking";
 
 interface UseBookingSaverProps {
   fetchedBookings: BookingComBooking[];
@@ -48,7 +48,7 @@ export function useBookingSaver({
       await new Promise(resolve => setTimeout(resolve, 500));
       setSaveProgress({ current: 1, total: 1 });
       
-      const result = await externalBookingService.saveExternalBookings([bookingToSave], 'booking.com');
+      const result = await saveService.saveExternalBookings([bookingToSave], 'booking.com');
       
       if (result.success) {
         toast.success(`Successfully saved booking`);

@@ -13,10 +13,11 @@ export const saveService = {
     try {
       console.log("Saving bookings:", JSON.stringify(bookings, null, 2));
       
-      // Verify user is authenticated before proceeding
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      if (authError) {
-        console.error("Auth error:", authError);
+      // Get current auth session before proceeding
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error("Authentication error:", sessionError || "No active session");
         return {
           success: false,
           saved: 0,
@@ -26,20 +27,12 @@ export const saveService = {
           code: 401
         };
       }
-
-      if (!authData.session) {
-        return {
-          success: false,
-          saved: 0,
-          errors: bookings.length,
-          duplicates: 0,
-          message: "No authenticated session found. Please log in to save bookings.",
-          code: 401
-        };
-      }
       
-      // Call the edge function to save bookings, ensuring auth header is passed with session token
+      // Call the edge function with session token explicitly included
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: {
           source,
           bookings
@@ -48,8 +41,14 @@ export const saveService = {
       
       if (error) {
         console.error("Function invocation error:", error);
+        
         // Check if it's an authentication error
-        if (error.message && (error.message.includes('auth') || error.message.includes('401'))) {
+        if (error.message && (
+          error.message.includes('auth') || 
+          error.message.includes('401') ||
+          error.message.includes('unauthorized') ||
+          error.message.includes('not authenticated')
+        )) {
           return {
             success: false,
             saved: 0,
@@ -59,6 +58,7 @@ export const saveService = {
             code: 401
           };
         }
+        
         throw error;
       }
       
