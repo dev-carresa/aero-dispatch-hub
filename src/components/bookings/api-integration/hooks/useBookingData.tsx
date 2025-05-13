@@ -33,8 +33,8 @@ export function useBookingData(user: any) {
     handleSaveBookings
   } = useBookingSaver({
     fetchedBookings,
-    isAuthenticated,
-    setErrorDetails
+    setErrorDetails,
+    isAuthenticated
   });
 
   return {
