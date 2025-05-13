@@ -26,10 +26,7 @@ export const externalBookingService = {
         }
       });
       
-      if (error) {
-        console.error("Error testing connection:", error);
-        throw error;
-      }
+      if (error) throw error;
       
       return data;
     } catch (error: any) {
@@ -49,7 +46,6 @@ export const externalBookingService = {
     page?: number;
   }): Promise<BookingComResponse> {
     try {
-      console.log("Fetching bookings with params:", params);
       const { data, error } = await supabase.functions.invoke('fetch-external-bookings', {
         body: { 
           source: 'booking.com',
@@ -61,10 +57,7 @@ export const externalBookingService = {
         }
       });
       
-      if (error) {
-        console.error("Error in function invoke:", error);
-        throw error;
-      }
+      if (error) throw error;
       
       return data;
     } catch (error: any) {
@@ -79,55 +72,21 @@ export const externalBookingService = {
     saved: number;
     errors: number;
     duplicates: number;
-    message?: string;
   }> {
     try {
-      console.log(`Saving ${bookings.length} bookings from ${source}`);
-      
-      // Check if the bookings array has valid ID fields
-      const validBookings = bookings.filter(booking => {
-        const hasId = booking.id || booking.reference || booking.legId || booking.bookingReference || booking.customerReference;
-        if (!hasId) {
-          console.warn("Found booking without ID:", booking);
-        }
-        return hasId;
-      });
-      
-      if (validBookings.length === 0) {
-        return {
-          success: false,
-          saved: 0,
-          errors: bookings.length,
-          duplicates: 0,
-          message: "No valid bookings to save. Missing ID fields."
-        };
-      }
-      
       const { data, error } = await supabase.functions.invoke('save-external-bookings', {
         body: {
           source,
-          bookings: validBookings
+          bookings
         }
       });
       
-      if (error) {
-        console.error("Error calling save-external-bookings:", error);
-        throw error;
-      }
+      if (error) throw error;
       
-      return {
-        ...data,
-        message: data.message || `Saved ${data.saved} bookings successfully.`
-      };
+      return data;
     } catch (error: any) {
       console.error("Error saving bookings:", error);
-      return {
-        success: false,
-        saved: 0,
-        errors: bookings.length,
-        duplicates: 0,
-        message: error.message || "Failed to save bookings"
-      };
+      throw new Error(error.message || "Failed to save bookings");
     }
   },
   

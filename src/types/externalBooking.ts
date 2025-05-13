@@ -34,8 +34,6 @@ export interface BookingComResponse {
     pages: number;
   };
   links?: BookingApiLink[]; // Added links array for pagination
-  success?: boolean;
-  message?: string;
 }
 
 export interface BookingComBooking {
@@ -45,7 +43,7 @@ export interface BookingComBooking {
   bookingReference?: string; // Added for compatibility
   reservation_id?: string;
   check_in: string;
-  check_out?: string;
+  check_out: string;
   status: string;
   guest: {
     first_name: string;
@@ -56,8 +54,6 @@ export interface BookingComBooking {
   // Added passenger object for compatibility
   passenger?: {
     name: string;
-    telephone_number?: string;
-    title?: string;
   };
   // Added date fields for compatibility
   pickup_date_time?: string;
@@ -81,15 +77,6 @@ export interface BookingComBooking {
   price_details?: {
     total_price?: number;
     currency?: string;
-    customerCurrency?: string;
-    customerOriginalPrice?: number;
-    amount?: string;
-  };
-  price?: {
-    amount?: string;
-    currency?: string;
-    customerCurrency?: string;
-    customerOriginalPrice?: number;
   };
   special_requests?: string;
   created_at?: string;
@@ -103,10 +90,6 @@ export interface BookingComBooking {
       longitude: number;
     },
     address?: string; // Added missing address property
-    type?: string;
-    country?: string;
-    postcode?: string;
-    establishment_name?: string;
   };
   // Add dropoff property
   dropoff?: {
@@ -115,18 +98,7 @@ export interface BookingComBooking {
       longitude: number;
     },
     address?: string;
-    type?: string;
-    country?: string;
-    postcode?: string;
-    establishment_name?: string;
   };
-  links?: BookingApiLink[];
-  state_hash?: string;
-  vehicle_type?: string;
-  meet_and_greet?: boolean;
-  passenger_count?: number;
-  pickup_date_time_zone?: string;
-  customerReference?: string;
 }
 
 export interface BatchConversionResult {

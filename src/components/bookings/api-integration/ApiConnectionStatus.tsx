@@ -1,41 +1,29 @@
 
-import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckCircle, AlertCircle, RefreshCcw } from "lucide-react";
+import { useState } from "react";
 import { externalBookingService } from "@/services/externalBookingService";
 import { toast } from "sonner";
 
-export interface ApiConnectionStatusProps {
-  apiName?: string;
-  initialStatus?: "connected" | "disconnected" | "error" | "loading";
-  onConnectionChange?: (status: "connected" | "disconnected" | "error" | "loading") => void;
-  status?: "connected" | "disconnected" | "error" | "loading"; // Added status prop
+interface ApiConnectionStatusProps {
+  apiName: string;
+  initialStatus?: "connected" | "disconnected" | "error";
+  onConnectionChange?: (status: "connected" | "disconnected" | "error") => void;
 }
 
 export function ApiConnectionStatus({ 
-  apiName = "Booking.com", 
+  apiName, 
   initialStatus = "disconnected",
-  onConnectionChange,
-  status: externalStatus, // Renamed to avoid conflict with local state
+  onConnectionChange
 }: ApiConnectionStatusProps) {
-  // Use externalStatus (passed prop) if available, otherwise use initialStatus
-  const [status, setStatus] = useState<"connected" | "disconnected" | "error" | "loading">(
-    externalStatus || initialStatus
-  );
+  const [status, setStatus] = useState<"connected" | "disconnected" | "error" | "testing">(initialStatus);
   const [message, setMessage] = useState<string>("");
-  
-  // Update internal state when external status prop changes
-  useEffect(() => {
-    if (externalStatus) {
-      setStatus(externalStatus);
-    }
-  }, [externalStatus]);
   
   const testConnection = async () => {
     try {
-      setStatus("loading");
+      setStatus("testing");
       setMessage("Testing connection...");
       
       // We currently only support Booking.com
@@ -94,7 +82,7 @@ export function ApiConnectionStatus({
                 <span className="text-sm font-medium text-red-600">Error</span>
               </>
             )}
-            {status === "loading" && (
+            {status === "testing" && (
               <>
                 <Spinner size="sm" className="text-primary" />
                 <span className="text-sm font-medium text-gray-600">Testing...</span>
@@ -106,7 +94,7 @@ export function ApiConnectionStatus({
             variant="outline" 
             size="sm" 
             onClick={testConnection}
-            disabled={status === "loading"}
+            disabled={status === "testing"}
             className="flex items-center gap-1"
           >
             <RefreshCcw className="h-4 w-4" />
