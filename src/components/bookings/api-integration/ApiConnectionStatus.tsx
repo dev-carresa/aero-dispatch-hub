@@ -1,9 +1,9 @@
 
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckCircle, AlertCircle, RefreshCcw } from "lucide-react";
-import { useState } from "react";
 import { externalBookingService } from "@/services/externalBookingService";
 import { toast } from "sonner";
 
@@ -27,7 +27,7 @@ export function ApiConnectionStatus({
   const [message, setMessage] = useState<string>("");
   
   // Update internal state when external status prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (externalStatus) {
       setStatus(externalStatus);
     }
