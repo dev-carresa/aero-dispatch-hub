@@ -69,23 +69,23 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route element={<Layout><Outlet /></Layout>}>
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/users" element={<ProtectedRoute permission="users:view"><Users /></ProtectedRoute>} />
                   <Route path="/users/new" element={<ProtectedRoute permission="users:create"><NewUser /></ProtectedRoute>} />
                   <Route path="/users/:id" element={<ProtectedRoute permission="users:view"><UserProfile /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/profile/edit" element={<EditProfilePage />} />
+                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
                   <Route path="/api-users" element={<ProtectedRoute permission="api_users:view"><ApiUsers /></ProtectedRoute>} />
                   <Route path="/api-users/new" element={<ProtectedRoute permission="api_users:create"><NewApiUser /></ProtectedRoute>} />
                   <Route path="/api-users/:id" element={<ProtectedRoute permission="api_users:view"><ApiUserDetails /></ProtectedRoute>} />
                   <Route path="/api-users/:id/edit" element={<ProtectedRoute permission="api_users:edit"><EditApiUser /></ProtectedRoute>} />
-                  {/* Removed permissions from all booking routes */}
-                  <Route path="/bookings" element={<BookingsIndex />} />
-                  <Route path="/bookings/new" element={<NewBooking />} />
-                  <Route path="/bookings/:id" element={<BookingDetails />} />
-                  <Route path="/bookings/:id/edit" element={<EditBooking />} />
-                  <Route path="/bookings/api-test" element={<BookingApiTest />} />
+                  <Route path="/bookings" element={<ProtectedRoute permission="bookings:view"><BookingsIndex /></ProtectedRoute>} />
+                  <Route path="/bookings/new" element={<ProtectedRoute permission="bookings:create"><NewBooking /></ProtectedRoute>} />
+                  <Route path="/bookings/:id" element={<ProtectedRoute permission="bookings:view"><BookingDetails /></ProtectedRoute>} />
+                  <Route path="/bookings/:id/edit" element={<ProtectedRoute permission="bookings:edit"><EditBooking /></ProtectedRoute>} />
+                  {/* Changed this route to not require any permission */}
+                  <Route path="/bookings/api-test" element={<ProtectedRoute><BookingApiTest /></ProtectedRoute>} />
                   <Route path="/vehicles" element={<ProtectedRoute permission="vehicles:view"><Vehicles /></ProtectedRoute>} />
                   <Route path="/vehicles/new" element={<ProtectedRoute permission="vehicles:create"><NewVehicle /></ProtectedRoute>} />
                   <Route path="/vehicles/:id/edit" element={<ProtectedRoute permission="vehicles:edit"><EditVehicle /></ProtectedRoute>} />

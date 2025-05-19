@@ -9,18 +9,15 @@ interface RequestBody {
     endDate?: string;
     status?: string;
     page?: number;
-    size?: number;
-    after?: string;
   };
   credentials?: {
     username: string;
     password: string;
   };
   oauthToken?: string;
-  nextLink?: string; // Added to support pagination
 }
 
-const BOOKING_API_BASE = "https://dispatchapi.taxi.booking.com";
+const BOOKING_API_ENDPOINT = "https://dispatchapi.taxi.booking.com/v1/bookings";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -29,7 +26,7 @@ serve(async (req) => {
   }
   
   try {
-    const { source, params, credentials, oauthToken, nextLink } = await req.json() as RequestBody;
+    const { source, params, credentials, oauthToken } = await req.json() as RequestBody;
     
     if (!source) {
       return new Response(
@@ -60,31 +57,8 @@ serve(async (req) => {
         console.log("Making request to Booking.com API with OAuth token");
         
         try {
-          // Determine the API endpoint URL
-          let apiUrl = BOOKING_API_BASE + "/v1/bookings";
-          
-          // If nextLink is provided, use that instead of building query params
-          if (nextLink) {
-            apiUrl = BOOKING_API_BASE + nextLink;
-            console.log(`Using pagination link: ${apiUrl}`);
-          } else if (params) {
-            // Build query params
-            const queryParams = new URLSearchParams();
-            
-            if (params.size) queryParams.append("size", params.size.toString());
-            if (params.after) queryParams.append("after", params.after);
-            if (params.status) queryParams.append("status", params.status);
-            if (params.startDate) queryParams.append("from", params.startDate);
-            if (params.endDate) queryParams.append("to", params.endDate);
-            
-            const queryString = queryParams.toString();
-            if (queryString) {
-              apiUrl += `?${queryString}`;
-            }
-          }
-          
           // Make the actual API request to the Booking.com API
-          const response = await fetch(apiUrl, {
+          const response = await fetch(BOOKING_API_ENDPOINT, {
             method: "GET",
             headers: headers
           });
@@ -100,11 +74,9 @@ serve(async (req) => {
           const data = await response.json();
           console.log("API response received successfully");
           
-          // Ensure we return a consistent format that includes links if present
           return new Response(
             JSON.stringify({ 
               bookings: data.bookings || data,
-              links: data.links || [],
               meta: data.meta || { 
                 count: Array.isArray(data.bookings) ? data.bookings.length : 
                        (Array.isArray(data) ? data.length : 0) 
@@ -217,13 +189,6 @@ serve(async (req) => {
                 count: mockBookings.length,
                 total: mockBookings.length
               },
-              links: [
-                {
-                  "rel": "next",
-                  "href": "/v1/bookings?size=3&after=1744140426000",
-                  "type": "GET"
-                }
-              ],
               error: apiError.message || "Failed to fetch from API, using mock data"
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }

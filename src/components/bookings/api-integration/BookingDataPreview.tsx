@@ -1,158 +1,136 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, Save } from "lucide-react";
-import { BookingComBooking } from "@/types/externalBooking";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Save } from "lucide-react";
+import { BookingComBooking } from "@/types/externalBooking";
+import { Progress } from "@/components/ui/progress";
 
 interface BookingDataPreviewProps {
   bookings: BookingComBooking[];
   isLoading: boolean;
   onSaveAll: () => void;
-  currentProgress: number;
-  totalProgress: number;
+  currentProgress?: number;
+  totalProgress?: number;
 }
 
 export function BookingDataPreview({
   bookings,
   isLoading,
   onSaveAll,
-  currentProgress,
-  totalProgress
+  currentProgress = 0,
+  totalProgress = 0
 }: BookingDataPreviewProps) {
-  const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
-
-  const toggleExpand = (id: string) => {
-    if (expandedBooking === id) {
-      setExpandedBooking(null);
-    } else {
-      setExpandedBooking(id);
-    }
-  };
+  if (!bookings || bookings.length === 0) {
+    return null;
+  }
   
-  // Helper function to get a unique identifier for a booking
-  const getBookingId = (booking: BookingComBooking, index: number) => {
-    return booking.bookingReference || booking.reference || booking.legId || 
-           booking.customerReference || booking.id || `booking-${index}`;
-  };
-  
-  // Helper function to get guest name from various formats
-  const getGuestName = (booking: BookingComBooking) => {
-    if (booking.passenger?.name) {
-      return booking.passenger.name;
-    } else if (booking.guest) {
-      return `${booking.guest.first_name || ''} ${booking.guest.last_name || ''}`.trim();
-    }
-    return 'No name';
-  };
-  
-  // Helper function to get pickup/date information
-  const getDateInfo = (booking: BookingComBooking) => {
-    return booking.pickup_date_time || booking.booked_date || booking.check_in || 'No date information';
-  };
-  
-  // Helper function to get pickup address
-  const getPickupAddress = (booking: BookingComBooking) => {
-    return booking.pickup?.address || 
-      (booking.property?.address || 'Unknown pickup');
-  };
-  
-  // Helper function to get dropoff address
-  const getDropoffAddress = (booking: BookingComBooking) => {
-    return booking.dropoff?.address || 'Unknown destination';
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Booking Data Preview</h3>
-        <Button 
-          onClick={onSaveAll} 
-          disabled={isLoading || bookings.length === 0}
-          className="flex items-center gap-2"
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg">Retrieved Bookings Preview</CardTitle>
+        <Button
+          onClick={onSaveAll}
+          disabled={isLoading}
+          className="flex items-center gap-1"
         >
           {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
+            <>Processing...</>
           ) : (
             <>
               <Save className="h-4 w-4" />
-              Save First Booking
+              Save All
             </>
           )}
         </Button>
-      </div>
-
-      {isLoading && totalProgress > 0 && (
-        <div className="space-y-2">
-          <Progress value={(currentProgress / totalProgress) * 100} className="h-2" />
-          <p className="text-sm text-muted-foreground text-center">
-            Saving booking {currentProgress} of {totalProgress}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4">
-        {bookings.map((booking, index) => {
-          const bookingId = getBookingId(booking, index);
-          const isExpanded = expandedBooking === bookingId;
-          const guestName = getGuestName(booking);
-          const dateInfo = getDateInfo(booking);
-          const pickupAddress = getPickupAddress(booking);
-          const dropoffAddress = getDropoffAddress(booking);
-          
-          return (
-            <Card key={bookingId} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base">
-                      {guestName}
-                      {index === 0 && <Badge className="ml-2 bg-green-500">First booking</Badge>}
-                    </CardTitle>
-                    <CardDescription>
-                      {dateInfo}
-                    </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && totalProgress > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-1">
+              Saving bookings: {currentProgress} of {totalProgress}
+            </p>
+            <Progress value={(currentProgress / totalProgress) * 100} />
+          </div>
+        )}
+        
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            {bookings.map((booking) => (
+              <Card key={booking.id} className="overflow-hidden">
+                <div className="bg-muted p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">ID: {booking.id}</span>
+                      <Badge status={booking.status || "unknown"} />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1"
+                      title="Save this booking"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => toggleExpand(bookingId)}
-                  >
-                    {isExpanded ? 'Hide Details' : 'View Details'}
-                  </Button>
                 </div>
-              </CardHeader>
-              
-              {isExpanded && (
-                <CardContent className="pb-3">
-                  <ScrollArea className="h-[300px] rounded border p-4">
-                    <pre className="text-xs whitespace-pre-wrap">
-                      {JSON.stringify(booking, null, 2)}
-                    </pre>
-                  </ScrollArea>
+                <CardContent className="p-3 pt-3">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <Field 
+                      label="Guest" 
+                      value={booking.guest && `${booking.guest.first_name || 'N/A'} ${booking.guest.last_name || 'N/A'}` || "N/A"} 
+                    />
+                    <Field label="Room" value={booking.room_details?.room_type || "N/A"} />
+                    <Field label="Check In" value={booking.check_in || "N/A"} />
+                    <Field label="Check Out" value={booking.check_out || "N/A"} />
+                    <Field 
+                      label="Price" 
+                      value={
+                        booking.price_details?.total_price
+                          ? `${booking.price_details.total_price} ${booking.price_details.currency || ''}`
+                          : "N/A"
+                      } 
+                    />
+                    <Field label="Created" value={booking.created_at || "N/A"} />
+                  </div>
                 </CardContent>
-              )}
-              
-              <CardFooter className="bg-muted/50 px-6 py-3">
-                <div className="flex justify-between items-center w-full text-sm">
-                  <div>
-                    From: {pickupAddress}
-                  </div>
-                  <div>
-                    To: {dropoffAddress}
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Helper components
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="text-muted-foreground">{label}:</span>{" "}
+      <span className="font-medium">{value}</span>
     </div>
+  );
+}
+
+function Badge({ status }: { status: string }) {
+  let bgColor = "bg-gray-100 text-gray-800";
+  
+  switch (status.toLowerCase()) {
+    case "confirmed":
+      bgColor = "bg-green-100 text-green-800";
+      break;
+    case "pending":
+      bgColor = "bg-yellow-100 text-yellow-800";
+      break;
+    case "cancelled":
+      bgColor = "bg-red-100 text-red-800";
+      break;
+  }
+  
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${bgColor}`}>
+      {status}
+    </span>
   );
 }

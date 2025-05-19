@@ -8,7 +8,7 @@ export function mapDbBookingsToDisplayBookings(dbBookings: any[]): Booking[] {
   return dbBookings.map(booking => {
     return {
       id: booking.id,
-      reference: booking.reference_source || `B${String(Math.floor(Math.random() * 10000)).padStart(5, '0')}`,
+      reference: `B${String(Math.floor(Math.random() * 10000)).padStart(5, '0')}`,
       customer: booking.customer_name,
       origin: booking.pickup_location,
       destination: booking.destination,
@@ -20,9 +20,7 @@ export function mapDbBookingsToDisplayBookings(dbBookings: any[]): Booking[] {
       price: `$${booking.price}`,
       fleet: booking.fleet_name,
       flightNumber: booking.flight_number,
-      serviceType: booking.source ? `${booking.source} Transfer` : "Transfer",
-      external_id: booking.external_id,
-      external_source: booking.external_source
+      serviceType: "Transfer" // Default, could be extended based on data
     };
   });
 }

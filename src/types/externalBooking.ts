@@ -16,13 +16,6 @@ export interface ExternalBooking {
   user_id?: string;
 }
 
-// Link object for pagination in Booking.com API responses
-export interface BookingApiLink {
-  rel: string;
-  href: string;
-  type: string;
-}
-
 // Simplified structure of what we expect from Booking.com API
 export interface BookingComResponse {
   bookings?: BookingComBooking[];
@@ -33,87 +26,51 @@ export interface BookingComResponse {
     page: number;
     pages: number;
   };
-  links?: BookingApiLink[]; // Added links array for pagination
 }
 
-// Enhanced BookingComBooking interface to match the provided response structure
 export interface BookingComBooking {
-  id?: string;
-  reference?: string;
-  customerReference?: string;
-  legId?: string;
-  bookingReference?: string;
-  state_hash?: string;
-  status?: string;
-  check_in?: string;
-  check_out?: string;
+  id: string;
   reservation_id?: string;
-  booked_date?: string;
-  pickup_date_time?: string;
-  pickup_date_time_zone?: string;
-  vehicle_type?: string;
-  passenger_count?: number;
-  meet_and_greet?: boolean;
-  guest?: {
-    first_name?: string;
-    last_name?: string;
+  check_in: string;
+  check_out: string;
+  status: string;
+  guest: {
+    first_name: string;
+    last_name: string;
     email?: string;
     phone?: string;
-  };
-  passenger?: {
-    name?: string;
-    title?: string;
-    telephone_number?: string;
-  };
-  price?: {
-    amount?: string;
-    currency?: string;
-    customerOriginalPrice?: number;
-    customerCurrency?: string;
-  };
-  price_details?: {
-    total_price?: number;
-    currency?: string;
   };
   room_details?: {
     room_type?: string;
     guests?: number;
   };
   property?: {
-    name?: string;
+    name: string;
     address?: string;
     city?: string;
     country?: string;
     location?: {
       coordinates?: {
-        latitude?: number;
-        longitude?: number;
+        latitude: number;
+        longitude: number;
       }
     };
   };
-  pickup?: {
-    latitude?: number;
-    longitude?: number;
-    address?: string;
-    establishment_name?: string;
-    postcode?: string;
-    country?: string;
-    type?: string;
-  };
-  dropoff?: {
-    latitude?: number;
-    longitude?: number;
-    address?: string;
-    establishment_name?: string;
-    postcode?: string;
-    country?: string;
-    type?: string;
+  price_details?: {
+    total_price?: number;
+    currency?: string;
   };
   special_requests?: string;
   created_at?: string;
   updated_at?: string;
   check_in_time?: string;
   flight_number?: string;
+  pickup?: {
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    }
+  };
 }
 
 export interface BatchConversionResult {

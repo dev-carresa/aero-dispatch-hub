@@ -1,48 +1,41 @@
 
 import { PageTitle } from "@/components/ui/page-title";
-import { Separator } from "@/components/ui/separator";
-import { BookingApiTestTabs } from "./BookingApiTestTabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { LogIn } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { InfoIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Settings } from "lucide-react";
+import { BookingApiTestTabs } from "./BookingApiTestTabs";
 
-export default function BookingApiTestPage() {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
+const BookingApiTestPage = () => {
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <PageTitle heading="Booking.com API Integration" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-300">
+      <div className="flex justify-between items-start">
+        <PageTitle 
+          heading="Booking.com API Test"
+          text="Configure and test Booking.com API integration"
+        />
+        
+        <Link to="/settings/api">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            API Settings
+          </Button>
+        </Link>
       </div>
-      
-      <Separator />
-      
-      {!isAuthenticated && (
-        <Alert className="border-amber-300 bg-amber-50">
-          <LogIn className="h-5 w-5 text-amber-500" />
-          <AlertTitle className="text-amber-700">Not logged in</AlertTitle>
-          <AlertDescription className="text-amber-600 flex flex-col gap-4">
-            <p>You're not currently logged in. You can still test the API and save bookings, but for a better experience, we recommend logging in.</p>
-            
-            <div>
-              <Button 
-                variant="outline" 
-                className="border-amber-500 text-amber-700 hover:bg-amber-100"
-                onClick={() => navigate('/login')}
-              >
-                Go to Login
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="bg-white rounded-lg border shadow p-6">
-        <BookingApiTestTabs />
-      </div>
+
+      <Alert>
+        <InfoIcon className="h-4 w-4" />
+        <AlertTitle>Static Authentication</AlertTitle>
+        <AlertDescription>
+          This page uses static credentials for testing the Booking.com API integration.
+          The connection should already be established with the provided credentials.
+        </AlertDescription>
+      </Alert>
+
+      <BookingApiTestTabs />
     </div>
   );
-}
+};
+
+export default BookingApiTestPage;

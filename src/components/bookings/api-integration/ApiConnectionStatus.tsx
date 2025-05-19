@@ -1,97 +1,117 @@
 
-import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { CheckCircle, AlertCircle, RefreshCcw } from "lucide-react";
+import { useState } from "react";
 import { externalBookingService } from "@/services/externalBookingService";
-import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ApiConnectionStatusProps {
-  status: "connected" | "disconnected" | "error" | "loading";
-  onStatusChange: (status: "connected" | "disconnected" | "error" | "loading") => void;
+  apiName: string;
+  initialStatus?: "connected" | "disconnected" | "error";
+  onConnectionChange?: (status: "connected" | "disconnected" | "error") => void;
 }
 
 export function ApiConnectionStatus({ 
-  status, 
-  onStatusChange 
+  apiName, 
+  initialStatus = "disconnected",
+  onConnectionChange
 }: ApiConnectionStatusProps) {
-  const [isChecking, setIsChecking] = useState(false);
+  const [status, setStatus] = useState<"connected" | "disconnected" | "error" | "testing">(initialStatus);
+  const [message, setMessage] = useState<string>("");
   
-  // Check connection status on mount
-  useEffect(() => {
-    checkConnectionStatus();
-  }, []);
-  
-  // Determine color based on status
-  const getStatusColor = () => {
-    switch(status) {
-      case "connected":
-        return "bg-green-100 text-green-800 border-green-300";
-      case "disconnected":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "error":
-        return "bg-red-100 text-red-800 border-red-300";
-      case "loading":
-        return "bg-blue-100 text-blue-800 border-blue-300";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
-    }
-  };
-  
-  // Check status against API
-  const checkConnectionStatus = async () => {
-    if (isChecking) return;
-    
-    setIsChecking(true);
-    onStatusChange("loading");
-    
+  const testConnection = async () => {
     try {
-      const result = await externalBookingService.testBookingComConnection();
-      onStatusChange(result.success ? "connected" : "error");
-    } catch (error) {
-      console.error("Error checking connection status:", error);
-      onStatusChange("error");
-    } finally {
-      setIsChecking(false);
-    }
-  };
-  
-  // Get status text
-  const getStatusText = () => {
-    switch(status) {
-      case "connected":
-        return "Connected";
-      case "disconnected":
-        return "Not Connected";
-      case "error":
-        return "Connection Error";
-      case "loading":
-        return "Checking Connection...";
-      default:
-        return "Unknown";
+      setStatus("testing");
+      setMessage("Testing connection...");
+      
+      // We currently only support Booking.com
+      if (apiName.toLowerCase() === "booking.com") {
+        const result = await externalBookingService.testBookingComConnection();
+        
+        if (result.success) {
+          setStatus("connected");
+          setMessage(result.message);
+          if (onConnectionChange) onConnectionChange("connected");
+          toast.success(result.message);
+        } else {
+          setStatus("error");
+          setMessage(result.message);
+          if (onConnectionChange) onConnectionChange("error");
+          toast.error(result.message);
+        }
+      } else {
+        setStatus("error");
+        setMessage(`Testing ${apiName} is not implemented yet.`);
+        if (onConnectionChange) onConnectionChange("error");
+        toast.error(`Testing ${apiName} is not implemented yet.`);
+      }
+    } catch (error: any) {
+      setStatus("error");
+      setMessage(error.message || `Failed to connect to ${apiName}.`);
+      if (onConnectionChange) onConnectionChange("error");
+      toast.error(error.message || `Failed to connect to ${apiName}.`);
     }
   };
   
   return (
-    <div className="space-y-4">
-      <div className={`p-4 rounded-md border ${getStatusColor()}`}>
-        <div className="flex items-center">
-          <div className={`w-3 h-3 rounded-full mr-2 ${status === "connected" ? "bg-green-500" : status === "loading" ? "bg-blue-500" : "bg-red-500"}`}></div>
-          <p className="font-medium">{getStatusText()}</p>
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">{apiName} API Connection</CardTitle>
+        <CardDescription>Check the connection status to the {apiName} API</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {status === "connected" && (
+              <>
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-medium text-green-600">Connected</span>
+              </>
+            )}
+            {status === "disconnected" && (
+              <>
+                <AlertCircle className="h-5 w-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-500">Disconnected</span>
+              </>
+            )}
+            {status === "error" && (
+              <>
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <span className="text-sm font-medium text-red-600">Error</span>
+              </>
+            )}
+            {status === "testing" && (
+              <>
+                <Spinner size="sm" className="text-primary" />
+                <span className="text-sm font-medium text-gray-600">Testing...</span>
+              </>
+            )}
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={testConnection}
+            disabled={status === "testing"}
+            className="flex items-center gap-1"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Test Connection
+          </Button>
         </div>
-      </div>
-      
-      <Button 
-        onClick={checkConnectionStatus} 
-        disabled={isChecking || status === "loading"}
-        variant="outline" 
-        className="w-full"
-      >
-        {isChecking ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Checking...
-          </>
-        ) : "Test Connection"}
-      </Button>
-    </div>
+        
+        {message && (
+          <div className={`mt-2 text-sm p-2 rounded ${
+            status === "connected" ? "bg-green-50 text-green-700" : 
+            status === "error" ? "bg-red-50 text-red-700" : 
+            "bg-gray-50 text-gray-600"
+          }`}>
+            {message}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

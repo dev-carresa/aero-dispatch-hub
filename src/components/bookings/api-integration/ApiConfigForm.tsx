@@ -1,125 +1,99 @@
 
-import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Save } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 
-export interface ApiConfigFormProps {
+const apiConfigSchema = z.object({
+  api_key: z.string().min(1, "API key is required"),
+});
+
+type ApiConfigFormValues = z.infer<typeof apiConfigSchema>;
+
+interface ApiConfigFormProps {
   apiName: string;
   keyName: string;
   onConfigSaved: () => void;
 }
 
 export function ApiConfigForm({ apiName, keyName, onConfigSaved }: ApiConfigFormProps) {
-  const [apiKey, setApiKey] = useState("");
-  const [apiSecret, setApiSecret] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!apiKey || !apiSecret) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "API key and secret are required"
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
+  const form = useForm<ApiConfigFormValues>({
+    resolver: zodResolver(apiConfigSchema),
+    defaultValues: {
+      api_key: "",
+    },
+  });
+  
+  const onSubmit = async (data: ApiConfigFormValues) => {
     try {
-      // Save API credentials with correct field mapping
+      setIsLoading(true);
+      
+      // Update the API key in the api_integrations table
       const { error } = await supabase
         .from('api_integrations')
-        .upsert({
-          api_title: apiName,
-          category: 'booking',
-          key_name: keyName,
-          key_value: JSON.stringify({ apiKey, apiSecret }), // Store both values as JSON in key_value
-          status: 'connected',
-          enabled: true,
-          updated_at: new Date().toISOString(),
-          user_id: '00000000-0000-0000-0000-000000000000' // Default user ID for now
-        });
-      
+        .update({ 
+          key_value: data.api_key,
+          status: 'disconnected', // Reset status until tested
+          last_tested: new Date().toISOString()
+        })
+        .eq('key_name', keyName);
+        
       if (error) throw error;
       
-      toast({
-        title: "Success",
-        description: `${apiName} API configuration saved successfully`
-      });
+      toast.success(`${apiName} API key saved successfully`);
       onConfigSaved();
+      form.reset();
     } catch (error: any) {
-      console.error("Error saving API config:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || `Failed to save ${apiName} API configuration`
-      });
+      console.error("Error saving API key:", error);
+      toast.error(error.message || `Failed to save ${apiName} API key`);
     } finally {
       setIsLoading(false);
     }
   };
   
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>{apiName} API Configuration</CardTitle>
-        <CardDescription>
-          Enter your {apiName} API credentials to connect to the service
-        </CardDescription>
+        <CardTitle className="text-lg">{apiName} API Configuration</CardTitle>
+        <CardDescription>Enter your {apiName} API credentials</CardDescription>
       </CardHeader>
-      <form onSubmit={handleFormSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="apiKey">API Key</Label>
-            <Input
-              id="apiKey"
-              type="text"
-              placeholder={`Enter your ${apiName} API key`}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              required
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="api_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>API Key</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder={`Enter your ${apiName} API key`}
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="apiSecret">API Secret</Label>
-            <Input
-              id="apiSecret"
-              type="password"
-              placeholder={`Enter your ${apiName} API secret`}
-              value={apiSecret}
-              onChange={(e) => setApiSecret(e.target.value)}
-              required
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button 
-            type="submit" 
-            className="ml-auto" 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Configuration
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </form>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save API Key"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }
